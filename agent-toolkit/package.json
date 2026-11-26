@@ -1,0 +1,30 @@
+{
+  "name": "universal-agent-toolkit",
+  "version": "1.0.0",
+  "description": "Universal Multi-Agent Toolkit (AI Studio, Claude Code, Cursor, Copilot): Automated Playwright Visual UI Inspector, Event-Loop & Worker OOM Watchdog, Workspace JSON Sync, and Bilingual PL/EN Flag Toggle.",
+  "type": "module",
+  "bin": {
+    "agent-toolkit": "./bin/cli.mjs"
+  },
+  "scripts": {
+    "install-here": "node ./bin/cli.mjs install",
+    "install-global-skill": "node ./bin/cli.mjs install-global-skill",
+    "verify:ui": "node ./templates/verify-ui.mjs"
+  },
+  "files": [
+    "bin/",
+    "templates/",
+    "README.md"
+  ],
+  "keywords": [
+    "ai-studio",
+    "claude-code",
+    "cursor",
+    "playwright",
+    "visual-verification",
+    "agent-skills",
+    "webgpu",
+    "workers"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Flappy NeuroLab",
+  "version": "1.0.0",
+  "identifier": "io.neurolab.flappy",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:3000",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Flappy NeuroLab — WebGPU & Multi-Worker Neuroevolution Lab",
+        "width": 1440,
+        "height": 920,
+        "minWidth": 960,
+        "minHeight": 640,
+        "resizable": true,
+        "fullscreen": false,
+        "additionalBrowserArgs": "--enable-unsafe-webgpu --disable-gpu-watchdog --disable-background-timer-throttling --disable-renderer-backgrounding"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": []
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Flappy NeuroLab",
+  "description": "Interactive Flappy Bird neuroevolution laboratory with live neural network visualization, genetic algorithm controls, and Play vs. AI mode.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
