@@ -24,9 +24,9 @@ if (!fs.existsSync(distDir)) {
   process.exit(1);
 }
 
-console.log('=== [2/4] Ensuring Capacitor Android dependencies ===');
+console.log('=== [2/4] Ensuring Capacitor 7 Android dependencies (JDK 21 compatible) ===');
 if (!fs.existsSync(path.join(rootDir, 'node_modules', '@capacitor', 'android'))) {
-  run('npm install --no-save @capacitor/core@^6.0.0 @capacitor/cli@^6.0.0 @capacitor/android@^6.0.0');
+  run('npm install --no-save --no-audit --no-fund @capacitor/core@^7.0.0 @capacitor/cli@^7.0.0 @capacitor/android@^7.0.0');
 }
 
 console.log('=== [3/4] Initializing / Syncing Capacitor Android project ===');
@@ -57,5 +57,6 @@ if (fs.existsSync(apkPath)) {
   fs.copyFileSync(apkPath, outApk);
   console.log(`\nSUCCESS! Android APK generated at:\n  ${outApk}`);
 } else {
-  console.log(`\nGradle finished. Check ${androidDir}/app/build/outputs/apk/ for the generated APK.`);
+  console.error(`\nError: Gradle finished, but expected APK was not found at ${apkPath}`);
+  process.exit(1);
 }

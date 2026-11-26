@@ -2,7 +2,6 @@
   "appId": "io.neurolab.flappy",
   "appName": "Flappy NeuroLab",
   "webDir": "dist",
-  "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https"
   },
