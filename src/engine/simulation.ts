@@ -43,6 +43,7 @@ import {
   sampleCompoundEyeOmmatidia,
 } from './sensors';
 import type {
+  ArcadeOrb,
   BirdRenderState,
   ComputeProfileKind,
   EnvironmentConfig,
@@ -57,6 +58,7 @@ import type {
   NetworkArchitecture,
   NetworkSnapshot,
   Pipe,
+  PlayScorePopup,
   RenderSnapshot,
   SensorFeatureId,
   SerializedNeuralNetwork,
@@ -90,6 +92,7 @@ interface InternalBird extends OptimizerMember {
 
 export interface SimulationCallbacks {
   onScore?: () => void;
+  onOrbCollect?: (isPrism: boolean) => void;
   onCrash?: () => void;
   onGenerationAdvance?: () => void;
 }
@@ -153,6 +156,15 @@ export class FlappySimulation {
   private morphogenesis: MorphogenesisController | null = null;
   private islandCoordinator: IslandSpeciationCoordinator | null = null;
   private lastMeanFlopsPerFrame = 0;
+  private vsAiSoloMode = false;
+  private playerPoints = 0;
+  private playerCurrentCombo = 0;
+  private playerMaxCombo = 0;
+  private playerOrbsCollected = 0;
+  private orbCounter = 0;
+  private popupCounter = 0;
+  private arcadeOrbs: ArcadeOrb[] = [];
+  private scorePopups: PlayScorePopup[] = [];
   private readonly batchFrameParams = {
     hasNextPipe: false,
     gapTop: 0,
@@ -915,13 +927,25 @@ export class FlappySimulation {
     this.callbacks.onGenerationAdvance?.();
   }
 
-  prepareVsAiMatch(): void {
+  isSoloPlay(): boolean {
+    return this.vsAiSoloMode;
+  }
+
+  prepareVsAiMatch(soloMode?: boolean): void {
     this.mode = 'VS_AI';
     this.vsAiPhase = 'READY';
+    if (soloMode !== undefined) {
+      this.vsAiSoloMode = soloMode;
+    }
     this.resetWorld();
 
     this.playerBird = this.createBird(1, null, true, false);
     this.playerBird.y = PLAYABLE_HEIGHT * 0.48;
+
+    if (this.vsAiSoloMode) {
+      this.aiOpponentBird = null;
+      return;
+    }
 
     const championSource =
       this.vsAiOpponentBrain?.clone() ??
@@ -969,6 +993,14 @@ export class FlappySimulation {
     this.currentGenBestScore = 0;
     this.lastTickSpeed = env.pipeSpeed;
     this.pipes = [];
+    this.arcadeOrbs = [];
+    this.scorePopups = [];
+    if (this.mode === 'VS_AI') {
+      this.playerPoints = 0;
+      this.playerCurrentCombo = 0;
+      this.playerMaxCombo = 0;
+      this.playerOrbsCollected = 0;
+    }
     this.distUntilNextSpawn = env.pipeSpeed * env.spawnFrames;
     this.speedPhaseA = Math.random() * Math.PI * 2;
     this.speedPhaseB = Math.random() * Math.PI * 2;
@@ -1058,6 +1090,32 @@ export class FlappySimulation {
       passedByPlayer: false,
       passedByChampion: false,
     });
+
+    // Spawn collectible arcade orbs exclusively during interactive Play mode
+    if (this.mode === 'VS_AI') {
+      this.orbCounter += 1;
+      const isPrism = this.orbCounter % 4 === 0;
+      const midOffset = isPrism ? -env.pipeSpeed * env.spawnFrames * 0.42 : PIPE_WIDTH * 0.5;
+      const orbX = Math.max(xPos - 90, xPos + midOffset);
+      const yOffset = isPrism
+        ? (Math.random() > 0.5 ? -1 : 1) * Math.min(48, gapSize * 0.28)
+        : (Math.random() * 2 - 1) * Math.min(28, gapSize * 0.22);
+      const baseY = Math.max(
+        48,
+        Math.min(PLAYABLE_HEIGHT - 48, baseGapTop + gapSize * 0.5 + yOffset)
+      );
+      this.arcadeOrbs.push({
+        id: this.orbCounter,
+        x: orbX,
+        y: baseY,
+        baseY,
+        radius: isPrism ? 10 : 9,
+        points: isPrism ? 150 : 75,
+        kind: isPrism ? 'PRISM' : 'STAR',
+        phase: Math.random() * Math.PI * 2,
+        collected: false,
+      });
+    }
   }
 
   private getNextTwoPipes(): [Pipe | null, Pipe | null] {
@@ -1221,6 +1279,17 @@ export class FlappySimulation {
 
     if (pipes.length > 0 && pipes[0].x + PIPE_WIDTH < -24) {
       pipes.shift();
+    }
+
+    if (this.mode === 'VS_AI' && this.arcadeOrbs.length > 0) {
+      for (let i = this.arcadeOrbs.length - 1; i >= 0; i--) {
+        const orb = this.arcadeOrbs[i];
+        orb.x -= tickSpeed;
+        orb.y = orb.baseY + Math.sin(this.frameCount * 0.08 + orb.phase) * 7;
+        if (orb.collected || orb.x + orb.radius < -24) {
+          this.arcadeOrbs.splice(i, 1);
+        }
+      }
     }
   }
 
@@ -1789,6 +1858,17 @@ export class FlappySimulation {
     this.updatePipeWorld();
     const [nextPipe, nextPipe2] = this.getNextTwoPipes();
 
+    if (this.scorePopups.length > 0) {
+      for (let i = this.scorePopups.length - 1; i >= 0; i--) {
+        const p = this.scorePopups[i];
+        p.y -= 0.75;
+        p.ttl -= 0.028;
+        if (p.ttl <= 0) {
+          this.scorePopups.splice(i, 1);
+        }
+      }
+    }
+
     if (this.playerBird) {
       if (this.playerBird.alive) {
         this.playerBird.vy = Math.min(MAX_VY, this.playerBird.vy + gravity);
@@ -1798,12 +1878,68 @@ export class FlappySimulation {
         if (this.checkCollision(this.playerBird, nextPipe)) {
           this.playerBird.alive = false;
           this.playerBird.deathOpacity = 0.85;
+          this.playerCurrentCombo = 0;
           this.callbacks.onCrash?.();
         } else {
+          if (this.frameCount % 12 === 0) {
+            this.playerPoints += 2;
+          }
+
+          for (const orb of this.arcadeOrbs) {
+            if (orb.collected) continue;
+            const dx = BIRD_X - orb.x;
+            const dy = this.playerBird.y - orb.y;
+            const hitR = BIRD_RADIUS + orb.radius + 7;
+            if (dx * dx + dy * dy <= hitR * hitR) {
+              orb.collected = true;
+              this.playerOrbsCollected += 1;
+              this.playerPoints += orb.points;
+              this.popupCounter += 1;
+              this.scorePopups.push({
+                id: this.popupCounter,
+                x: orb.x,
+                y: orb.y - 8,
+                label: `+${orb.points} ${orb.kind === 'PRISM' ? '◆' : '★'}`,
+                color: orb.kind === 'PRISM' ? '#22D3EE' : '#FBBF24',
+                ttl: 1,
+              });
+              this.callbacks.onOrbCollect?.(orb.kind === 'PRISM');
+            }
+          }
+
           for (const pipe of this.pipes) {
             if (!pipe.passedByPlayer && pipe.x + PIPE_WIDTH < BIRD_X) {
               pipe.passedByPlayer = true;
               this.playerBird.score += 1;
+              const diffMult = this.getPlayDifficultyMultiplier();
+              const centerDist = Math.abs(this.playerBird.y - pipe.gapCenter);
+              const isPrecisionCenter = centerDist <= pipe.gapSize * 0.24;
+              if (isPrecisionCenter) {
+                this.playerCurrentCombo += 1;
+              } else {
+                this.playerCurrentCombo = 0;
+              }
+              if (this.playerCurrentCombo > this.playerMaxCombo) {
+                this.playerMaxCombo = this.playerCurrentCombo;
+              }
+              const comboBonus =
+                this.playerCurrentCombo > 0
+                  ? Math.min(280, this.playerCurrentCombo * 35)
+                  : 0;
+              const pipePoints = Math.round(100 * diffMult) + comboBonus;
+              this.playerPoints += pipePoints;
+              this.popupCounter += 1;
+              this.scorePopups.push({
+                id: this.popupCounter,
+                x: BIRD_X + 18,
+                y: Math.max(36, this.playerBird.y - 18),
+                label:
+                  this.playerCurrentCombo > 1
+                    ? `+${pipePoints} · ×${this.playerCurrentCombo}`
+                    : `+${pipePoints}`,
+                color: isPrecisionCenter ? '#FDE047' : '#34D399',
+                ttl: 1,
+              });
               this.callbacks.onScore?.();
             }
           }
@@ -2030,8 +2166,29 @@ export class FlappySimulation {
       opticalNoiseLevel: this.config.opticalNoiseLevel ?? 0,
       anomalyActive: isAnomalyActive,
       anomalyGravityMult: Number(anomalyMult.toFixed(2)),
+      arcadeOrbs: this.mode === 'VS_AI' ? this.arcadeOrbs : undefined,
+      scorePopups: this.mode === 'VS_AI' ? this.scorePopups : undefined,
+      playerPoints: this.mode === 'VS_AI' ? this.playerPoints : undefined,
+      playerCombo: this.mode === 'VS_AI' ? this.playerCurrentCombo : undefined,
       ommatidiaRays,
     };
+  }
+
+  private getPlayDifficultyMultiplier(): number {
+    switch (this.config.difficulty) {
+      case 'EASY':
+        return 1.0;
+      case 'MEDIUM':
+        return 1.3;
+      case 'HARD':
+        return 1.7;
+      case 'INSANE':
+        return 2.2;
+      case 'EXTRA_INSANE':
+        return 2.5 + Math.max(0, ((this.config.overdrivePct ?? 120) - 100) / 100);
+      default:
+        return 1.4;
+    }
   }
 
   getTelemetry(): SimulationTelemetry {
@@ -2132,6 +2289,10 @@ export class FlappySimulation {
       allTimeBestScore: this.allTimeBestScore,
       allTimeBestGeneration: this.allTimeBestGeneration,
       playerScore,
+      playerPoints: this.mode === 'VS_AI' ? this.playerPoints : 0,
+      playerCurrentCombo: this.mode === 'VS_AI' ? this.playerCurrentCombo : 0,
+      playerMaxCombo: this.mode === 'VS_AI' ? this.playerMaxCombo : 0,
+      playerOrbsCollected: this.mode === 'VS_AI' ? this.playerOrbsCollected : 0,
       aiOpponentScore,
       playerAlive: Boolean(this.playerBird?.alive),
       aiOpponentAlive: Boolean(this.aiOpponentBird?.alive),

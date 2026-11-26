@@ -2,6 +2,8 @@ export type GameMode = 'TRAINING' | 'VS_AI' | 'RESEARCH' | 'DOCS';
 
 export type VsAiPhase = 'READY' | 'PLAYING' | 'GAME_OVER';
 
+export type PlaySubMode = 'SOLO' | 'VS_AI';
+
 export type DifficultyPreset =
   | 'EASY'
   | 'MEDIUM'
@@ -440,6 +442,27 @@ export interface SavedBrain {
 
 export type SpeedSetting = 1 | 2 | 5 | 10 | 25 | 50 | 100 | 250 | 500 | 'MAX';
 
+export interface ArcadeOrb {
+  id: number;
+  x: number;
+  y: number;
+  baseY: number;
+  radius: number;
+  points: number;
+  kind: 'STAR' | 'PRISM';
+  phase: number;
+  collected: boolean;
+}
+
+export interface PlayScorePopup {
+  id: number;
+  x: number;
+  y: number;
+  label: string;
+  color: string;
+  ttl: number;
+}
+
 export interface RenderSnapshot {
   birds: BirdRenderState[];
   pipes: Pipe[];
@@ -456,6 +479,10 @@ export interface RenderSnapshot {
   opticalNoiseLevel?: number;
   anomalyActive?: boolean;
   anomalyGravityMult?: number;
+  arcadeOrbs?: ArcadeOrb[];
+  scorePopups?: PlayScorePopup[];
+  playerPoints?: number;
+  playerCombo?: number;
   ommatidiaRays?: Array<{
     angleRad: number;
     hitDistNorm: number;
@@ -489,6 +516,10 @@ export interface SimulationTelemetry {
   allTimeBestScore: number;
   allTimeBestGeneration: number;
   playerScore: number;
+  playerPoints?: number;
+  playerCurrentCombo?: number;
+  playerMaxCombo?: number;
+  playerOrbsCollected?: number;
   aiOpponentScore: number;
   playerAlive: boolean;
   aiOpponentAlive: boolean;

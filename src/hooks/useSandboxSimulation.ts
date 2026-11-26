@@ -1,6 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { arcadeAudio } from '../engine/audio';
+import {
+  isSmartphoneDevice,
+  loadEcoPreference,
+  persistEcoPreference,
+  resolveEcoActive,
+  type EcoModePreference,
+} from '../engine/deviceProfile';
 import { normalizeHiddenLayers } from '../engine/neuralNetwork';
+import {
+  addCompletedPlayRun,
+  clearStoredLeaderboard,
+  clearStoredPlayHistory,
+  loadPlayRecordsSnapshot,
+  persistPlayerNick,
+  updateSavedPlayRunNick,
+  type PlayRunRecord,
+} from '../engine/playRecords';
 import {
   loadSavedBrains,
   persistSavedBrains,
@@ -26,12 +42,48 @@ import type {
   EvolutionConfig,
   GameMode,
   LearningAlgorithm,
+  PlaySubMode,
   RenderSnapshot,
   SavedBrain,
   SerializedNeuralNetwork,
   SimulationTelemetry,
   SpeedSetting,
 } from '../engine/types';
+
+const HUMAN_PB_STORAGE_KEY = 'flappy-neuro-human-pb-v1';
+
+function loadHumanPersonalBests(): Partial<Record<DifficultyPreset, number>> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(HUMAN_PB_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') {
+      return parsed as Partial<Record<DifficultyPreset, number>>;
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return {};
+}
+
+function persistHumanPersonalBests(
+  bests: Partial<Record<DifficultyPreset, number>>
+): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(HUMAN_PB_STORAGE_KEY, JSON.stringify(bests));
+  } catch {
+    // ignore storage quota errors
+  }
+}
+
+export interface PlaySessionStats {
+  runs: number;
+  totalScore: number;
+  bestSessionScore: number;
+  lastRunWasNewRecord: boolean;
+}
 
 export const DEFAULT_EVOLUTION_CONFIG: EvolutionConfig = {
   algorithm: 'CMA_HYBRID',
@@ -84,6 +136,44 @@ export function useSandboxSimulation(params: {
   );
   const [activeOpponentName, setActiveOpponentName] =
     useState<string>('Evolved Champion');
+  const [playSubMode, setPlaySubMode] = useState<PlaySubMode>('SOLO');
+  const [humanBestByDifficulty, setHumanBestByDifficulty] = useState<
+    Partial<Record<DifficultyPreset, number>>
+  >(() => loadHumanPersonalBests());
+  const [playSessionStats, setPlaySessionStats] = useState<PlaySessionStats>({
+    runs: 0,
+    totalScore: 0,
+    bestSessionScore: 0,
+    lastRunWasNewRecord: false,
+  });
+  const [playerNick, setPlayerNick] = useState<string>(
+    () => loadPlayRecordsSnapshot().playerNick
+  );
+  const [playHistory, setPlayHistory] = useState<PlayRunRecord[]>(
+    () => loadPlayRecordsSnapshot().history
+  );
+  const [leaderboard, setLeaderboard] = useState<PlayRunRecord[]>(
+    () => loadPlayRecordsSnapshot().leaderboard
+  );
+  const [bestPointsByDifficulty, setBestPointsByDifficulty] = useState<
+    Partial<Record<DifficultyPreset, number>>
+  >(() => loadPlayRecordsSnapshot().bestPointsByDifficulty);
+  const [lastCompletedRunId, setLastCompletedRunId] = useState<string | null>(
+    null
+  );
+  const playerNickRef = useRef<string>(playerNick);
+  playerNickRef.current = playerNick;
+  const activeOpponentNameRef = useRef<string>(activeOpponentName);
+  activeOpponentNameRef.current = activeOpponentName;
+  const [ecoPreference, setEcoPreference] = useState<EcoModePreference>(() =>
+    loadEcoPreference()
+  );
+  const [smartphoneDetected, setSmartphoneDetected] = useState<boolean>(() =>
+    isSmartphoneDevice()
+  );
+  const ecoActive = resolveEcoActive(ecoPreference, smartphoneDetected);
+  const ecoActiveRef = useRef<boolean>(ecoActive);
+  ecoActiveRef.current = ecoActive;
 
   const vsAiSimRef = useRef<FlappySimulation | null>(null);
   if (!vsAiSimRef.current) {
@@ -94,8 +184,10 @@ export function useSandboxSimulation(params: {
       : DEFAULT_EVOLUTION_CONFIG;
     vsAiSimRef.current = new FlappySimulation(initialVsConfig, {
       onScore: () => arcadeAudio.playScore(),
+      onOrbCollect: (isPrism) => arcadeAudio.playOrbCollect(isPrism),
       onCrash: () => arcadeAudio.playCrash(),
     });
+    vsAiSimRef.current.prepareVsAiMatch(true);
   }
 
   const workerRef = useRef<Worker | null>(null);
@@ -104,6 +196,15 @@ export function useSandboxSimulation(params: {
   const lastUiSyncRef = useRef<number>(0);
   const modeRef = useRef<GameMode>(mode);
   modeRef.current = mode;
+  const playSubModeRef = useRef<PlaySubMode>(playSubMode);
+  playSubModeRef.current = playSubMode;
+  const runningRef = useRef<boolean>(running);
+  runningRef.current = running;
+  const configDifficultyRef = useRef<DifficultyPreset>(config.difficulty);
+  configDifficultyRef.current = config.difficulty;
+  const prevVsPhaseRef = useRef<string>('READY');
+  const lastCrashAtRef = useRef<number>(0);
+  const scoredRunRef = useRef<boolean>(false);
 
   const [trainingTelemetry, setTrainingTelemetry] =
     useState<SimulationTelemetry>(() => ({
@@ -146,9 +247,84 @@ export function useSandboxSimulation(params: {
   }, []);
 
   const syncVsAiTelemetry = useCallback(() => {
-    if (vsAiSimRef.current) {
-      setVsAiTelemetry(vsAiSimRef.current.getTelemetry());
+    const sim = vsAiSimRef.current;
+    if (!sim) return;
+    const nextTel = sim.getTelemetry();
+    const prevPhase = prevVsPhaseRef.current;
+    prevVsPhaseRef.current = nextTel.vsAiPhase;
+
+    if (nextTel.vsAiPhase === 'READY') {
+      scoredRunRef.current = false;
     }
+
+    if (
+      nextTel.vsAiPhase === 'PLAYING' &&
+      !nextTel.playerAlive &&
+      lastCrashAtRef.current === 0
+    ) {
+      lastCrashAtRef.current = performance.now();
+    }
+
+    if (nextTel.vsAiPhase === 'GAME_OVER' && prevPhase !== 'GAME_OVER' && !scoredRunRef.current) {
+      scoredRunRef.current = true;
+      lastCrashAtRef.current = performance.now();
+      const score = nextTel.playerScore;
+      const pts = nextTel.playerPoints ?? 0;
+      const orbs = nextTel.playerOrbsCollected ?? 0;
+      const maxCombo = nextTel.playerMaxCombo ?? 0;
+      const diff = configDifficultyRef.current;
+      let isNewRecord = false;
+      setHumanBestByDifficulty((prev) => {
+        const currentBest = prev[diff] ?? 0;
+        if (score > currentBest) {
+          isNewRecord = true;
+          const updated = { ...prev, [diff]: score };
+          persistHumanPersonalBests(updated);
+          if (score > 0) {
+            arcadeAudio.playNewRecord();
+          }
+          return updated;
+        }
+        return prev;
+      });
+      setPlaySessionStats((prev) => ({
+        runs: prev.runs + 1,
+        totalScore: prev.totalScore + score,
+        bestSessionScore: Math.max(prev.bestSessionScore, score),
+        lastRunWasNewRecord: isNewRecord,
+      }));
+
+      if (pts >= 4 || score > 0 || orbs > 0) {
+        const wonVsAi =
+          playSubModeRef.current === 'VS_AI'
+            ? nextTel.vsAiWinner === 'PLAYER'
+              ? true
+              : nextTel.vsAiWinner === 'AI'
+                ? false
+                : null
+            : null;
+        const saved = addCompletedPlayRun({
+          playerNick: playerNickRef.current,
+          points: pts,
+          pipes: score,
+          orbsCollected: orbs,
+          maxCombo,
+          difficulty: diff,
+          subMode: playSubModeRef.current,
+          opponentName: activeOpponentNameRef.current,
+          wonVsAi,
+          fallbackName: 'Anon Pilot',
+        });
+        setPlayHistory(saved.history);
+        setLeaderboard(saved.leaderboard);
+        setBestPointsByDifficulty(saved.bestPointsByDifficulty);
+        setLastCompletedRunId(saved.record.id);
+      } else {
+        setLastCompletedRunId(null);
+      }
+    }
+
+    setVsAiTelemetry(nextTel);
   }, []);
 
   useEffect(() => {
@@ -169,8 +345,9 @@ export function useSandboxSimulation(params: {
         if (msg.genAdvanced) arcadeAudio.playGenerationAdvance();
 
         const now = performance.now();
+        const uiSyncMinMs = ecoActiveRef.current ? 140 : 55;
         if (
-          now - lastUiSyncRef.current >= 55 ||
+          now - lastUiSyncRef.current >= uiSyncMinMs ||
           msg.genAdvanced ||
           msg.scored
         ) {
@@ -196,7 +373,7 @@ export function useSandboxSimulation(params: {
         inputFeatures: normalizeInputFeatures(initialConfig.inputFeatures),
       },
       speed: 1,
-      running: true,
+      running: modeRef.current === 'TRAINING',
     } satisfies WorkerInboundMessage);
 
     const handleVisibilityChange = () => {
@@ -206,25 +383,53 @@ export function useSandboxSimulation(params: {
       } satisfies WorkerInboundMessage);
     };
 
+    const handleResize = () => {
+      setSmartphoneDetected(isSmartphoneDevice());
+    };
+
+    worker.postMessage({
+      type: 'SET_MOBILE_ECO',
+      enabled: ecoActiveRef.current,
+    } satisfies WorkerInboundMessage);
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('resize', handleResize);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('resize', handleResize);
       worker.terminate();
       workerRef.current = null;
     };
   }, []);
 
   useEffect(() => {
+    persistEcoPreference(ecoPreference);
+    postToWorker({ type: 'SET_MOBILE_ECO', enabled: ecoActive });
+  }, [ecoPreference, ecoActive, postToWorker]);
+
+  const handleCycleEcoMode = useCallback(() => {
+    setEcoPreference((prev) => {
+      if (prev === 'AUTO') return smartphoneDetected ? 'FULL' : 'ECO';
+      if (prev === 'ECO') return 'FULL';
+      return 'AUTO';
+    });
+  }, [smartphoneDetected]);
+
+  useEffect(() => {
     saveTrainingConfig(config);
   }, [config]);
 
   const handleSelectMode = useCallback(
-    (nextMode: GameMode) => {
+    (nextMode: GameMode, forcedSubMode?: PlaySubMode) => {
       if (nextMode === 'VS_AI') {
         const vsSim = vsAiSimRef.current;
         if (!vsSim) return;
 
         postToWorker({ type: 'SET_RUNNING', running: false });
+
+        const targetSubMode = forcedSubMode ?? playSubModeRef.current;
+        setPlaySubMode(targetSubMode);
+        playSubModeRef.current = targetSubMode;
 
         if (trainingTelemetry.allTimeBestScore > 0 && trainingChampionRef.current) {
           vsSim.setChampionBrain(trainingChampionRef.current);
@@ -235,7 +440,9 @@ export function useSandboxSimulation(params: {
           vsSim.setChampionBrain(PRETRAINED_ACE_BRAIN.network);
           setActiveOpponentName(PRETRAINED_ACE_BRAIN.name);
         }
-        vsSim.prepareVsAiMatch();
+        lastCrashAtRef.current = 0;
+        scoredRunRef.current = false;
+        vsSim.prepareVsAiMatch(targetSubMode === 'SOLO');
         setMode('VS_AI');
         setRunning(true);
         syncVsAiTelemetry();
@@ -249,6 +456,32 @@ export function useSandboxSimulation(params: {
       }
     },
     [postToWorker, setMode, syncVsAiTelemetry, trainingTelemetry.allTimeBestScore]
+  );
+
+  const handleChangePlaySubMode = useCallback(
+    (nextSubMode: PlaySubMode) => {
+      setPlaySubMode(nextSubMode);
+      playSubModeRef.current = nextSubMode;
+      const vsSim = vsAiSimRef.current;
+      if (!vsSim) return;
+      if (nextSubMode === 'VS_AI') {
+        if (trainingTelemetry.allTimeBestScore > 0 && trainingChampionRef.current) {
+          vsSim.setChampionBrain(trainingChampionRef.current);
+          setActiveOpponentName(
+            `Evolved Champion (${trainingTelemetry.allTimeBestScore} pipes)`
+          );
+        } else {
+          vsSim.setChampionBrain(PRETRAINED_ACE_BRAIN.network);
+          setActiveOpponentName(PRETRAINED_ACE_BRAIN.name);
+        }
+      }
+      lastCrashAtRef.current = 0;
+      scoredRunRef.current = false;
+      vsSim.prepareVsAiMatch(nextSubMode === 'SOLO');
+      setRunning(true);
+      syncVsAiTelemetry();
+    },
+    [syncVsAiTelemetry, trainingTelemetry.allTimeBestScore]
   );
 
   const handleToggleRunning = useCallback(() => {
@@ -277,7 +510,10 @@ export function useSandboxSimulation(params: {
   }, [postToWorker]);
 
   const handleRematchVsAi = useCallback(() => {
-    vsAiSimRef.current?.prepareVsAiMatch();
+    lastCrashAtRef.current = 0;
+    scoredRunRef.current = false;
+    setPlaySessionStats((prev) => ({ ...prev, lastRunWasNewRecord: false }));
+    vsAiSimRef.current?.prepareVsAiMatch(playSubModeRef.current === 'SOLO');
     setRunning(true);
     syncVsAiTelemetry();
   }, [syncVsAiTelemetry]);
@@ -290,6 +526,21 @@ export function useSandboxSimulation(params: {
   const handlePlayerFlap = useCallback(() => {
     const sim = vsAiSimRef.current;
     if (!sim) return;
+    const phase = sim.getVsAiPhase();
+    if (phase === 'GAME_OVER') {
+      if (performance.now() - lastCrashAtRef.current >= 380) {
+        lastCrashAtRef.current = 0;
+        scoredRunRef.current = false;
+        setPlaySessionStats((prev) => ({ ...prev, lastRunWasNewRecord: false }));
+        sim.prepareVsAiMatch(playSubModeRef.current === 'SOLO');
+        setRunning(true);
+        syncVsAiTelemetry();
+      }
+      return;
+    }
+    if (phase === 'PLAYING' && !runningRef.current) {
+      setRunning(true);
+    }
     const flapped = sim.playerFlap();
     if (flapped) {
       arcadeAudio.playFlap();
@@ -439,7 +690,11 @@ export function useSandboxSimulation(params: {
         });
       }
       vsSim.setChampionBrain(brain.network);
-      vsSim.prepareVsAiMatch();
+      setPlaySubMode('VS_AI');
+      playSubModeRef.current = 'VS_AI';
+      lastCrashAtRef.current = 0;
+      scoredRunRef.current = false;
+      vsSim.prepareVsAiMatch(false);
       setMode('VS_AI');
       setActiveOpponentName(brain.name);
       setRunning(true);
@@ -448,6 +703,54 @@ export function useSandboxSimulation(params: {
     },
     [config, postToWorker, setMode, showNotice, sweepCustomEnvironment, syncVsAiTelemetry]
   );
+
+  const handleSelectPlayDifficulty = useCallback(
+    (diff: DifficultyPreset) => {
+      const nextConfig: EvolutionConfig = {
+        ...config,
+        difficulty: diff,
+      };
+      setConfig(nextConfig);
+      postToWorker({ type: 'UPDATE_CONFIG', config: nextConfig });
+      if (vsAiSimRef.current) {
+        const currentVs = vsAiSimRef.current.getConfig();
+        vsAiSimRef.current.updateConfig({
+          ...nextConfig,
+          hiddenNodes: currentVs.hiddenNodes,
+          hiddenLayers: currentVs.hiddenLayers,
+          inputFeatures: currentVs.inputFeatures,
+        });
+        lastCrashAtRef.current = 0;
+        scoredRunRef.current = false;
+        setPlaySessionStats((prev) => ({ ...prev, lastRunWasNewRecord: false }));
+        vsAiSimRef.current.prepareVsAiMatch(playSubModeRef.current === 'SOLO');
+        setRunning(true);
+        syncVsAiTelemetry();
+      }
+    },
+    [config, postToWorker, syncVsAiTelemetry]
+  );
+
+  const handleUseEvolvedChampionOpponent = useCallback(() => {
+    const vsSim = vsAiSimRef.current;
+    if (!vsSim) return;
+    if (trainingChampionRef.current) {
+      vsSim.setChampionBrain(trainingChampionRef.current);
+      setActiveOpponentName(
+        `Evolved Champion (${trainingTelemetry.allTimeBestScore} pipes)`
+      );
+    } else {
+      vsSim.setChampionBrain(PRETRAINED_ACE_BRAIN.network);
+      setActiveOpponentName(PRETRAINED_ACE_BRAIN.name);
+    }
+    setPlaySubMode('VS_AI');
+    playSubModeRef.current = 'VS_AI';
+    lastCrashAtRef.current = 0;
+    scoredRunRef.current = false;
+    vsSim.prepareVsAiMatch(false);
+    setRunning(true);
+    syncVsAiTelemetry();
+  }, [syncVsAiTelemetry, trainingTelemetry.allTimeBestScore]);
 
   const handleDeleteBrain = useCallback((id: string) => {
     setSavedBrains((prev) => {
@@ -492,17 +795,20 @@ export function useSandboxSimulation(params: {
       if (isFormField) return;
 
       if (modeRef.current === 'VS_AI') {
-        if (e.code === 'Space' || e.code === 'ArrowUp') {
+        if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
           e.preventDefault();
           if (target?.tagName === 'BUTTON') {
             target.blur();
           }
-          if (vsAiSimRef.current?.getVsAiPhase() === 'GAME_OVER') {
-            vsAiSimRef.current.prepareVsAiMatch();
-            syncVsAiTelemetry();
-          } else {
-            handlePlayerFlap();
+          handlePlayerFlap();
+        } else if (e.code === 'KeyP' || e.code === 'Escape') {
+          if (vsAiSimRef.current?.getVsAiPhase() === 'PLAYING') {
+            e.preventDefault();
+            setRunning((prev) => !prev);
           }
+        } else if (e.code === 'KeyR') {
+          e.preventDefault();
+          handleRematchVsAi();
         }
       } else if (modeRef.current === 'TRAINING' && e.code === 'Space') {
         if (target?.tagName !== 'BUTTON') {
@@ -519,8 +825,8 @@ export function useSandboxSimulation(params: {
     howModalOpen,
     onCloseModals,
     handlePlayerFlap,
+    handleRematchVsAi,
     handleToggleRunning,
-    syncVsAiTelemetry,
   ]);
 
   const handleLoadFruitFlyPreset = useCallback(() => {
@@ -608,6 +914,41 @@ export function useSandboxSimulation(params: {
     );
   }, [config, postToWorker, setMode, showNotice]);
 
+  const handleUpdatePlayerNick = useCallback((rawNick: string) => {
+    const cleaned = persistPlayerNick(rawNick);
+    setPlayerNick(cleaned);
+  }, []);
+
+  const handleSaveLastRunWithNick = useCallback(
+    (rawNick: string) => {
+      const targetId = lastCompletedRunId;
+      const cleaned = persistPlayerNick(rawNick);
+      setPlayerNick(cleaned);
+      if (targetId) {
+        const res = updateSavedPlayRunNick({
+          runId: targetId,
+          nick: cleaned,
+          fallbackName: 'Anon Pilot',
+        });
+        setPlayHistory(res.history);
+        setLeaderboard(res.leaderboard);
+      }
+      const display = cleaned || 'Anon Pilot';
+      showNotice(`Zapisano profil / wynik: ${display}`);
+    },
+    [lastCompletedRunId, showNotice]
+  );
+
+  const handleClearPlayHistory = useCallback(() => {
+    setPlayHistory(clearStoredPlayHistory());
+    showNotice('Historia lotów wyczyszczona');
+  }, [showNotice]);
+
+  const handleClearLeaderboard = useCallback(() => {
+    setLeaderboard(clearStoredLeaderboard());
+    showNotice('Tabela wyników wyczyszczona');
+  }, [showNotice]);
+
   return {
     config,
     running,
@@ -618,11 +959,26 @@ export function useSandboxSimulation(params: {
     muted,
     savedBrains,
     activeOpponentName,
+    playSubMode,
+    humanBestByDifficulty,
+    bestPointsByDifficulty,
+    playSessionStats,
+    playerNick,
+    playHistory,
+    leaderboard,
+    lastCompletedRunId,
+    ecoPreference,
+    ecoActive,
+    smartphoneDetected,
     trainingTelemetry,
     vsAiTelemetry,
     trainingSnapshotRef,
     vsAiSimRef,
     handleSelectMode,
+    handleChangePlaySubMode,
+    handleSelectPlayDifficulty,
+    handleUseEvolvedChampionOpponent,
+    handleCycleEcoMode,
     handleToggleRunning,
     handleSelectSpeed,
     handleResetTraining,
@@ -640,6 +996,10 @@ export function useSandboxSimulation(params: {
     handleImportBrain,
     handleLoadFruitFlyPreset,
     handleLoadDecoupledCortexPreset,
+    handleUpdatePlayerNick,
+    handleSaveLastRunWithNick,
+    handleClearPlayHistory,
+    handleClearLeaderboard,
     syncVsAiTelemetry,
   };
 }

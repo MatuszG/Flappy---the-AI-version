@@ -34,6 +34,13 @@ interface ResearchReportPanelProps {
   findings: ResearchFindings;
   isBusy: boolean;
   onImportJsonDataset: (file: File) => void;
+  onLoadGithubLake?: () => void;
+  githubLakeMeta?: {
+    runCount: number;
+    totalTrials: number;
+    totalPerfect: number;
+    updatedAt: string;
+  } | null;
   onClearSavedSession: () => void;
 }
 
@@ -43,6 +50,8 @@ export const ResearchReportPanel = memo(function ResearchReportPanel({
   findings,
   isBusy,
   onImportJsonDataset,
+  onLoadGithubLake,
+  githubLakeMeta,
   onClearSavedSession,
 }: ResearchReportPanelProps) {
   const importInputRef = useRef<HTMLInputElement | null>(null);
@@ -217,7 +226,7 @@ export const ResearchReportPanel = memo(function ResearchReportPanel({
           <input
             ref={importInputRef}
             type="file"
-            accept=".json,application/json"
+            accept=".json,.jsonl,application/json,application/x-ndjson"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -234,8 +243,26 @@ export const ResearchReportPanel = memo(function ResearchReportPanel({
             className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-medium text-slate-200 whitespace-nowrap cursor-pointer transition-colors hover:border-cyan-500/50 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Upload className="h-3.5 w-3.5" aria-hidden="true" />
-            Import JSON
+            Import JSON/L
           </button>
+          {onLoadGithubLake && (
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={onLoadGithubLake}
+              title={
+                githubLakeMeta && githubLakeMeta.totalTrials > 0
+                  ? `Load aggregated GitHub Data Lake (${githubLakeMeta.runCount} runs · ${githubLakeMeta.totalTrials} trials · ${githubLakeMeta.totalPerfect} perfect)`
+                  : 'Load aggregated GitHub Research Data Lake snapshot (public/data/research-lake.json)'
+              }
+              className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200 whitespace-nowrap cursor-pointer transition-colors hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Download className="h-3.5 w-3.5" aria-hidden="true" />
+              {githubLakeMeta && githubLakeMeta.totalTrials > 0
+                ? `GitHub Lake (${githubLakeMeta.totalTrials.toLocaleString()})`
+                : 'GitHub Lake'}
+            </button>
+          )}
           {results.length > 0 && !isBusy && (
             <button
               type="button"

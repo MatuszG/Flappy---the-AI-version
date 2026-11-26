@@ -1,0 +1,63 @@
+{
+  "schema": "flappy-neurolab-lake-v1",
+  "updatedAt": "2026-11-26T02:01:15.949Z",
+  "runCount": 0,
+  "rawTrialCount": 0,
+  "totalTrials": 0,
+  "totalPerfect": 0,
+  "protocol": {
+    "algorithms": [
+      "DE",
+      "CMA_HYBRID"
+    ],
+    "difficulties": [
+      "EASY",
+      "MEDIUM",
+      "HARD",
+      "INSANE",
+      "EXTRA_INSANE"
+    ],
+    "topologies": [
+      [
+        4
+      ]
+    ],
+    "inputFeatureSets": [
+      [
+        "BIRD_Y",
+        "VEL_VY",
+        "PIPE_DX",
+        "TOP_CLEAR",
+        "BOT_CLEAR",
+        "PIPE_VY",
+        "NEXT_PIPE_DY",
+        "NEXT_TOP_CLEAR",
+        "NEXT_BOT_CLEAR",
+        "NEXT_PIPE_DX",
+        "NEXT_PIPE_VY",
+        "PIPE_TTF"
+      ]
+    ],
+    "architectures": [
+      "MLP"
+    ],
+    "weightPrecisions": [
+      "FP32"
+    ],
+    "populationSizes": [
+      120
+    ],
+    "mutationRates": [
+      0.16
+    ],
+    "mutationStrengths": [
+      0.35
+    ],
+    "maxGenerations": 120,
+    "stagnationLimit": 32,
+    "targetPipeCap": 500,
+    "verificationSeeds": 5,
+    "workerThreads": 0
+  },
+  "trials": []
+}

@@ -108,10 +108,10 @@ export function NeuralNetworkViz({ snapshot, perceptionMode }: NeuralNetworkVizP
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-3 border-b border-slate-800/80 pb-3">
+      <div className="flex items-start justify-between gap-2.5 border-b border-slate-800/80 pb-3">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 overflow-hidden">
-            <h2 className="font-display text-sm sm:text-base font-semibold text-slate-100 whitespace-nowrap truncate">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <h2 className="font-display text-sm sm:text-base font-semibold text-slate-100 whitespace-nowrap">
               {bi('Mózg Lidera', 'Leader Brain')}
             </h2>
             {archCatalog && (
@@ -135,23 +135,15 @@ export function NeuralNetworkViz({ snapshot, perceptionMode }: NeuralNetworkVizP
             </span>
           </div>
           <p className="mt-1 font-mono text-[11px] tabular-nums text-slate-400 truncate">
-            {topologyText} · {paramCount} {bi('param.', 'params')} ·{' '}
-            {depth === 0
-              ? bi('0 warstw ukr.', '0 hidden layers')
-              : bi(`${depth} warstw ukr. (D${depth})`, `${depth} hidden layers (D${depth})`)}
+            {topologyText} · {paramCount}p · D{depth}
             {snapshot.flopsPerFrame !== undefined
               ? ` · ${Math.round(snapshot.flopsPerFrame)} FLOPs/f`
               : ''}
           </p>
-          {archCatalog && (
-            <p className="mt-0.5 text-[11px] text-slate-400 truncate">
-              {lang === 'pl' ? archCatalog.summaryPl : archCatalog.formulaSummary}
-            </p>
-          )}
         </div>
-        <div className="w-[148px] shrink-0 text-right font-mono text-xs tabular-nums">
+        <div className="w-[106px] sm:w-[128px] shrink-0 text-right font-mono text-xs tabular-nums">
           <div
-            className={`inline-block rounded border px-2 py-0.5 text-[11px] font-semibold ${
+            className={`inline-block rounded border px-2 py-0.5 text-[10.5px] sm:text-[11px] font-semibold whitespace-nowrap ${
               snapshot.shouldFlap
                 ? 'border-emerald-500/45 bg-emerald-500/15 text-emerald-300'
                 : 'border-slate-800 bg-slate-900/90 text-slate-400'
@@ -174,12 +166,12 @@ export function NeuralNetworkViz({ snapshot, perceptionMode }: NeuralNetworkVizP
             {snapshot.architecture === 'PONDER_ACT'
               ? snapshot.reasoningStepInfo.ponderSteps > 1
                 ? bi(
-                    `SYSTEM 2 (${snapshot.reasoningStepInfo.ponderSteps}/${snapshot.reasoningStepInfo.maxSteps} kroków myślenia)`,
-                    `SYSTEM 2 (${snapshot.reasoningStepInfo.ponderSteps}/${snapshot.reasoningStepInfo.maxSteps} thinking steps)`
+                    `SYSTEM 2 (${snapshot.reasoningStepInfo.ponderSteps}/${snapshot.reasoningStepInfo.maxSteps} kroków)`,
+                    `SYSTEM 2 (${snapshot.reasoningStepInfo.ponderSteps}/${snapshot.reasoningStepInfo.maxSteps} steps)`
                   )
                 : bi(
-                    `SYSTEM 1 (1/${snapshot.reasoningStepInfo.maxSteps} szybki krok)`,
-                    `SYSTEM 1 (1/${snapshot.reasoningStepInfo.maxSteps} fast step)`
+                    `SYSTEM 1 (1/${snapshot.reasoningStepInfo.maxSteps} krok)`,
+                    `SYSTEM 1 (1/${snapshot.reasoningStepInfo.maxSteps} step)`
                   )
               : snapshot.architecture === 'LOOPED_REASONER'
                 ? bi(
@@ -187,7 +179,7 @@ export function NeuralNetworkViz({ snapshot, perceptionMode }: NeuralNetworkVizP
                     `LOOPED CoT (${snapshot.reasoningStepInfo.ponderSteps} steps)`
                   )
                 : snapshot.architecture === 'LATENT_ROLLOUT'
-                  ? bi('SYMULACJA WYOBRAŹNI (Rollout)', 'IMAGINATION ROLLOUT')
+                  ? bi('ROLLOUT WYOBRAŹNI', 'IMAGINATION ROLLOUT')
                   : 'SELECTIVE SSM / MinGRU'}
           </span>
           <span className="text-slate-300">
@@ -195,8 +187,8 @@ export function NeuralNetworkViz({ snapshot, perceptionMode }: NeuralNetworkVizP
               ? `ΔV(SKOK−CZEKAJ)=${snapshot.reasoningStepInfo.rolloutAdvantage >= 0 ? '+' : ''}${snapshot.reasoningStepInfo.rolloutAdvantage.toFixed(2)}`
               : snapshot.reasoningStepInfo.ssmGateMean !== undefined
                 ? bi(
-                    `Bramka pamięci z_t=${snapshot.reasoningStepInfo.ssmGateMean.toFixed(2)}`,
-                    `Memory gate z_t=${snapshot.reasoningStepInfo.ssmGateMean.toFixed(2)}`
+                    `Bramka z_t=${snapshot.reasoningStepInfo.ssmGateMean.toFixed(2)}`,
+                    `Gate z_t=${snapshot.reasoningStepInfo.ssmGateMean.toFixed(2)}`
                   )
                 : bi(
                     `Głębokość ${snapshot.reasoningStepInfo.ponderSteps}/${snapshot.reasoningStepInfo.maxSteps}`,
@@ -208,35 +200,15 @@ export function NeuralNetworkViz({ snapshot, perceptionMode }: NeuralNetworkVizP
 
       {snapshot.architecture === 'DROSOPHILA_CONNECTOME' && (
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-2.5 py-1.5 font-mono text-[10px] tabular-nums text-emerald-200">
-          <span className="font-semibold">
-            {bi(
-              'KONEKTOM DROSOPHILA (FlyWire 2024 · Bio-GPU)',
-              'DROSOPHILA CONNECTOME (FlyWire 2024 · Bio-GPU)'
-            )}
-          </span>
-          <span className="text-slate-300">
-            {bi(
-              'Optic T4/T5 LTC · Hamowanie boczne APL · Oktopamina · Odruch Giant Fiber',
-              'Optic T4/T5 LTC · APL Lateral Inhibition · Octopamine · Giant Fiber Reflex'
-            )}
-          </span>
+          <span className="font-semibold">DROSOPHILA · FlyWire 2024</span>
+          <span className="text-slate-300">T4/T5 LTC · APL · Giant Fiber</span>
         </div>
       )}
 
       {snapshot.architecture === 'DECOUPLED_FLY_CORTEX' && (
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-purple-500/40 bg-purple-500/10 px-2.5 py-1.5 font-mono text-[10px] tabular-nums text-purple-200">
-          <span className="font-semibold">
-            {bi(
-              'FLY-CORTEX (Wiedza Zamrożona 0p vs Plastyczny Rdzeń Rozumowania)',
-              'FLY-CORTEX (Frozen Knowledge 0p vs. Plastic Executive Core)'
-            )}
-          </span>
-          <span className="text-slate-300">
-            {bi(
-              'FlyHash APL Top-k + LTC Executive + Plastyczność Dopaminowa Online w locie',
-              'FlyHash APL Top-k + LTC Executive + Online Dopamine Plasticity'
-            )}
-          </span>
+          <span className="font-semibold">FLY-CORTEX (0p Memory + Plastic Core)</span>
+          <span className="text-slate-300">FlyHash APL + LTC + Online DA</span>
         </div>
       )}
 

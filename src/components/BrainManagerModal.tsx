@@ -94,57 +94,61 @@ export function BrainManagerModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 p-2 sm:p-4 backdrop-blur-xs"
       role="dialog"
       aria-modal="true"
       aria-labelledby="brain-modal-title"
+      onClick={onClose}
     >
-      <div className="w-full max-w-2xl rounded-xl border border-slate-800 bg-[#111827] shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
-          <div>
+      <div
+        className="flex max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#111827] shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-800 px-4 py-3.5 sm:px-6 sm:py-4">
+          <div className="min-w-0">
             <h2
               id="brain-modal-title"
-              className="font-display text-lg font-semibold text-white"
+              className="font-display text-base sm:text-lg font-semibold text-white truncate"
             >
               {bi('Zapisane Sieci Neuronowe', 'Saved Neural Brains')}
             </h2>
             <p className="text-xs text-slate-400">
               {bi(
-                'Zapisuj wyewoluowanych mistrzów, importuj wagi JSON lub zmierz się z gotowym asem.',
-                'Save evolved champions, import JSON weights, or race a pre-trained ace.'
+                'Zapisuj mistrzów, importuj JSON lub wyścig z gotowym asem.',
+                'Save champions, import JSON, or race the ace.'
               )}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close modal"
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white cursor-pointer"
+            aria-label={bi('Zamknij okno', 'Close modal')}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700 hover:text-white cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="space-y-5 p-6">
+        <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
           {/* Save current champion */}
-          <form onSubmit={handleSave} className="flex flex-wrap items-center gap-3">
+          <form onSubmit={handleSave} className="grid grid-cols-2 sm:flex sm:items-center gap-2.5">
             <input
               type="text"
               value={brainName}
               onChange={(e) => setBrainName(e.target.value)}
               placeholder={bi(
-                `Nazwa mistrza (Rekord: ${currentBestScore} rur)`,
-                `Name champion (Best: ${currentBestScore} pipes)`
+                `Nazwa mistrza (${currentBestScore} rur)`,
+                `Champion name (${currentBestScore} pipes)`
               )}
-              className="min-w-52 flex-1 rounded-lg border border-slate-700 bg-[#0B1120] px-3.5 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-500 focus:outline-none"
+              className="col-span-2 sm:flex-1 min-w-0 rounded-lg border border-slate-700 bg-[#0B1120] px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-500 focus:outline-none"
             />
             <button
               type="submit"
               disabled={!canSaveCurrent}
-              className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-4 py-2 text-xs font-semibold text-slate-950 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-2 text-xs font-semibold text-slate-950 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Save className="h-3.5 w-3.5" aria-hidden="true" />
-              {bi('Zapisz Lidera', 'Save Current Best')}
+              {bi('Zapisz Lidera', 'Save Best')}
             </button>
 
             <input
@@ -157,10 +161,10 @@ export function BrainManagerModal({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-medium text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-slate-700"
+              className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-medium text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-slate-700"
             >
               <Upload className="h-3.5 w-3.5" aria-hidden="true" />
-              {bi('Importuj JSON', 'Import JSON')}
+              {bi('Import JSON', 'Import JSON')}
             </button>
           </form>
 
@@ -171,18 +175,18 @@ export function BrainManagerModal({
           )}
 
           {/* Brain Library List */}
-          <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+          <div className="space-y-2.5">
             {brains.map((brain) => (
               <div
                 key={brain.id}
-                className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-800 bg-[#0B1120]/70 px-4 py-3"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-slate-800 bg-[#0B1120]/70 px-3.5 py-3"
               >
-                <div>
-                  <p className="text-sm font-semibold text-slate-100">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-100 truncate">
                     {brain.name}
                   </p>
                   <p className="mt-0.5 font-mono text-xs tabular-nums text-slate-400">
-                    {bi('Rekord', 'Record')} {brain.bestScore.toLocaleString()} {bi('rur', 'pipes')} · Gen {brain.generation} ·{' '}
+                    {brain.bestScore.toLocaleString()} {bi('rur', 'pipes')} · Gen {brain.generation} ·{' '}
                     {formatTopologyLabel(
                       normalizeHiddenLayers(
                         brain.network.hiddenLayers !== undefined
@@ -194,16 +198,16 @@ export function BrainManagerModal({
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => {
                       onLoadIntoTraining(brain);
                       onClose();
                     }}
-                    className="rounded-md border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 whitespace-nowrap cursor-pointer transition-colors hover:border-cyan-500/50 hover:text-cyan-200"
+                    className="min-h-[36px] rounded-md border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 whitespace-nowrap cursor-pointer transition-colors hover:border-cyan-500/50 hover:text-cyan-200"
                   >
-                    {bi('Wczytaj do Treningu', 'Seed Lab')}
+                    {bi('Do Treningu', 'Seed Lab')}
                   </button>
                   <button
                     type="button"
@@ -211,17 +215,17 @@ export function BrainManagerModal({
                       onRaceAgainstBrain(brain);
                       onClose();
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-amber-400"
+                    className="inline-flex min-h-[36px] items-center gap-1.5 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-amber-400"
                   >
                     <Play className="h-3 w-3" aria-hidden="true" />
-                    {bi('Wyścig vs AI', 'Race AI')}
+                    {bi('Wyścig', 'Race')}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleExport(brain)}
                     aria-label={`Export ${brain.name} as JSON`}
                     title="Export JSON"
-                    className="rounded-md p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100 cursor-pointer"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-400 hover:bg-slate-800 hover:text-slate-100 cursor-pointer"
                   >
                     <Download className="h-3.5 w-3.5" />
                   </button>
@@ -231,7 +235,7 @@ export function BrainManagerModal({
                       onClick={() => onDeleteBrain(brain.id)}
                       aria-label={`Delete ${brain.name}`}
                       title="Delete"
-                      className="rounded-md p-1.5 text-slate-400 hover:bg-slate-800 hover:text-red-400 cursor-pointer"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-400 hover:bg-slate-800 hover:text-red-400 cursor-pointer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

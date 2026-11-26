@@ -13,6 +13,7 @@
     "bench:engine": "tsx scripts/engine-lab.ts --bench",
     "lab:frontier": "tsx scripts/engine-lab.ts --frontier",
     "analyze:llm": "tsx scripts/analyze-llm.ts",
+    "lake:sync": "tsx scripts/sync-research-lake.ts",
     "desktop:dev": "npx @tauri-apps/cli@latest dev",
     "desktop:build": "npm run build && npx @tauri-apps/cli@latest build",
     "android:sync": "npm run build && npx @capacitor/cli@latest sync android",

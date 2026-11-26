@@ -44,6 +44,9 @@ jobs:
       - name: Run deterministic physics & neuroevolution engine tests
         run: npm run test:engine
 
+      - name: Sync GitHub Research Data Lake
+        run: npm run lake:sync
+
       - name: Build portable production bundle
         run: npm run build
 

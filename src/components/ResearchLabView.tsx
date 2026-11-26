@@ -114,6 +114,13 @@ interface ResearchLabViewProps {
   onSaveSessionNow: () => void;
   onClearSavedSession: () => void;
   onImportJsonDataset: (file: File) => void;
+  onLoadGithubLake?: () => void;
+  githubLakeMeta?: {
+    runCount: number;
+    totalTrials: number;
+    totalPerfect: number;
+    updatedAt: string;
+  } | null;
   onLoadTrialIntoLab: (
     brain: SavedBrain,
     difficulty: DifficultyPreset,
@@ -162,6 +169,8 @@ export const ResearchLabView = memo(function ResearchLabView({
   onSaveSessionNow,
   onClearSavedSession,
   onImportJsonDataset,
+  onLoadGithubLake,
+  githubLakeMeta,
   onLoadTrialIntoLab,
   onRaceTrial,
   onGetPerfReport,
@@ -570,6 +579,8 @@ export const ResearchLabView = memo(function ResearchLabView({
           });
         }}
         onImportJsonDataset={onImportJsonDataset}
+        onLoadGithubLake={onLoadGithubLake}
+        githubLakeMeta={githubLakeMeta}
         onGetPerfReport={onGetPerfReport}
       />
 
@@ -694,6 +705,8 @@ export const ResearchLabView = memo(function ResearchLabView({
             findings={findings}
             isBusy={isBusy}
             onImportJsonDataset={onImportJsonDataset}
+            onLoadGithubLake={onLoadGithubLake}
+            githubLakeMeta={githubLakeMeta}
             onClearSavedSession={onClearSavedSession}
           />
         )}

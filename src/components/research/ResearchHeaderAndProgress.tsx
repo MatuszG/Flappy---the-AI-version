@@ -46,6 +46,13 @@ interface ResearchHeaderAndProgressProps {
   onSaveSessionNow: () => void;
   onExportColab?: () => void;
   onImportJsonDataset?: (file: File) => void;
+  onLoadGithubLake?: () => void;
+  githubLakeMeta?: {
+    runCount: number;
+    totalTrials: number;
+    totalPerfect: number;
+    updatedAt: string;
+  } | null;
   onGetPerfReport?: () => string | null;
 }
 
@@ -69,6 +76,8 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
   onSaveSessionNow,
   onExportColab,
   onImportJsonDataset,
+  onLoadGithubLake,
+  githubLakeMeta,
   onGetPerfReport,
 }: ResearchHeaderAndProgressProps) {
   const { bi } = useLanguage();
@@ -174,7 +183,7 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="flex min-w-0 w-full sm:w-auto flex-wrap items-center gap-2">
             {!isBusy ? (
               <>
                 {resultsCount > 0 &&
@@ -232,7 +241,7 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                     <input
                       ref={importInputRef}
                       type="file"
-                      accept=".json,application/json"
+                      accept=".json,.jsonl,application/json,application/x-ndjson"
                       className="hidden"
                       onChange={(e) => {
                         const f = e.target.files?.[0];
@@ -246,15 +255,29 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                       type="button"
                       onClick={() => importInputRef.current?.click()}
                       title={bi(
-                        'Wczytaj / połącz wyniki JSON z Google Colab lub kopii zapasowej',
-                        'Import / merge JSON dataset from Google Colab or backup'
+                        'Wczytaj / połącz wyniki JSON lub JSONL z Colaba, GitHuba lub kopii zapasowej',
+                        'Import / merge JSON or JSONL dataset from Colab, GitHub, or backup'
                       )}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/90 px-3 py-2 text-xs font-medium text-slate-200 whitespace-nowrap cursor-pointer transition-colors hover:border-cyan-500/50 hover:text-cyan-200"
                     >
                       <Upload className="h-3.5 w-3.5" aria-hidden="true" />
-                      Import JSON
+                      Import JSON/L
                     </button>
                   </>
+                )}
+                {onLoadGithubLake && githubLakeMeta && githubLakeMeta.totalTrials > 0 && (
+                  <button
+                    type="button"
+                    onClick={onLoadGithubLake}
+                    title={bi(
+                      `Wczytaj zbiorcze archiwum GitHub Research Data Lake (${githubLakeMeta.runCount} biegów · ${githubLakeMeta.totalTrials} prób · ${githubLakeMeta.totalPerfect} perfect)`,
+                      `Load aggregated GitHub Research Data Lake (${githubLakeMeta.runCount} runs · ${githubLakeMeta.totalTrials} trials · ${githubLakeMeta.totalPerfect} perfect)`
+                    )}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200 whitespace-nowrap cursor-pointer transition-colors hover:bg-emerald-500/20"
+                  >
+                    <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                    GitHub Lake ({githubLakeMeta.totalTrials.toLocaleString()})
+                  </button>
                 )}
               </>
             ) : (

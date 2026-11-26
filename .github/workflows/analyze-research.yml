@@ -1,0 +1,55 @@
+name: Sync & Analyze Research Data Lake
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'research-data/runs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: 'research-lake-sync'
+  cancel-in-progress: false
+
+jobs:
+  analyze-research-lake:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          package-manager-cache: false
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+          else
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Deduplicate & analyze all runs in research-data/runs/
+        run: npm run lake:sync
+
+      - name: Commit updated leaderboard, AI digest & GitHub Pages lake snapshot
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research-data/LEADERBOARD.md research-data/ai-delta-digest.md research-data/llm-meta-dossier.md public/data/research-lake.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(research-lake): sync leaderboard & AI digest [skip ci]"
+            git push
+          else
+            echo "No research lake changes to commit."
+          fi

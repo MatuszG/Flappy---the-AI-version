@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { Award, Check, Pause, Play, RotateCcw, Sparkles, UserCheck } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import {
   BIRD_RADIUS,
   CANVAS_HEIGHT,
@@ -11,16 +12,20 @@ import {
 import { SENSOR_METADATA } from '../engine/sensors';
 import { ARCHITECTURE_CATALOG } from '../engine/architectureCatalog';
 import type {
+  ArcadeOrb,
   BirdRenderState,
   DifficultyPreset,
   EnvironmentConfig,
   GameMode,
   Pipe,
+  PlayScorePopup,
+  PlaySubMode,
   RenderSnapshot,
   SensorFeatureId,
   VsAiPhase,
 } from '../engine/types';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getMedalForScore } from './PlayArcadePanel';
 
 export interface TrainingCanvasHud {
   algorithmLabel: string;
@@ -39,18 +44,30 @@ interface ArcadeCanvasProps {
   vsAiSimRef: React.MutableRefObject<FlappySimulation>;
   running: boolean;
   showSensors: boolean;
+  ecoMode?: boolean;
   mode: GameMode;
+  playSubMode?: PlaySubMode;
+  personalBest?: number;
+  bestPoints?: number;
+  lastRunWasNewRecord?: boolean;
   trainingHud?: TrainingCanvasHud;
   vsAiPhase: VsAiPhase;
   playerScore: number;
+  playerPoints?: number;
+  playerCombo?: number;
+  playerMaxCombo?: number;
+  playerOrbsCollected?: number;
+  playerNick?: string;
   aiOpponentScore: number;
   playerAlive: boolean;
   aiOpponentAlive: boolean;
   vsAiWinner: 'PLAYER' | 'AI' | 'TIE' | null;
   onPlayerFlap: () => void;
+  onTogglePause?: () => void;
   onFinishEarly: () => void;
   onRematch: () => void;
   onBackToLab: () => void;
+  onSaveRunWithNick?: (nick: string) => void;
   onSyncVsAiTelemetry: () => void;
 }
 
@@ -1055,26 +1072,132 @@ function drawCompoundEyeOmmatidia(
   ctx.restore();
 }
 
+function drawArcadeOrbsAndPopups(
+  ctx: CanvasRenderingContext2D,
+  orbs: ArcadeOrb[] | undefined,
+  popups: PlayScorePopup[] | undefined,
+  animTick: number
+) {
+  if (orbs && orbs.length > 0) {
+    for (let i = 0; i < orbs.length; i++) {
+      const orb = orbs[i];
+      if (orb.collected) continue;
+      const pulse = 1 + Math.sin(animTick * 0.12 + orb.phase) * 0.12;
+      const r = orb.radius * pulse;
+      const isPrism = orb.kind === 'PRISM';
+
+      ctx.save();
+      ctx.translate(orb.x, orb.y);
+
+      // Outer halo
+      const halo = ctx.createRadialGradient(0, 0, r * 0.2, 0, 0, r * 2.1);
+      halo.addColorStop(
+        0,
+        isPrism ? 'rgba(34, 211, 238, 0.5)' : 'rgba(251, 191, 36, 0.52)'
+      );
+      halo.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 2.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.rotate(animTick * (isPrism ? 0.04 : 0.025) + orb.phase);
+
+      if (isPrism) {
+        // Diamond cyan prism (+150)
+        ctx.fillStyle = '#22D3EE';
+        ctx.strokeStyle = '#ECFEFF';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -r * 1.15);
+        ctx.lineTo(r * 0.9, 0);
+        ctx.lineTo(0, r * 1.15);
+        ctx.lineTo(-r * 0.9, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        // Golden amber energy star orb (+75)
+        ctx.fillStyle = '#FBBF24';
+        ctx.strokeStyle = '#FEF3C7';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.92, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#FFFBEB';
+        ctx.beginPath();
+        ctx.arc(-r * 0.25, -r * 0.25, r * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+  }
+
+  if (popups && popups.length > 0) {
+    ctx.save();
+    ctx.font = '800 13px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < popups.length; i++) {
+      const p = popups[i];
+      ctx.globalAlpha = Math.max(0, Math.min(1, p.ttl));
+      ctx.fillStyle = 'rgba(7, 12, 24, 0.85)';
+      ctx.fillText(p.label, p.x + 1, p.y + 1);
+      ctx.fillStyle = p.color;
+      ctx.fillText(p.label, p.x, p.y);
+    }
+    ctx.restore();
+  }
+}
+
 export function ArcadeCanvas({
   trainingSnapshotRef,
   vsAiSimRef,
   running,
   showSensors,
+  ecoMode = false,
   mode,
+  playSubMode = 'SOLO',
+  personalBest = 0,
+  bestPoints = 0,
+  lastRunWasNewRecord = false,
   trainingHud,
   vsAiPhase,
   playerScore,
+  playerPoints = 0,
+  playerCombo = 0,
+  playerMaxCombo = 0,
+  playerOrbsCollected = 0,
+  playerNick = '',
   aiOpponentScore,
   playerAlive,
   aiOpponentAlive,
   vsAiWinner,
   onPlayerFlap,
+  onTogglePause,
   onFinishEarly,
   onRematch,
   onBackToLab,
+  onSaveRunWithNick,
   onSyncVsAiTelemetry,
 }: ArcadeCanvasProps) {
   const { bi } = useLanguage();
+  const [nickDraft, setNickDraft] = useState(playerNick);
+  const [savedNotice, setSavedNotice] = useState(false);
+
+  useEffect(() => {
+    setNickDraft(playerNick);
+  }, [playerNick]);
+
+  useEffect(() => {
+    if (vsAiPhase !== 'GAME_OVER') {
+      setSavedNotice(false);
+    }
+  }, [vsAiPhase]);
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const skyCacheRef = useRef<Map<VisualThemeKey, HTMLCanvasElement>>(new Map());
   const trailRef = useRef<{ x: number; y: number }[]>([]);
@@ -1082,11 +1205,19 @@ export function ArcadeCanvas({
 
   const runningRef = useRef(running);
   const sensorsRef = useRef(showSensors);
+  const ecoModeRef = useRef(ecoMode);
   const modeRef = useRef(mode);
+  const playSubModeRef = useRef<PlaySubMode>(playSubMode);
 
   runningRef.current = running;
   sensorsRef.current = showSensors;
+  ecoModeRef.current = ecoMode;
   modeRef.current = mode;
+  playSubModeRef.current = playSubMode;
+
+  const isSoloPlay = playSubMode === 'SOLO';
+  const isPlayPaused = mode === 'VS_AI' && vsAiPhase === 'PLAYING' && !running;
+  const runMedal = getMedalForScore(playerScore);
 
   useEffect(() => {
     let rafId = 0;
@@ -1102,6 +1233,7 @@ export function ArcadeCanvas({
     };
 
     let lastTime = performance.now();
+    let lastDrawTime = 0;
     let accumulator = 0;
     const fixedStepMs = 1000 / 60;
 
@@ -1112,20 +1244,46 @@ export function ArcadeCanvas({
         accumulator += dt;
       }
 
+      let steppedInVs = false;
       if (modeRef.current === 'VS_AI') {
         if (runningRef.current) {
           while (accumulator >= fixedStepMs) {
             vsAiSimRef.current.step();
             accumulator -= fixedStepMs;
+            steppedInVs = true;
           }
         } else {
           accumulator = 0;
         }
         frameTick += 1;
-        if (frameTick % 2 === 0) {
+        const syncModulo = ecoModeRef.current ? 4 : 2;
+        if (frameTick % syncModulo === 0 || !runningRef.current) {
           onSyncVsAiTelemetry();
         }
       }
+
+      // On Eco mobile mode: cap Training canvas draw at ~30fps and avoid redundant 120Hz draws in Play mode when a 60Hz tick hasn't stepped
+      const isEco = ecoModeRef.current;
+      if (isEco) {
+        const minDrawIntervalMs = modeRef.current === 'TRAINING' ? 31 : 15;
+        if (
+          modeRef.current === 'VS_AI' &&
+          runningRef.current &&
+          !steppedInVs &&
+          currentTime - lastDrawTime < 22
+        ) {
+          rafId = requestAnimationFrame(renderFrame);
+          return;
+        }
+        if (
+          modeRef.current === 'TRAINING' &&
+          currentTime - lastDrawTime < minDrawIntervalMs
+        ) {
+          rafId = requestAnimationFrame(renderFrame);
+          return;
+        }
+      }
+      lastDrawTime = currentTime;
 
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d');
@@ -1159,8 +1317,8 @@ export function ArcadeCanvas({
           snap.birds.find((b) => b.isLeader) ??
           snap.birds.find((b) => b.isChampion);
 
-        // Smooth motion ribbon trail behind the active leader bird
-        if (leader && leader.alive) {
+        // Smooth motion ribbon trail behind the active leader bird (omitted in Eco mode on low-power phones)
+        if (leader && leader.alive && !isEco) {
           const trail = trailRef.current;
           const stepDx = snap.tickSpeed || 2.85;
           for (let t = 0; t < trail.length; t++) {
@@ -1209,6 +1367,15 @@ export function ArcadeCanvas({
           }
         }
 
+        if (snap.mode === 'VS_AI') {
+          drawArcadeOrbsAndPopups(
+            ctx,
+            snap.arcadeOrbs,
+            snap.scorePopups,
+            animOffsetRef.current
+          );
+        }
+
         for (let i = 0; i < snap.birds.length; i++) {
           const bird = snap.birds[i];
           if (bird !== leader && !bird.isPlayer) {
@@ -1253,11 +1420,14 @@ export function ArcadeCanvas({
         ctx.lineTo(CANVAS_WIDTH, PLAYABLE_HEIGHT);
         ctx.stroke();
 
-        // Non-overlapping two-row ground HUD bar (Row 1: Active Sensors / Retina, Row 2: Scenario & Physics)
+        // Non-overlapping ground HUD bar: crisp 1-row large readout on narrow phones (<500px), rich 2-row readout on wider screens
+        const canvasDisplayW = canvas.clientWidth || CANVAS_WIDTH;
+        const isSmallCanvas = canvasDisplayW < 500;
+
         ctx.save();
-        ctx.fillStyle = 'rgba(7, 12, 24, 0.78)';
+        ctx.fillStyle = 'rgba(7, 12, 24, 0.84)';
         ctx.fillRect(6, PLAYABLE_HEIGHT + 13, CANVAS_WIDTH - 12, GROUND_HEIGHT - 16);
-        ctx.strokeStyle = 'rgba(30, 41, 59, 0.75)';
+        ctx.strokeStyle = 'rgba(30, 41, 59, 0.8)';
         ctx.lineWidth = 1;
         ctx.strokeRect(6, PLAYABLE_HEIGHT + 13, CANVAS_WIDTH - 12, GROUND_HEIGHT - 16);
 
@@ -1265,74 +1435,109 @@ export function ArcadeCanvas({
         ctx.rect(10, PLAYABLE_HEIGHT + 14, CANVAS_WIDTH - 20, GROUND_HEIGHT - 18);
         ctx.clip();
 
-        ctx.font = '600 9.5px "JetBrains Mono", monospace';
-        ctx.textBaseline = 'middle';
-        const row1Y = PLAYABLE_HEIGHT + 24;
-        const row2Y = PLAYABLE_HEIGHT + 40;
-        const maxRowWidth = CANVAS_WIDTH - 28;
-
-        if (sensorsRef.current && snap.activeInputFeatures.length > 0) {
-          const isPixelEye = snap.perceptionMode === 'COMPOUND_EYE_PIXELS';
-          const prefixLabel = isPixelEye
-            ? `RETINA 16-RAY (${Math.round((snap.opticalNoiseLevel ?? 0) * 100)}% NOISE) → T4/T5 (${snap.activeInputFeatures.length}ch): `
-            : `SENSORS (${snap.activeInputFeatures.length}/12): `;
-          const sensorLabels = snap.activeInputFeatures.map((f) =>
-            isPixelEye
-              ? SENSOR_METADATA[f].opticalShortLabel
-              : SENSOR_METADATA[f].shortLabel
+        if (isSmallCanvas) {
+          ctx.font = '700 13.5px "JetBrains Mono", monospace';
+          ctx.textBaseline = 'middle';
+          const centerY = PLAYABLE_HEIGHT + 32;
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#94A3B8';
+          ctx.fillText(
+            `${(snap.tickSpeed || env.pipeSpeed).toFixed(2)} px/f`,
+            16,
+            centerY
           );
-          let sensorList = sensorLabels.join(' · ');
-          ctx.textAlign = 'left';
-          ctx.fillStyle = isPixelEye
-            ? 'rgba(110, 231, 183, 0.95)'
-            : 'rgba(148, 163, 184, 0.9)';
-          ctx.fillText(prefixLabel, 14, row1Y);
-          const prefixW = ctx.measureText(prefixLabel).width;
-          const availListW = Math.max(40, maxRowWidth - prefixW);
-          if (ctx.measureText(sensorList).width > availListW) {
-            let trimmed = sensorLabels.slice(0, sensorLabels.length);
-            while (
-              trimmed.length > 1 &&
-              ctx.measureText(`${trimmed.join(' · ')} · …`).width > availListW
-            ) {
-              trimmed.pop();
-            }
-            sensorList = `${trimmed.join(' · ')} · +${sensorLabels.length - trimmed.length}`;
+
+          ctx.textAlign = 'right';
+          ctx.fillStyle = snap.anomalyActive ? '#FCD34D' : '#E2E8F0';
+          const shortTags = [`${Math.round(env.gap)}px`];
+          if (env.movingPipes) shortTags.push(`±${Math.round(env.moveAmplitude)}px`);
+          if (env.speedVariability > 0) {
+            shortTags.push(`±${Math.round(env.speedVariability * 100)}%`);
           }
-          ctx.fillStyle = isPixelEye ? '#A7F3D0' : '#67E8F9';
-          ctx.fillText(sensorList, 14 + prefixW, row1Y);
+          const sensorSuffix =
+            sensorsRef.current && snap.activeInputFeatures.length > 0
+              ? ` · ${snap.activeInputFeatures.length}in`
+              : '';
+          ctx.fillText(
+            `${env.label.toUpperCase()} · ${shortTags.join(' · ')}${sensorSuffix}`,
+            CANVAS_WIDTH - 16,
+            centerY
+          );
         } else {
+          ctx.font = '600 9.5px "JetBrains Mono", monospace';
+          ctx.textBaseline = 'middle';
+          const row1Y = PLAYABLE_HEIGHT + 24;
+          const row2Y = PLAYABLE_HEIGHT + 40;
+          const maxRowWidth = CANVAS_WIDTH - 28;
+
+          if (sensorsRef.current && snap.activeInputFeatures.length > 0) {
+            const isPixelEye = snap.perceptionMode === 'COMPOUND_EYE_PIXELS';
+            const prefixLabel = isPixelEye
+              ? `RETINA 16-RAY (${Math.round((snap.opticalNoiseLevel ?? 0) * 100)}% NOISE) → T4/T5 (${snap.activeInputFeatures.length}ch): `
+              : `SENSORS (${snap.activeInputFeatures.length}/12): `;
+            const sensorLabels = snap.activeInputFeatures.map((f) =>
+              isPixelEye
+                ? SENSOR_METADATA[f].opticalShortLabel
+                : SENSOR_METADATA[f].shortLabel
+            );
+            let sensorList = sensorLabels.join(' · ');
+            ctx.textAlign = 'left';
+            ctx.fillStyle = isPixelEye
+              ? 'rgba(110, 231, 183, 0.95)'
+              : 'rgba(148, 163, 184, 0.9)';
+            ctx.fillText(prefixLabel, 14, row1Y);
+            const prefixW = ctx.measureText(prefixLabel).width;
+            const availListW = Math.max(40, maxRowWidth - prefixW);
+            if (ctx.measureText(sensorList).width > availListW) {
+              const trimmed = sensorLabels.slice(0, sensorLabels.length);
+              while (
+                trimmed.length > 1 &&
+                ctx.measureText(`${trimmed.join(' · ')} · …`).width > availListW
+              ) {
+                trimmed.pop();
+              }
+              sensorList = `${trimmed.join(' · ')} · +${sensorLabels.length - trimmed.length}`;
+            }
+            ctx.fillStyle = isPixelEye ? '#A7F3D0' : '#67E8F9';
+            ctx.fillText(sensorList, 14 + prefixW, row1Y);
+          } else {
+            ctx.textAlign = 'left';
+            if (modeRef.current === 'VS_AI' && playSubModeRef.current === 'SOLO') {
+              ctx.fillStyle = 'rgba(252, 211, 77, 0.88)';
+              ctx.fillText('SOLO ARCADE · TAP OR SPACE TO FLAP', 14, row1Y);
+            } else {
+              ctx.fillStyle = 'rgba(148, 163, 184, 0.75)';
+              ctx.fillText('SENSORS OVERLAY: HIDDEN', 14, row1Y);
+            }
+          }
+
+          const hazardTags: string[] = [`Gap ${Math.round(env.gap)}px`];
+          if (env.gapVariance > 0) hazardTags.push(`±${Math.round(env.gapVariance)}px`);
+          if (env.movingPipes) hazardTags.push(`Mov ±${Math.round(env.moveAmplitude)}px`);
+          if (env.speedVariability > 0) {
+            hazardTags.push(`Gust ±${Math.round(env.speedVariability * 100)}%`);
+          }
+          if (snap.anomalyActive && snap.anomalyGravityMult !== undefined) {
+            hazardTags.push(`ANOMALY ${(env.gravityScale * snap.anomalyGravityMult).toFixed(2)}g`);
+          } else if (env.gravityScale !== 1) {
+            hazardTags.push(`Grav ${env.gravityScale.toFixed(2)}g`);
+          }
+
+          const leftSpeedText = `SPEED ${(snap.tickSpeed || env.pipeSpeed).toFixed(2)} px/f`;
           ctx.textAlign = 'left';
-          ctx.fillStyle = 'rgba(148, 163, 184, 0.75)';
-          ctx.fillText('SENSORS OVERLAY: HIDDEN', 14, row1Y);
-        }
+          ctx.fillStyle = 'rgba(148, 163, 184, 0.85)';
+          ctx.fillText(leftSpeedText, 14, row2Y);
 
-        const hazardTags: string[] = [`Gap ${Math.round(env.gap)}px`];
-        if (env.gapVariance > 0) hazardTags.push(`±${Math.round(env.gapVariance)}px`);
-        if (env.movingPipes) hazardTags.push(`Mov ±${Math.round(env.moveAmplitude)}px`);
-        if (env.speedVariability > 0) {
-          hazardTags.push(`Gust ±${Math.round(env.speedVariability * 100)}%`);
+          ctx.textAlign = 'right';
+          ctx.fillStyle = snap.anomalyActive
+            ? '#FCD34D'
+            : 'rgba(226, 232, 240, 0.9)';
+          ctx.fillText(
+            `${env.label.toUpperCase()} · ${hazardTags.join(' · ')}`,
+            CANVAS_WIDTH - 14,
+            row2Y
+          );
         }
-        if (snap.anomalyActive && snap.anomalyGravityMult !== undefined) {
-          hazardTags.push(`ANOMALY ${(env.gravityScale * snap.anomalyGravityMult).toFixed(2)}g`);
-        } else if (env.gravityScale !== 1) {
-          hazardTags.push(`Grav ${env.gravityScale.toFixed(2)}g`);
-        }
-
-        const leftSpeedText = `SPEED ${(snap.tickSpeed || env.pipeSpeed).toFixed(2)} px/f`;
-        ctx.textAlign = 'left';
-        ctx.fillStyle = 'rgba(148, 163, 184, 0.85)';
-        ctx.fillText(leftSpeedText, 14, row2Y);
-
-        ctx.textAlign = 'right';
-        ctx.fillStyle = snap.anomalyActive
-          ? '#FCD34D'
-          : 'rgba(226, 232, 240, 0.9)';
-        ctx.fillText(
-          `${env.label.toUpperCase()} · ${hazardTags.join(' · ')}`,
-          CANVAS_WIDTH - 14,
-          row2Y
-        );
         ctx.restore();
       }
 
@@ -1345,23 +1550,51 @@ export function ArcadeCanvas({
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-[#091326] shadow-lg">
-      <canvas
-        ref={canvasRef}
-        width={CANVAS_WIDTH}
-        height={CANVAS_HEIGHT}
-        onClick={() => {
-          if (mode === 'VS_AI') {
+      {/* Small-screen dedicated Generation & Live Telemetry header (keeps sky clear & crisp font) */}
+      {mode === 'TRAINING' && trainingHud && (
+        <div className="flex sm:hidden flex-wrap items-center justify-between gap-2 border-b border-slate-800/90 bg-[#0B1120] px-3 py-2 font-mono text-[11px] tabular-nums">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="rounded bg-cyan-500/20 border border-cyan-500/35 px-1.5 py-0.5 font-bold text-cyan-300">
+              {bi('Pok', 'Gen')} {trainingHud.generation}
+            </span>
+            <span className="text-slate-300">
+              <strong className="text-emerald-300">{trainingHud.aliveCount}</strong>/{trainingHud.totalPopulation}
+            </span>
+            <span className="text-slate-400 truncate">
+              {trainingHud.algorithmLabel} · {trainingHud.topologyLabel}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-slate-300">
+              {bi('Lot', 'Now')} <strong className="text-white">{trainingHud.currentBestScore}</strong>
+            </span>
+            <span className="text-amber-300 font-bold">
+              {bi('Rek', 'Best')} {trainingHud.allTimeBestScore}
+            </span>
+          </div>
+        </div>
+      )}
+
+      <div className="relative">
+        <canvas
+          ref={canvasRef}
+          width={CANVAS_WIDTH}
+          height={CANVAS_HEIGHT}
+          onPointerDown={(e) => {
+            if (mode !== 'VS_AI') return;
+            if (e.pointerType === 'mouse' && e.button !== 0) return;
+            e.preventDefault();
             onPlayerFlap();
-          }
-        }}
-        className={`block w-full aspect-[4/3] select-none ${
-          mode === 'VS_AI' ? 'cursor-pointer' : ''
-        }`}
-      />
+          }}
+          className={`block w-full aspect-[4/3] select-none ${
+            mode === 'VS_AI' ? 'cursor-pointer touch-none' : ''
+          }`}
+        />
 
       {mode === 'TRAINING' && trainingHud && (
-        <div className="pointer-events-none absolute inset-x-0 top-2.5 flex justify-start px-2.5 sm:px-3">
-          <div className="inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-0.5 rounded-lg border border-slate-700/70 bg-[#0B1120]/82 px-2.5 py-1 font-mono text-[10px] sm:text-[11px] tabular-nums text-slate-300 backdrop-blur-sm">
+        <div className="pointer-events-none hidden sm:flex absolute inset-x-0 top-2 justify-start px-3">
+          <div className="inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-0.5 rounded-lg border border-slate-700/70 bg-[#0B1120]/82 px-2.5 py-1 font-mono text-[11px] tabular-nums text-slate-300 backdrop-blur-sm">
             <span className="font-semibold text-white whitespace-nowrap shrink-0">
               {trainingHud.algorithmLabel}
             </span>
@@ -1398,101 +1631,339 @@ export function ArcadeCanvas({
       )}
 
       {mode === 'VS_AI' && (
-        <div className="pointer-events-none absolute inset-x-0 top-3 flex items-center justify-between px-4">
-          <div className="rounded-lg border border-slate-700/70 bg-[#0B1120]/85 px-3 py-1.5 backdrop-blur-sm">
-            <span className="text-xs font-medium text-amber-300">
-              {bi('TY', 'YOU')}
-            </span>
-            <span className="ml-2 font-mono text-base font-semibold tabular-nums text-white">
-              {playerScore}
-            </span>
-          </div>
+        <div className="pointer-events-none absolute inset-x-0 top-2.5 sm:top-3 flex items-start justify-between px-2.5 sm:px-4">
+          {/* Left HUD: Points + PB in Solo, or Player Points/Pipes in Duel */}
+          {isSoloPlay ? (
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="rounded-lg border border-amber-500/40 bg-[#0B1120]/85 px-2.5 py-1 backdrop-blur-sm">
+                <span className="font-mono text-[10px] uppercase tracking-wide text-amber-300">
+                  PKT
+                </span>
+                <span className="ml-1.5 font-mono text-sm font-bold tabular-nums text-white">
+                  {playerPoints.toLocaleString()}
+                </span>
+                {playerCombo > 1 && (
+                  <span className="ml-1.5 font-mono text-[10px] font-bold text-emerald-300">
+                    ×{playerCombo}
+                  </span>
+                )}
+              </div>
+              <div className="hidden sm:block rounded-lg border border-slate-700/70 bg-[#0B1120]/82 px-2.5 py-1 backdrop-blur-sm">
+                <span className="font-mono text-[10px] uppercase tracking-wide text-slate-400">
+                  {bi('Rekord', 'Best')}
+                </span>
+                <span className="ml-1.5 font-mono text-sm font-bold tabular-nums text-amber-300">
+                  {Math.max(personalBest, playerScore)}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-slate-700/70 bg-[#0B1120]/85 px-2.5 sm:px-3 py-1 sm:py-1.5 backdrop-blur-sm">
+              <span className="text-[11px] sm:text-xs font-medium text-amber-300">
+                {bi('TY', 'YOU')}
+              </span>
+              <span className="ml-1.5 font-mono text-sm sm:text-base font-bold tabular-nums text-white">
+                {playerScore}
+              </span>
+              <span className="ml-2 font-mono text-[11px] font-semibold tabular-nums text-emerald-300">
+                {playerPoints.toLocaleString()}p
+              </span>
+              {playerCombo > 1 && (
+                <span className="ml-1 font-mono text-[10px] font-bold text-amber-300">
+                  ×{playerCombo}
+                </span>
+              )}
+            </div>
+          )}
 
-          <div className="rounded-lg border border-slate-700/70 bg-[#0B1120]/85 px-3 py-1.5 backdrop-blur-sm">
-            <span className="text-xs font-medium text-cyan-300">
-              {playerAlive
-                ? bi('DUCH AI', 'AI GHOST')
-                : bi('MISTRZ AI', 'AI CHAMPION')}
-            </span>
-            <span className="ml-2 font-mono text-base font-semibold tabular-nums text-white">
-              {aiOpponentScore}
-            </span>
+          {/* Center Score Display during active Solo flight */}
+          {isSoloPlay && vsAiPhase === 'PLAYING' && (
+            <div className="font-display text-3xl sm:text-5xl font-black tabular-nums text-white drop-shadow-[0_3px_10px_rgba(0,0,0,0.85)]">
+              {playerScore}
+            </div>
+          )}
+
+          {/* Right HUD: AI Ghost score (Duel) + Pause button during active flight */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {!isSoloPlay && (
+              <div className="rounded-lg border border-slate-700/70 bg-[#0B1120]/85 px-2.5 sm:px-3 py-1 sm:py-1.5 backdrop-blur-sm">
+                <span className="text-[11px] sm:text-xs font-medium text-cyan-300">
+                  {playerAlive
+                    ? bi('DUCH AI', 'AI GHOST')
+                    : bi('MISTRZ AI', 'AI ACE')}
+                </span>
+                <span className="ml-2 font-mono text-sm sm:text-base font-bold tabular-nums text-white">
+                  {aiOpponentScore}
+                </span>
+              </div>
+            )}
+
+            {vsAiPhase === 'PLAYING' && onTogglePause && (
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTogglePause();
+                }}
+                aria-label={running ? bi('Pauza', 'Pause') : bi('Wznów', 'Resume')}
+                title={running ? bi('Pauza (P)', 'Pause (P)') : bi('Wznów (P)', 'Resume (P)')}
+                className="pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700/80 bg-[#0B1120]/85 text-slate-200 backdrop-blur-sm cursor-pointer transition-colors hover:border-amber-400/60 hover:text-amber-300"
+              >
+                {running ? (
+                  <Pause className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Play className="h-4 w-4" aria-hidden="true" />
+                )}
+              </button>
+            )}
           </div>
         </div>
       )}
 
       {mode === 'VS_AI' && vsAiPhase === 'READY' && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="rounded-xl border border-slate-700/80 bg-[#0B1120]/90 px-6 py-4 text-center backdrop-blur-sm">
-            <p className="font-display text-lg font-semibold text-white">
-              {bi('Naciśnij Spację lub Kliknij, aby Lecieć', 'Press Space or Click to Fly')}
+        <div className="pointer-events-none absolute inset-x-0 bottom-12 sm:bottom-16 flex justify-center px-3">
+          <div className="rounded-xl border border-slate-700/85 bg-[#0B1120]/90 px-5 py-3 sm:px-7 sm:py-4 text-center backdrop-blur-sm shadow-xl">
+            <p className="font-display text-base sm:text-lg font-bold text-white">
+              {bi('Dotknij lub naciśnij Spację, aby lecieć', 'Tap or Press Space to Fly')}
             </p>
-            <p className="mt-1 text-xs text-slate-300">
-              {bi(
-                'Ty lecisz złotym ptakiem · AI leci jako półprzezroczysty duch w tych samych warunkach',
-                'You fly Amber · AI flies as a translucent Cyan ghost while you stay alive'
-              )}
+            <p className="mt-1 text-xs sm:text-sm text-slate-300">
+              {isSoloPlay
+                ? bi(
+                    'Tryb Solo Arcade · pobij swój rekord na tym torze',
+                    'Solo Arcade · beat your personal best on this track'
+                  )
+                : bi(
+                    'Ty lecisz złotym ptakiem · AI leci obok jako cyjanowy duch',
+                    'You fly Amber · AI flies alongside as a translucent Cyan ghost'
+                  )}
             </p>
+          </div>
+        </div>
+      )}
+
+      {isPlayPaused && (
+        <div
+          onPointerDown={(e) => e.stopPropagation()}
+          className="absolute inset-0 flex items-center justify-center bg-[#0B1120]/70 backdrop-blur-[2px] p-4"
+        >
+          <div className="w-full max-w-[290px] rounded-xl border border-slate-700 bg-[#111827] p-5 text-center shadow-xl">
+            <h3 className="font-display text-xl font-bold text-white">
+              {bi('Pauza', 'Paused')}
+            </h3>
+            <p className="mt-1 font-mono text-xs sm:text-sm tabular-nums text-slate-400">
+              {bi('Aktualny wynik:', 'Current score:')}{' '}
+              <strong className="text-amber-300">{playerScore}</strong>
+            </p>
+            <div className="mt-4 flex items-center justify-center gap-2.5">
+              <button
+                type="button"
+                onClick={onTogglePause}
+                className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-amber-400"
+              >
+                <Play className="h-4 w-4" aria-hidden="true" />
+                {bi('Wznów', 'Resume')}
+              </button>
+              <button
+                type="button"
+                onClick={onRematch}
+                className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 whitespace-nowrap cursor-pointer transition-colors hover:bg-slate-700"
+              >
+                <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                {bi('Od nowa', 'Restart')}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {mode === 'VS_AI' &&
+        !isSoloPlay &&
         vsAiPhase === 'PLAYING' &&
         !playerAlive &&
         aiOpponentAlive && (
-          <div className="absolute inset-x-0 bottom-16 flex justify-center px-4">
-            <div className="flex items-center gap-4 rounded-xl border border-slate-700/80 bg-[#0B1120]/90 px-4 py-2.5 backdrop-blur-sm">
+          <div
+            onPointerDown={(e) => e.stopPropagation()}
+            className="absolute inset-x-0 bottom-12 sm:bottom-16 flex justify-center px-3"
+          >
+            <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 rounded-xl border border-slate-700/80 bg-[#0B1120]/92 px-3.5 py-2 backdrop-blur-sm">
               <span className="font-mono text-xs tabular-nums text-slate-200">
                 {bi(
-                  `Twój wynik: ${playerScore} · AI nadal leci (${aiOpponentScore})`,
-                  `Crashed at ${playerScore} · AI still flying (${aiOpponentScore})`
+                  `Twój wynik: ${playerScore} · AI leci (${aiOpponentScore})`,
+                  `Score: ${playerScore} · AI flying (${aiOpponentScore})`
                 )}
               </span>
-              <button
-                type="button"
-                onClick={onFinishEarly}
-                className="rounded-md bg-amber-500 px-3 py-1 text-xs font-semibold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-amber-400"
-              >
-                {bi('Pokaż wynik', 'Skip to Results')}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={onRematch}
+                  className="min-h-[36px] rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-amber-400"
+                >
+                  {bi('Nowy Lot', 'Retry')}
+                </button>
+                <button
+                  type="button"
+                  onClick={onFinishEarly}
+                  className="min-h-[36px] rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 whitespace-nowrap cursor-pointer transition-colors hover:bg-slate-700"
+                >
+                  {bi('Wynik', 'Finish')}
+                </button>
+              </div>
             </div>
           </div>
         )}
 
       {mode === 'VS_AI' && vsAiPhase === 'GAME_OVER' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#0B1120]/70 backdrop-blur-[2px]">
-          <div className="w-full max-w-xs rounded-xl border border-slate-700 bg-[#111827] p-6 text-center shadow-xl">
-            <h3 className="font-display text-xl font-bold text-white">
-              {vsAiWinner === 'PLAYER'
-                ? bi('Pokonałeś Mistrza AI!', 'You Beat the AI')
-                : vsAiWinner === 'AI'
-                  ? bi('Mistrz AI Wygrywa', 'AI Champion Wins')
-                  : bi('Remis!', 'Draw Match')}
-            </h3>
-            <p className="mt-2 font-mono text-sm tabular-nums text-slate-300">
-              {bi('Ty', 'You')} {playerScore} — {aiOpponentScore} AI
-            </p>
+        <div
+          onPointerDown={(e) => e.stopPropagation()}
+          className="absolute inset-0 flex items-center justify-center bg-[#0B1120]/76 backdrop-blur-[2px] p-2.5 sm:p-3 overflow-y-auto"
+        >
+          <div className="w-full max-w-[360px] rounded-xl border border-slate-700 bg-[#111827] p-4 sm:p-5 text-center shadow-2xl">
+            {lastRunWasNewRecord && playerScore > 0 && (
+              <div className="mb-1.5 inline-flex items-center gap-1 rounded-full border border-amber-400/50 bg-amber-500/15 px-3 py-0.5 font-mono text-[11px] font-bold text-amber-300">
+                <Award className="h-3.5 w-3.5" aria-hidden="true" />
+                {bi('NOWY REKORD!', 'NEW PERSONAL BEST!')}
+              </div>
+            )}
 
-            <div className="mt-5 flex items-center justify-center gap-3">
+            <h3 className="font-display text-lg sm:text-xl font-bold text-white">
+              {isSoloPlay
+                ? bi('Koniec Lotu', 'Flight Complete')
+                : vsAiWinner === 'PLAYER'
+                  ? bi('Pokonałeś Mistrza AI!', 'You Beat the AI!')
+                  : vsAiWinner === 'AI'
+                    ? bi('Mistrz AI Wygrywa', 'AI Champion Wins')
+                    : bi('Remis!', 'Draw Match')}
+            </h3>
+
+            <div className="mt-2.5 grid grid-cols-3 gap-2 rounded-lg border border-slate-800 bg-[#0B1120] p-2.5 font-mono tabular-nums">
+              <div>
+                <div className="text-[10px] uppercase text-slate-400">
+                  {bi('Punkty', 'Points')}
+                </div>
+                <div className="text-lg sm:text-xl font-bold text-emerald-300">
+                  {playerPoints.toLocaleString()}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase text-slate-400">
+                  {bi('Rury', 'Pipes')}
+                </div>
+                <div className="text-lg sm:text-xl font-bold text-white">
+                  {playerScore}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase text-slate-400">
+                  {isSoloPlay ? bi('Rekord', 'Best') : 'AI'}
+                </div>
+                <div className="text-lg sm:text-xl font-bold text-amber-300">
+                  {isSoloPlay
+                    ? Math.max(personalBest, playerScore)
+                    : aiOpponentScore}
+                </div>
+              </div>
+            </div>
+
+            {(playerOrbsCollected > 0 || playerMaxCombo > 1 || bestPoints > 0) && (
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2 font-mono text-[10.5px] text-slate-400">
+                <span className="inline-flex items-center gap-1 text-amber-300">
+                  <Sparkles className="h-3 w-3" aria-hidden="true" />
+                  {bi('Orby:', 'Orbs:')} {playerOrbsCollected}
+                </span>
+                <span aria-hidden="true">·</span>
+                <span className="text-cyan-300">
+                  Max Combo: ×{Math.max(1, playerMaxCombo)}
+                </span>
+                {bestPoints > 0 && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span>
+                      PB {Math.max(bestPoints, playerPoints).toLocaleString()}p
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
+
+            {runMedal.id !== 'NONE' && (
+              <div
+                className={`mt-2 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-0.5 font-mono text-[11px] font-semibold ${runMedal.badgeBg}`}
+              >
+                <Award className="h-3.5 w-3.5" aria-hidden="true" />
+                {bi(runMedal.labelPl, runMedal.labelEn)}
+              </div>
+            )}
+
+            {/* Quick Save Nick to Leaderboard */}
+            {onSaveRunWithNick && (playerPoints >= 4 || playerScore > 0) && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  onSaveRunWithNick(nickDraft);
+                  setSavedNotice(true);
+                }}
+                className="mt-3 flex items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] p-1.5"
+              >
+                <input
+                  type="text"
+                  maxLength={22}
+                  value={nickDraft}
+                  onChange={(e) => {
+                    setNickDraft(e.target.value);
+                    setSavedNotice(false);
+                  }}
+                  placeholder={bi('Wpisz swój nick do tabeli...', 'Your name on leaderboard...')}
+                  aria-label={bi('Twój nick w tabeli wyników', 'Your leaderboard nickname')}
+                  className="min-w-0 flex-1 bg-transparent px-2 py-1 text-xs font-medium text-white placeholder:text-slate-500 focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  className={`inline-flex min-h-[32px] items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                    savedNotice
+                      ? 'bg-emerald-500 text-slate-950'
+                      : 'bg-cyan-500/20 text-cyan-200 border border-cyan-500/40 hover:bg-cyan-500/30'
+                  }`}
+                >
+                  {savedNotice ? (
+                    <>
+                      <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                      {bi('Zapisano', 'Saved')}
+                    </>
+                  ) : (
+                    <>
+                      <UserCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                      {bi('Zapisz', 'Save')}
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+
+            <div className="mt-3 flex items-center justify-center gap-2">
               <button
                 type="button"
                 onClick={onRematch}
-                className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-semibold text-slate-950 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-amber-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
+                className="inline-flex min-h-[42px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-amber-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
               >
+                <RotateCcw className="h-4 w-4" aria-hidden="true" />
                 {bi('Zagraj Ponownie', 'Play Again')}
               </button>
               <button
                 type="button"
                 onClick={onBackToLab}
-                className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-medium text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-sm font-medium text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-slate-700"
               >
-                {bi('Wróć do Treningu', 'Back to Lab')}
+                {bi('Trening', 'Lab')}
               </button>
             </div>
+            <p className="mt-2 font-mono text-[10.5px] text-slate-400">
+              {bi('Spacja / Dotknij ekranu aby powtórzyć', 'Press Space or tap to retry')}
+            </p>
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

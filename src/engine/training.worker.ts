@@ -12,6 +12,7 @@ export type WorkerInboundMessage =
   | { type: 'SET_RUNNING'; running: boolean }
   | { type: 'SET_SPEED'; speed: SpeedSetting }
   | { type: 'SET_VISIBILITY'; hidden: boolean }
+  | { type: 'SET_MOBILE_ECO'; enabled: boolean }
   | { type: 'STEP_ONCE' }
   | { type: 'UPDATE_CONFIG'; config: EvolutionConfig }
   | { type: 'RESET' }
@@ -43,6 +44,7 @@ let sim: FlappySimulation | null = null;
 let running = true;
 let speed: SpeedSetting = 1;
 let tabHidden = false;
+let mobileEco = false;
 let timerId: ReturnType<typeof setTimeout> | null = null;
 
 let pendingScored = false;
@@ -88,8 +90,8 @@ function tickLoop(): void {
   const loopStart = performance.now();
 
   if (sim && running) {
-    const targetSteps = speed === 'MAX' ? 8000 : speed;
-    const budgetMs = tabHidden ? 48 : 13.5;
+    const targetSteps = speed === 'MAX' ? (mobileEco ? 2400 : 8000) : speed;
+    const budgetMs = tabHidden ? 48 : mobileEco ? 7.5 : 13.5;
 
     let stepsDone = 0;
     for (let s = 0; s < targetSteps; s++) {
@@ -135,8 +137,8 @@ function tickLoop(): void {
 
   const workMs = performance.now() - loopStart;
   if (running) {
-    const targetInterval = tabHidden ? 45 : 16;
-    const delay = Math.max(1, targetInterval - workMs);
+    const targetInterval = tabHidden ? 45 : mobileEco ? 28 : 16;
+    const delay = Math.max(mobileEco ? 6 : 1, targetInterval - workMs);
     timerId = setTimeout(tickLoop, delay);
   }
 }
@@ -194,6 +196,10 @@ workerScope.onmessage = (ev: MessageEvent<WorkerInboundMessage>) => {
       if (!tabHidden && running) {
         emitFullFrame();
       }
+      break;
+    }
+    case 'SET_MOBILE_ECO': {
+      mobileEco = Boolean(msg.enabled);
       break;
     }
     case 'STEP_ONCE': {

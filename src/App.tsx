@@ -1,9 +1,12 @@
 import {
   BookmarkPlus,
+  Brain,
   Eye,
   EyeOff,
+  Leaf,
   Pause,
   Play,
+  RotateCcw,
   SkipForward,
   Swords,
   Volume2,
@@ -11,13 +14,14 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { ArcadeCanvas } from './components/ArcadeCanvas';
+import { ArenaLeaderboardPanel } from './components/ArenaLeaderboardPanel';
 import { BrainManagerModal } from './components/BrainManagerModal';
 import { EvolutionControls } from './components/EvolutionControls';
 import { FitnessChart } from './components/FitnessChart';
 import { HowItWorksModal } from './components/HowItWorksModal';
 import { InfoTooltip } from './components/InfoTooltip';
 import { NeuralNetworkViz } from './components/NeuralNetworkViz';
-import { ArenaLeaderboardPanel } from './components/ArenaLeaderboardPanel';
+import { PlayArcadePanel } from './components/PlayArcadePanel';
 import { ProjectDocumentationView } from './components/ProjectDocumentationView';
 import { ResearchLabView } from './components/ResearchLabView';
 import { TopBar } from './components/TopBar';
@@ -28,6 +32,7 @@ import {
   OPTIMIZER_ROLE_BADGES,
 } from './engine/optimizers';
 import { PRETRAINED_ACE_BRAIN } from './engine/pretrainedBrain';
+import { CORE_DIFFICULTIES, DIFFICULTY_META } from './engine/physics';
 import { ALGORITHM_SHORT_LABELS } from './engine/researchReport';
 import {
   ALL_SENSOR_FEATURES,
@@ -36,8 +41,6 @@ import {
   SENSOR_METADATA,
 } from './engine/sensors';
 import {
-  DIFFICULTY_META,
-  DIFFICULTY_ORDER,
   FlappySimulation,
   resolveEnvironment,
 } from './engine/simulation';
@@ -86,7 +89,7 @@ export default function App() {
 
 function AppContent() {
   const { bi } = useLanguage();
-  const [mode, setMode] = useState<GameMode>('TRAINING');
+  const [mode, setMode] = useState<GameMode>('VS_AI');
   const [deckTab, setDeckTab] = useState<'history' | 'params'>('history');
   const [brainsModalOpen, setBrainsModalOpen] = useState(false);
   const [howModalOpen, setHowModalOpen] = useState(false);
@@ -120,16 +123,6 @@ function AppContent() {
     showNotice,
   });
 
-  const handlePrimaryAction = useCallback(() => {
-    if (mode === 'VS_AI') {
-      sandbox.handleRematchVsAi();
-    } else if (mode === 'RESEARCH') {
-      research.handleResetActiveResearch();
-    } else {
-      sandbox.handleResetTraining();
-    }
-  }, [mode, research, sandbox]);
-
   const activeTelemetry =
     mode === 'VS_AI' ? sandbox.vsAiTelemetry : sandbox.trainingTelemetry;
 
@@ -138,9 +131,7 @@ function AppContent() {
       <TopBar
         mode={mode}
         onSelectMode={sandbox.handleSelectMode}
-        onOpenBrains={() => setBrainsModalOpen(true)}
         onOpenHowItWorks={() => setHowModalOpen(true)}
-        onPrimaryAction={handlePrimaryAction}
       />
 
       <main className="mx-auto w-full max-w-[1440px] flex-1 px-3 py-4 sm:px-6 sm:py-6">
@@ -186,28 +177,25 @@ function AppContent() {
             onSaveSessionNow={research.handleSaveSessionNow}
             onClearSavedSession={research.handleClearSavedSession}
             onImportJsonDataset={research.handleImportJsonDataset}
+            onLoadGithubLake={research.handleLoadGithubLake}
+            githubLakeMeta={research.githubLakeMeta}
             onLoadTrialIntoLab={sandbox.handleLoadIntoTraining}
             onRaceTrial={sandbox.handleRaceAgainstBrain}
             onGetPerfReport={research.getPerfReport}
           />
         ) : (
           <>
-            {/* Clean unboxed workspace header & inline metadata */}
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-white">
-                  {mode === 'TRAINING'
-                    ? bi('Laboratorium Treningu Neuroewolucji', 'Neuroevolution Training Stage')
-                    : bi('Pojedynek: Człowiek vs Mistrz AI', 'Human vs. AI Champion')}
-                </h1>
-                <p className="mt-1 font-mono text-xs tabular-nums text-slate-400">
-                  {mode === 'TRAINING' ? (
-                    <>
-                      {sandbox.config.evolutionTopologyMode === 'ISLAND_SPECIATION'
-                        ? bi('Arena Na Żywo (Wspólny tor)', 'Live Multi-Arch Arena')
-                        : bi('Pojedyncza Sieć', 'Single Network')}
-                      <span className="mx-2 text-slate-600">·</span>
-                      {bi('Scenariusz:', 'Scenario:')}{' '}
+            {/* Compact Play Header or Training Notice Strip */}
+            {(mode === 'VS_AI' || notice) && (
+              <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                {mode === 'VS_AI' ? (
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 min-w-0">
+                    <h1 className="font-display text-lg sm:text-xl font-bold tracking-tight text-white">
+                      {sandbox.playSubMode === 'SOLO'
+                        ? bi('Flappy Arcade · Solo', 'Flappy Arcade · Solo')
+                        : bi('Pojedynek: Ty vs AI', 'Duel: Human vs. AI')}
+                    </h1>
+                    <p className="font-mono text-[11px] sm:text-xs tabular-nums text-slate-400">
                       <span className="text-slate-200">
                         {
                           resolveEnvironment(
@@ -217,34 +205,20 @@ function AppContent() {
                           ).label
                         }
                       </span>
-                      <span className="mx-2 text-slate-600">·</span>
-                      {sandbox.config.perceptionMode === 'COMPOUND_EYE_PIXELS'
-                        ? bi('Oko Złożone 16-Ray', '16-Ray Compound Eye')
-                        : bi('Sensory Geometryczne', 'Geometric Sensors')}
-                    </>
-                  ) : (
-                    <>
-                      {bi('Przeciwnik:', 'Opponent:')}{' '}
-                      <span className="text-cyan-300">
-                        {sandbox.activeOpponentName}
-                      </span>
-                      <span className="mx-2 text-slate-600">·</span>
-                      {bi('Sterowanie: Spacja, Strzałka w górę lub kliknięcie', 'Controls: Space, Arrow Up, or Click Canvas')}
-                      <span className="mx-2 text-slate-600">·</span>
-                      {bi('Scenariusz:', 'Scenario:')}{' '}
-                      {
-                        resolveEnvironment(
-                          sandbox.config.difficulty,
-                          sandbox.config.customEnvironment,
-                          sandbox.config.overdrivePct
-                        ).label
-                      }
-                    </>
-                  )}
-                </p>
-              </div>
+                      {sandbox.playSubMode === 'VS_AI' && (
+                        <>
+                          <span className="mx-1.5 text-slate-600">·</span>
+                          <span className="text-cyan-300">
+                            {sandbox.activeOpponentName}
+                          </span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                ) : (
+                  <div />
+                )}
 
-              <div className="flex flex-wrap items-center gap-3">
                 {notice && (
                   <p
                     role="status"
@@ -254,7 +228,7 @@ function AppContent() {
                   </p>
                 )}
               </div>
-            </div>
+            )}
 
             {mode === 'TRAINING' && (
               <div className="mb-5">
@@ -271,18 +245,97 @@ function AppContent() {
               </div>
             )}
 
+            {mode === 'VS_AI' && (
+              <div className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-slate-800 bg-[#111827] px-2.5 py-2 lg:hidden">
+                <div className="inline-flex rounded-lg border border-slate-800 bg-[#0B1120] p-0.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => sandbox.handleChangePlaySubMode('SOLO')}
+                    className={`min-h-[36px] rounded-md px-3 py-1 text-xs font-bold whitespace-nowrap cursor-pointer transition-colors ${
+                      sandbox.playSubMode === 'SOLO'
+                        ? 'bg-amber-500 text-slate-950'
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    {bi('Solo', 'Solo')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => sandbox.handleChangePlaySubMode('VS_AI')}
+                    className={`min-h-[36px] rounded-md px-3 py-1 text-xs font-bold whitespace-nowrap cursor-pointer transition-colors ${
+                      sandbox.playSubMode === 'VS_AI'
+                        ? 'bg-cyan-500 text-slate-950'
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    {bi('VS AI', 'VS AI')}
+                  </button>
+                </div>
+
+                <label className="flex min-w-0 flex-1 items-center justify-end gap-2">
+                  <span className="font-mono text-[11px] text-slate-400 shrink-0">
+                    {bi('Tor:', 'Track:')}
+                  </span>
+                  <select
+                    aria-label={bi('Wybierz tor', 'Select track')}
+                    value={sandbox.config.difficulty}
+                    onChange={(e) =>
+                      sandbox.handleSelectPlayDifficulty(
+                        e.target.value as typeof sandbox.config.difficulty
+                      )
+                    }
+                    className="min-h-[36px] max-w-[170px] flex-1 rounded-lg border border-slate-700 bg-[#0B1120] px-2.5 py-1 text-xs font-semibold text-amber-200 focus-visible:outline-2 focus-visible:outline-amber-400"
+                  >
+                    {CORE_DIFFICULTIES.map((diff) => {
+                      const pb = sandbox.humanBestByDifficulty[diff] ?? 0;
+                      const label =
+                        diff === 'EXTRA_INSANE'
+                          ? 'Extra Insane'
+                          : DIFFICULTY_META[diff].shortLabel;
+                      return (
+                        <option key={diff} value={diff}>
+                          {label} (PB {pb})
+                        </option>
+                      );
+                    })}
+                  </select>
+                </label>
+              </div>
+            )}
+
             {/* Two-Zone Sandbox Split */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
               {/* Left / Primary Stage */}
-              <section className="lg:col-span-7 space-y-4">
+              <section
+                className={`space-y-4 ${
+                  mode === 'VS_AI'
+                    ? 'lg:col-span-7 xl:col-span-8'
+                    : 'lg:col-span-7'
+                }`}
+              >
                 <ArcadeCanvas
                   trainingSnapshotRef={sandbox.trainingSnapshotRef}
                   vsAiSimRef={
                     sandbox.vsAiSimRef as React.MutableRefObject<FlappySimulation>
                   }
                   running={sandbox.running}
-                  showSensors={sandbox.showSensors}
+                  showSensors={
+                    mode === 'VS_AI' && sandbox.playSubMode === 'SOLO'
+                      ? false
+                      : sandbox.showSensors
+                  }
+                  ecoMode={mode === 'TRAINING' ? sandbox.ecoActive : false}
                   mode={mode}
+                  playSubMode={sandbox.playSubMode}
+                  personalBest={
+                    sandbox.humanBestByDifficulty[sandbox.config.difficulty] ?? 0
+                  }
+                  bestPoints={
+                    sandbox.bestPointsByDifficulty[sandbox.config.difficulty] ?? 0
+                  }
+                  lastRunWasNewRecord={
+                    sandbox.playSessionStats.lastRunWasNewRecord
+                  }
                   trainingHud={{
                     algorithmLabel: ALGORITHM_SHORT_LABELS[sandbox.config.algorithm],
                     topologyLabel: formatTopologyLabel(
@@ -302,25 +355,34 @@ function AppContent() {
                   }}
                   vsAiPhase={sandbox.vsAiTelemetry.vsAiPhase}
                   playerScore={sandbox.vsAiTelemetry.playerScore}
+                  playerPoints={sandbox.vsAiTelemetry.playerPoints ?? 0}
+                  playerCombo={sandbox.vsAiTelemetry.playerCurrentCombo ?? 0}
+                  playerMaxCombo={sandbox.vsAiTelemetry.playerMaxCombo ?? 0}
+                  playerOrbsCollected={
+                    sandbox.vsAiTelemetry.playerOrbsCollected ?? 0
+                  }
+                  playerNick={sandbox.playerNick}
                   aiOpponentScore={sandbox.vsAiTelemetry.aiOpponentScore}
                   playerAlive={sandbox.vsAiTelemetry.playerAlive}
                   aiOpponentAlive={sandbox.vsAiTelemetry.aiOpponentAlive}
                   vsAiWinner={sandbox.vsAiTelemetry.vsAiWinner}
                   onPlayerFlap={sandbox.handlePlayerFlap}
+                  onTogglePause={sandbox.handleToggleRunning}
                   onFinishEarly={sandbox.handleFinishVsAiEarly}
                   onRematch={sandbox.handleRematchVsAi}
                   onBackToLab={() => sandbox.handleSelectMode('TRAINING')}
+                  onSaveRunWithNick={sandbox.handleSaveLastRunWithNick}
                   onSyncVsAiTelemetry={sandbox.syncVsAiTelemetry}
                 />
 
                 {/* Transport & Simulation Controls Bar */}
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-[#111827] px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-800 bg-[#111827] px-3 py-2.5 sm:px-4 sm:py-3">
                   {mode === 'TRAINING' ? (
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         onClick={sandbox.handleToggleRunning}
-                        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                        className={`inline-flex min-h-[38px] items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
                           sandbox.running
                             ? 'bg-slate-800 text-slate-100 hover:bg-slate-700'
                             : 'bg-cyan-500 text-slate-950 hover:bg-cyan-400'
@@ -343,13 +405,26 @@ function AppContent() {
                         type="button"
                         onClick={sandbox.handleStepFrame}
                         title={bi('Przesuń symulację o 1 klatkę', 'Advance one simulation tick')}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-slate-700 hover:text-white"
+                        className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-slate-700 hover:text-white"
                       >
                         <SkipForward
                           className="h-3.5 w-3.5"
                           aria-hidden="true"
                         />
                         {bi('Krok', 'Step')}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={sandbox.handleResetTraining}
+                        title={bi('Zresetuj populację i trening', 'Reset training population')}
+                        className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-slate-700 hover:text-white"
+                      >
+                        <RotateCcw
+                          className="h-3.5 w-3.5"
+                          aria-hidden="true"
+                        />
+                        {bi('Reset', 'Reset')}
                       </button>
 
                       <div
@@ -374,98 +449,253 @@ function AppContent() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={sandbox.handlePlayerFlap}
-                        className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-xs font-semibold text-slate-950 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-amber-400"
-                      >
-                        {bi('Skok (Flap)', 'Flap Wings')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          sandbox.handleRaceAgainstBrain(PRETRAINED_ACE_BRAIN)
-                        }
-                        className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-medium text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-cyan-500/50 hover:text-cyan-200"
-                      >
-                        {bi('Wczytaj mistrza Ace', 'Load Ace Opponent')}
-                      </button>
+                    /* Ergonomic Play Controls: Full-width Thumb FLAP Pad + Symmetric Utility Strip */
+                    <div className="flex w-full flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <button
+                          type="button"
+                          onPointerDown={(e) => {
+                            if (e.pointerType === 'mouse' && e.button !== 0) return;
+                            e.preventDefault();
+                            sandbox.handlePlayerFlap();
+                          }}
+                          className="inline-flex min-h-[54px] sm:min-h-[46px] w-full sm:w-auto sm:px-7 items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-base font-bold text-slate-950 whitespace-nowrap select-none touch-none cursor-pointer transition-colors active:bg-amber-400 hover:bg-amber-400 shadow-sm"
+                        >
+                          {bi('SKOK (FLAP)', 'FLAP')}
+                        </button>
+
+                        <div className="flex items-center justify-between sm:justify-start gap-2">
+                          <div className="flex items-center gap-2">
+                            {sandbox.vsAiTelemetry.vsAiPhase === 'PLAYING' && (
+                              <button
+                                type="button"
+                                onClick={sandbox.handleToggleRunning}
+                                className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-100 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-slate-700"
+                              >
+                                {sandbox.running ? (
+                                  <>
+                                    <Pause className="h-3.5 w-3.5" aria-hidden="true" />
+                                    {bi('Pauza', 'Pause')}
+                                  </>
+                                ) : (
+                                  <>
+                                    <Play className="h-3.5 w-3.5" aria-hidden="true" />
+                                    {bi('Wznów', 'Resume')}
+                                  </>
+                                )}
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={sandbox.handleRematchVsAi}
+                              title={bi('Rozpocznij od nowa (R)', 'Restart flight (R)')}
+                              className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-[#0B1120] px-3.5 py-2 text-xs font-medium text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-amber-500/50 hover:text-amber-200"
+                            >
+                              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                              <span>{bi('Od nowa', 'Restart')}</span>
+                            </button>
+                          </div>
+
+                          {/* Mobile utility right-side pair; hidden on sm+ where right column renders */}
+                          <div className="flex sm:hidden items-center gap-2">
+                            {sandbox.playSubMode === 'VS_AI' && (
+                              <button
+                                type="button"
+                                onClick={() => sandbox.setShowSensors((s) => !s)}
+                                aria-pressed={sandbox.showSensors}
+                                className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                                  sandbox.showSensors
+                                    ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
+                                    : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
+                                }`}
+                              >
+                                {sandbox.showSensors ? (
+                                  <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                                ) : (
+                                  <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
+                                )}
+                                {bi('Sensory', 'Sensors')}
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={sandbox.handleToggleAudio}
+                              aria-pressed={!sandbox.muted}
+                              className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                                !sandbox.muted
+                                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                                  : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
+                              }`}
+                            >
+                              {sandbox.muted ? (
+                                <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />
+                              ) : (
+                                <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
+                              )}
+                              {sandbox.muted ? bi('Wyciszono', 'Muted') : 'Audio'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="hidden sm:flex items-center gap-2 justify-end">
+                        {sandbox.playSubMode === 'VS_AI' && (
+                          <button
+                            type="button"
+                            onClick={() => sandbox.setShowSensors((s) => !s)}
+                            aria-pressed={sandbox.showSensors}
+                            title={bi(
+                              'Pokaż na planszy linie aktywnych sensorów wybranego mózgu',
+                              'Toggle live canvas overlay showing active sensor inputs'
+                            )}
+                            className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                              sandbox.showSensors
+                                ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
+                                : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            {sandbox.showSensors ? (
+                              <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                            ) : (
+                              <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
+                            )}
+                            {bi('Sensory', 'Sensors')}
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={sandbox.handleToggleAudio}
+                          aria-pressed={!sandbox.muted}
+                          aria-label={
+                            sandbox.muted
+                              ? bi('Włącz dźwięk', 'Unmute arcade sound')
+                              : bi('Wycisz dźwięk', 'Mute arcade sound')
+                          }
+                          className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                            !sandbox.muted
+                              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                              : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          {sandbox.muted ? (
+                            <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />
+                          ) : (
+                            <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
+                          )}
+                          {sandbox.muted ? bi('Wyciszono', 'Muted') : 'Audio'}
+                        </button>
+                      </div>
                     </div>
                   )}
 
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => sandbox.setShowSensors((s) => !s)}
-                      aria-pressed={sandbox.showSensors}
-                      title={bi(
-                        'Pokaż na planszy linie aktywnych sensorów wybranego mózgu',
-                        'Toggle live canvas overlay showing active sensor inputs'
-                      )}
-                      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
-                        sandbox.showSensors
-                          ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
-                          : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      {sandbox.showSensors ? (
-                        <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-                      ) : (
-                        <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
-                      )}
-                      {bi('Sensory', 'Sensors')}
-                    </button>
+                  {mode === 'TRAINING' && (
+                    <div className="flex w-full sm:w-auto flex-wrap items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => sandbox.setShowSensors((s) => !s)}
+                        aria-pressed={sandbox.showSensors}
+                        title={bi(
+                          'Pokaż na planszy linie aktywnych sensorów wybranego mózgu',
+                          'Toggle live canvas overlay showing active sensor inputs'
+                        )}
+                        className={`inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                          sandbox.showSensors
+                            ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
+                            : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        {sandbox.showSensors ? (
+                          <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                        ) : (
+                          <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
+                        )}
+                        {bi('Sensory', 'Sensors')}
+                      </button>
 
-                    <button
-                      type="button"
-                      onClick={sandbox.handleToggleAudio}
-                      aria-pressed={!sandbox.muted}
-                      aria-label={
-                        sandbox.muted
-                          ? bi('Włącz dźwięk', 'Unmute arcade sound')
-                          : bi('Wycisz dźwięk', 'Mute arcade sound')
-                      }
-                      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
-                        !sandbox.muted
-                          ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                          : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      {sandbox.muted ? (
-                        <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />
-                      ) : (
-                        <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
-                      )}
-                      {sandbox.muted ? bi('Wyciszono', 'Muted') : 'Audio'}
-                    </button>
+                      <button
+                        type="button"
+                        onClick={sandbox.handleToggleAudio}
+                        aria-pressed={!sandbox.muted}
+                        aria-label={
+                          sandbox.muted
+                            ? bi('Włącz dźwięk', 'Unmute arcade sound')
+                            : bi('Wycisz dźwięk', 'Mute arcade sound')
+                        }
+                        className={`inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                          !sandbox.muted
+                            ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                            : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        {sandbox.muted ? (
+                          <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />
+                        ) : (
+                          <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
+                        )}
+                        {sandbox.muted ? bi('Wyciszono', 'Muted') : 'Audio'}
+                      </button>
 
-                    {mode === 'TRAINING' && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={sandbox.handleQuickSave}
-                          disabled={!sandbox.trainingTelemetry.hasChampionBrain}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-slate-700 hover:text-white disabled:opacity-40"
-                        >
-                          <BookmarkPlus
-                            className="h-3.5 w-3.5"
-                            aria-hidden="true"
-                          />
-                          {bi('Zapisz lidera', 'Save Best')}
-                        </button>
+                      <button
+                        type="button"
+                        onClick={sandbox.handleCycleEcoMode}
+                        aria-pressed={sandbox.ecoActive}
+                        title={bi(
+                          'Tryb płynny / oszczędzanie zasobów podczas treningu na smartfonach',
+                          'Smooth Eco throttling during Training on smartphones'
+                        )}
+                        className={`inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                          sandbox.ecoActive
+                            ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                            : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        <Leaf className="h-3.5 w-3.5" aria-hidden="true" />
+                        <span>
+                          {sandbox.ecoPreference === 'AUTO'
+                            ? sandbox.ecoActive
+                              ? 'Eco (Auto)'
+                              : bi('Auto', 'Auto')
+                            : sandbox.ecoActive
+                              ? 'Eco'
+                              : 'Full'}
+                        </span>
+                      </button>
 
-                        <button
-                          type="button"
-                          onClick={() => sandbox.handleSelectMode('VS_AI')}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3.5 py-2 text-xs font-semibold text-slate-950 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-amber-400"
-                        >
-                          <Swords className="h-3.5 w-3.5" aria-hidden="true" />
-                          {bi('Ścigaj się z AI', 'Race AI')}
-                        </button>
-                      </>
-                    )}
-                  </div>
+                      <button
+                        type="button"
+                        onClick={sandbox.handleQuickSave}
+                        disabled={!sandbox.trainingTelemetry.hasChampionBrain}
+                        className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-slate-700 hover:text-white disabled:opacity-40"
+                      >
+                        <BookmarkPlus
+                          className="h-3.5 w-3.5"
+                          aria-hidden="true"
+                        />
+                        {bi('Zapisz lidera', 'Save Best')}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setBrainsModalOpen(true)}
+                        className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-cyan-500/50 hover:text-cyan-200"
+                      >
+                        <Brain className="h-3.5 w-3.5 text-cyan-400" aria-hidden="true" />
+                        {bi('Sieci', 'Brains')}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => sandbox.handleSelectMode('VS_AI', 'VS_AI')}
+                        className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-amber-500 px-3.5 py-2 text-xs font-semibold text-slate-950 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-amber-400"
+                      >
+                        <Swords className="h-3.5 w-3.5" aria-hidden="true" />
+                        {bi('Ścigaj się z AI', 'Race AI')}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Training Lab Interactive AI & Topology Playground Bar — Clean & Responsive */}
@@ -572,13 +802,13 @@ function AppContent() {
                     {/* Row 2: Quick Topology + Morphogenesis */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-slate-800/80 pt-3">
                       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300 shrink-0">
-                        {bi('Kształt sieci (warstwy ukryte)', 'Network Shape (hidden layers)')}
+                        {bi('Warstwy ukryte', 'Hidden Layers')}
                         <InfoTooltip
                           align="left"
                           label={bi('O topologii sieci', 'About network topology')}
                           text={bi(
-                            'Liczba neuronów w kolejnych warstwach ukrytych. N→1 oznacza brak warstw ukrytych; np. 6·2 to dwie warstwy ukryte (6 i 2 neurony).',
-                            'Hidden layer widths between inputs and the single Flap output. N→1 is a linear perceptron; 6·2 is two hidden layers of 6 and 2 neurons.'
+                            'Liczba neuronów w warstwach ukrytych. N→1 to brak warstw ukrytych; np. 6·2 oznacza dwie warstwy (6 i 2 neurony).',
+                            'Hidden layer widths between inputs and Flap output. N→1 has 0 hidden layers; 6·2 has two (6 and 2 neurons).'
                           )}
                         />
                       </span>
@@ -676,13 +906,13 @@ function AppContent() {
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300">
-                            {bi('System Percepcji:', 'Perception System:')}
+                            {bi('Percepcja:', 'Perception:')}
                             <InfoTooltip
                               align="left"
-                              label={bi('Dwa tryby zmysłów ptaka', 'Two distinct perception modes')}
+                              label={bi('Tryby zmysłów', 'Perception modes')}
                               text={bi(
-                                '1) Sensory Geometryczne (Lab 1–12): bezpośrednie współrzędne (Y, Vy, DX, Top, Bot...). 2) Siatkówka 16-Ray Ommatidia: ptak NIE ma laserów do krawędzi rury — wypuszcza wachlarz 16 promieni (-68°..+68°), a biologiczny płat wzrokowy (Lamina L1/L2 ΔI + Medulla T4/T5) ekstrahuje z nich strumienie przepływu optycznego.',
-                                '1) Geometric Lab Sensors (1–12): exact coordinates (Y, Vy, DX, Top, Bot...). 2) 16-Ray Compound-Eye Retina: no direct coordinate lasers — casts a 16-ray ommatidia fan (-68°..+68°) processed by the biological Lamina L1/L2 + T4/T5 Optic Lobe into optical flow streams.'
+                                '1) Sensory Geometryczne: dokładne współrzędne (Y, Vy, DX, Top, Bot). 2) Siatkówka 16-Ray: wachlarz 16 promieni (-68°..+68°) przetwarzany przez płat L1/L2 + T4/T5.',
+                                '1) Geometric Sensors: exact coordinates (Y, Vy, DX, Top, Bot). 2) 16-Ray Retina: 16 optical rays (-68°..+68°) processed via L1/L2 + T4/T5 streams.'
                               )}
                             />
                           </span>
@@ -786,14 +1016,8 @@ function AppContent() {
                             <div className="text-[11px] text-slate-300">
                               <span className="font-semibold text-emerald-300">
                                 {bi(
-                                  '16 Fotoreceptorów (-68°..+68°) → Płat Wzrokowy L1/L2 + T4/T5:',
-                                  '16 Photoreceptors (-68°..+68°) → L1/L2 + T4/T5 Optic Lobe:'
-                                )}
-                              </span>{' '}
-                              <span className="text-slate-400">
-                                {bi(
-                                  'Zamiast ręcznych współrzędnych (DX, Top, Bot) 16 promieni siatkówki jest przekształcanych w biologiczne strumienie przepływu optycznego.',
-                                  'Instead of manual geometric coordinates (DX, Top, Bot), 16 retinal rays are compressed into biological optical flow streams.'
+                                  'Siatkówka 16-Ray (-68°..+68°) · L1/L2 + T4/T5',
+                                  '16-Ray Retina (-68°..+68°) · L1/L2 + T4/T5'
                                 )}
                               </span>
                             </div>
@@ -1001,56 +1225,113 @@ function AppContent() {
                 )}
               </section>
 
-              {/* Right / AI Inspector & Control Deck */}
-              <aside className="lg:col-span-5 rounded-xl border border-slate-800 bg-[#111827] p-5 space-y-6">
-                <NeuralNetworkViz
-                  snapshot={activeTelemetry.leaderNetwork}
-                  perceptionMode={sandbox.config.perceptionMode}
-                />
-
-                <div className="border-t border-slate-800 pt-5">
-                  <div className="mb-4 flex items-center gap-1 rounded-lg border border-slate-800 bg-[#0B1120] p-1">
-                    <button
-                      type="button"
-                      onClick={() => setDeckTab('history')}
-                      className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap cursor-pointer transition-colors ${
-                        deckTab === 'history'
-                          ? 'bg-slate-800 text-white'
-                          : 'text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      {bi('Wykres Ewolucji', 'Evolution History')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeckTab('params')}
-                      className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap cursor-pointer transition-colors ${
-                        deckTab === 'params'
-                          ? 'bg-slate-800 text-white'
-                          : 'text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      {bi('Ustawienia & Fizyka', 'Hyperparameters')}
-                    </button>
-                  </div>
-
-                  {deckTab === 'history' ? (
-                    <FitnessChart
-                      history={sandbox.trainingTelemetry.history}
-                      milestones={sandbox.trainingTelemetry.milestones}
-                      allTimeBestScore={sandbox.trainingTelemetry.allTimeBestScore}
+              {/* Right / AI Inspector OR Dedicated Play Arcade Deck */}
+              <aside
+                className={`rounded-xl border border-slate-800 bg-[#111827] p-4 sm:p-5 space-y-5 ${
+                  mode === 'VS_AI'
+                    ? 'lg:col-span-5 xl:col-span-4'
+                    : 'lg:col-span-5'
+                }`}
+              >
+                {mode === 'VS_AI' ? (
+                  <PlayArcadePanel
+                    playSubMode={sandbox.playSubMode}
+                    difficulty={sandbox.config.difficulty}
+                    overdrivePct={sandbox.config.overdrivePct}
+                    humanBestByDifficulty={sandbox.humanBestByDifficulty}
+                    bestPointsByDifficulty={sandbox.bestPointsByDifficulty}
+                    sessionStats={sandbox.playSessionStats}
+                    playerNick={sandbox.playerNick}
+                    playHistory={sandbox.playHistory}
+                    leaderboard={sandbox.leaderboard}
+                    activeOpponentName={sandbox.activeOpponentName}
+                    hasTrainedChampion={
+                      sandbox.trainingTelemetry.allTimeBestScore > 0
+                    }
+                    trainedChampionScore={
+                      sandbox.trainingTelemetry.allTimeBestScore
+                    }
+                    savedBrains={sandbox.savedBrains}
+                    leaderNetwork={activeTelemetry.leaderNetwork}
+                    perceptionMode={sandbox.config.perceptionMode}
+                    onChangePlaySubMode={sandbox.handleChangePlaySubMode}
+                    onSelectDifficulty={sandbox.handleSelectPlayDifficulty}
+                    onChangeOverdrivePct={(pct) =>
+                      sandbox.handleConfigChange({
+                        ...sandbox.config,
+                        overdrivePct: pct,
+                      })
+                    }
+                    onSelectAceOpponent={() =>
+                      sandbox.handleRaceAgainstBrain(PRETRAINED_ACE_BRAIN)
+                    }
+                    onSelectTrainedChampion={
+                      sandbox.handleUseEvolvedChampionOpponent
+                    }
+                    onSelectSavedBrain={(brain) =>
+                      sandbox.handleRaceAgainstBrain(brain)
+                    }
+                    onOpenBrains={() => setBrainsModalOpen(true)}
+                    onSaveNick={sandbox.handleUpdatePlayerNick}
+                    onClearHistory={sandbox.handleClearPlayHistory}
+                    onClearLeaderboard={sandbox.handleClearLeaderboard}
+                  />
+                ) : (
+                  <>
+                    <NeuralNetworkViz
+                      snapshot={activeTelemetry.leaderNetwork}
+                      perceptionMode={sandbox.config.perceptionMode}
                     />
-                  ) : (
-                    <EvolutionControls
-                      config={sandbox.config}
-                      onChange={sandbox.handleConfigChange}
-                      onLoadFruitFlyPreset={sandbox.handleLoadFruitFlyPreset}
-                      onLoadDecoupledCortexPreset={
-                        sandbox.handleLoadDecoupledCortexPreset
-                      }
-                    />
-                  )}
-                </div>
+
+                    <div className="border-t border-slate-800 pt-5">
+                      <div className="mb-4 flex items-center gap-1 rounded-lg border border-slate-800 bg-[#0B1120] p-1">
+                        <button
+                          type="button"
+                          onClick={() => setDeckTab('history')}
+                          className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap cursor-pointer transition-colors ${
+                            deckTab === 'history'
+                              ? 'bg-slate-800 text-white'
+                              : 'text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          {bi('Wykres Ewolucji', 'Evolution History')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeckTab('params')}
+                          className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap cursor-pointer transition-colors ${
+                            deckTab === 'params'
+                              ? 'bg-slate-800 text-white'
+                              : 'text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          {bi('Ustawienia & Fizyka', 'Hyperparameters')}
+                        </button>
+                      </div>
+
+                      {deckTab === 'history' ? (
+                        <FitnessChart
+                          history={sandbox.trainingTelemetry.history}
+                          milestones={sandbox.trainingTelemetry.milestones}
+                          allTimeBestScore={
+                            sandbox.trainingTelemetry.allTimeBestScore
+                          }
+                        />
+                      ) : (
+                        <EvolutionControls
+                          config={sandbox.config}
+                          onChange={sandbox.handleConfigChange}
+                          onLoadFruitFlyPreset={
+                            sandbox.handleLoadFruitFlyPreset
+                          }
+                          onLoadDecoupledCortexPreset={
+                            sandbox.handleLoadDecoupledCortexPreset
+                          }
+                        />
+                      )}
+                    </div>
+                  </>
+                )}
               </aside>
             </div>
           </>

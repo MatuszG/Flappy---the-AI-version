@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Automated Playwright UI Verification & Screenshot Suite for Flappy NeuroLab
+ * Automated Playwright UI Verification & Multi-Viewport Screenshot Suite
+ * for Flappy NeuroLab (Desktop, Tablet Portrait, Tablet Landscape, Mobile).
  *
  * Usage:
  *   npm run verify:ui
@@ -17,6 +18,22 @@ const args = process.argv.slice(2);
 const argUrl = args.find((a) => a.startsWith('--url='))?.split('=')[1];
 const argOut = args.find((a) => a.startsWith('--out='))?.split('=')[1];
 const outDir = path.resolve(process.cwd(), argOut || '.ui-screenshots');
+
+function resolveChromiumExecutable() {
+  const defaultPath = chromium.executablePath();
+  if (defaultPath && fs.existsSync(defaultPath)) return undefined;
+
+  const candidates = [
+    '/ms-playwright/chrome-headless-shell-linux64/chrome-headless-shell',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return undefined;
+}
 
 async function isReachable(url) {
   try {
@@ -58,6 +75,39 @@ async function snap(page, fileName) {
   });
 }
 
+async function auditLayout(page, label) {
+  return page.evaluate((tag) => {
+    const overflowPx = Math.max(
+      0,
+      document.documentElement.scrollWidth - window.innerWidth
+    );
+    const header = document.querySelector('header');
+    const headerRect = header ? header.getBoundingClientRect() : null;
+    const headerHeight = headerRect ? Math.round(headerRect.height) : 0;
+    const headerPct =
+      headerRect && window.innerHeight > 0
+        ? Math.round((headerRect.height / window.innerHeight) * 100)
+        : 0;
+    return {
+      label: tag,
+      viewport: `${window.innerWidth}x${window.innerHeight}`,
+      overflowPx,
+      headerHeight,
+      headerPct,
+    };
+  }, label);
+}
+
+async function clickHeaderNav(page, pattern) {
+  const navBtn = page.locator('header nav').getByRole('button', { name: pattern }).first();
+  if (await navBtn.isVisible().catch(() => false)) {
+    await navBtn.click({ force: true });
+    return;
+  }
+  const fallbackBtn = page.locator('header').getByRole('button', { name: pattern }).first();
+  await fallbackBtn.click({ force: true });
+}
+
 async function run() {
   fs.mkdirSync(outDir, { recursive: true });
 
@@ -83,20 +133,23 @@ async function run() {
   let browser;
   const pageErrors = [];
   const consoleErrors = [];
+  const audits = [];
   const findings = [];
 
   try {
+    const executablePath = resolveChromiumExecutable();
     browser = await chromium.launch({
       headless: true,
+      ...(executablePath ? { executablePath } : {}),
       args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
     });
 
     const context = await browser.newContext({
-      viewport: { width: 1440, height: 960 },
+      viewport: { width: 1440, height: 900 },
       deviceScaleFactor: 1,
     });
     const page = await context.newPage();
-    page.setDefaultTimeout(6000);
+    page.setDefaultTimeout(7000);
 
     page.on('pageerror', (err) => pageErrors.push(err.message));
     page.on('console', (msg) => {
@@ -110,130 +163,229 @@ async function run() {
 
     console.log(`[verify:ui] Opening ${targetUrl}`);
     await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('header nav');
+    await page.waitForSelector('header');
     await page.evaluate(() => localStorage.clear());
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForSelector('canvas');
     await page.waitForTimeout(700);
 
-    // 1. Desktop Training Lab (Polish default)
-    console.log('[verify:ui] Step 1: Training Lab desktop (PL)');
-    const overflowDesktop = await page.evaluate(
-      () => document.documentElement.scrollWidth - window.innerWidth
-    );
-    findings.push(`desktop_overflow_px=${overflowDesktop}`);
-    await snap(page, '01-training-desktop-pl.png');
+    // 1. Desktop 1440x900 — Play First -> Training Lab (PL)
+    console.log('[verify:ui] 1. Desktop 1440x900: Play Landing & Training Lab (PL)');
+    audits.push(await auditLayout(page, 'desktop-play'));
+    await snap(page, '02-desktop-play.png');
 
-    // Verify TopBar flag language button switches PL -> EN and back
+    await clickHeaderNav(page, /Trening|Laboratorium|Training/i);
+    await page.waitForTimeout(600);
+    audits.push(await auditLayout(page, 'desktop-training'));
+    await snap(page, '01-desktop-training-pl.png');
+
+    // Toggle to Arena on Desktop & snapshot
+    const arenaBtnDesk = page.getByRole('button', { name: /^Arena \(/i }).first();
+    if (await arenaBtnDesk.isVisible().catch(() => false)) {
+      await arenaBtnDesk.click({ force: true });
+      await page.waitForTimeout(350);
+      audits.push(await auditLayout(page, 'desktop-training-arena'));
+      await snap(page, '17-desktop-training-arena.png');
+      const singleBtnDesk = page.getByRole('button', { name: /Pojedyncza Sieć|Single Network/i }).first();
+      if (await singleBtnDesk.isVisible().catch(() => false)) {
+        await singleBtnDesk.click({ force: true });
+        await page.waitForTimeout(200);
+      }
+    }
+
+    // Language toggle check
     const langBtnSelector = 'header button[title*="English"], header button[title*="polski"]';
     const textBefore = (await page.locator(langBtnSelector).first().innerText()).trim();
     await page.locator(langBtnSelector).first().click({ force: true });
     await page.waitForTimeout(200);
     const textAfterEn = (await page.locator(langBtnSelector).first().innerText()).trim();
-    const navTextEn = await page.locator('header nav').innerText();
+    const headerTextEn = await page.locator('header').innerText();
     findings.push(
-      `lang_toggle=${textBefore}->${textAfterEn}(EN_nav=${navTextEn.includes('Training Lab')})`
+      `lang_toggle=${textBefore}->${textAfterEn}(EN=${/Training|Play|Research/i.test(headerTextEn)})`
     );
     await page.locator(langBtnSelector).first().click({ force: true });
     await page.waitForTimeout(200);
 
-    // 2. Switch to 16-Ray Compound-Eye Retina + Hyperparameters panel
-    console.log('[verify:ui] Step 2: 16-Ray Retina mode');
-    const paramsTab = page.getByRole('button', { name: /Ustawienia & Fizyka|Hyperparameters/i }).first();
-    await paramsTab.click({ force: true });
-    await page.waitForTimeout(200);
-
-    const retinaBtn = page
-      .getByRole('button', {
-        name: /^(Oko Złożone 16-Ray \(Piksele\)|Compound-Eye Pixels)$/i,
-      })
-      .first();
-    await retinaBtn.click({ force: true });
-    await page.waitForTimeout(900);
-    await page.evaluate(() => {
-      const c = document.querySelector('canvas');
-      if (c) c.scrollIntoView({ block: 'center' });
-    });
-    await page.waitForTimeout(300);
-    await snap(page, '02-training-16ray-retina.png');
-
-    // 3. Switch to Arena Live + switch language to EN to verify English UI + Polish flag icon
-    console.log('[verify:ui] Step 3: Arena Live (EN)');
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await page.locator(langBtnSelector).first().click({ force: true });
-    await page.waitForTimeout(200);
-    const arenaBtn = page.getByRole('button', { name: /Live Arena|Arena Na Żywo/i }).first();
-    await arenaBtn.click({ force: true });
-    await page.waitForTimeout(1100);
-    await page.evaluate(() => {
-      const c = document.querySelector('canvas');
-      if (c) c.scrollIntoView({ block: 'center' });
-    });
-    await page.waitForTimeout(300);
-    await snap(page, '03-training-arena-en.png');
-
-    // 4. Play vs. AI view
-    console.log('[verify:ui] Step 4: Play vs. AI');
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await page.locator('header nav').getByRole('button', { name: /Play vs\. AI|Gra vs AI/i }).first().click({ force: true });
+    // 2. Desktop 1440x900 — Play Mode verified on landing above; verify Leaderboard & History tabs
+    console.log('[verify:ui] 2. Desktop 1440x900: Play Mode & Leaderboard/History Tabs');
+    await clickHeaderNav(page, /Graj|Gra vs AI|Play/i);
     await page.waitForTimeout(450);
-    await snap(page, '04-play-vs-ai.png');
 
-    // 5. Research Sweep (NeuroLab) — start, pause, inspect metrics & stop
-    console.log('[verify:ui] Step 5: Research Sweep + Pause');
-    await page.locator('header nav').getByRole('button', { name: /Research Sweep|Badania/i }).first().click({ force: true });
+    // Seed a sample completed Play entry into localStorage to verify Leaderboard & History rendering
+    await page.evaluate(() => {
+      const sampleRun = {
+        id: 'verify-run-1',
+        playerName: 'PilotTest',
+        points: 1420,
+        pipes: 9,
+        orbsCollected: 4,
+        maxCombo: 5,
+        difficulty: 'MEDIUM',
+        subMode: 'VS_AI',
+        opponentName: 'Hybrid MoE',
+        wonVsAi: true,
+        medalId: 'BRONZE',
+        createdAt: new Date().toISOString(),
+      };
+      localStorage.setItem('flappy-neuro-player-nick-v1', 'PilotTest');
+      localStorage.setItem('flappy-neuro-play-history-v1', JSON.stringify([sampleRun]));
+      localStorage.setItem('flappy-neuro-leaderboard-v1', JSON.stringify([sampleRun]));
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('canvas');
+    await page.waitForTimeout(550);
+
+    const lbTabDesk = page.getByRole('tab', { name: /Tabela|Top/i }).first();
+    if (await lbTabDesk.isVisible().catch(() => false)) {
+      await lbTabDesk.click({ force: true });
+      await page.waitForTimeout(250);
+      audits.push(await auditLayout(page, 'desktop-play-leaderboard'));
+      await snap(page, '18-desktop-play-leaderboard.png');
+    }
+    const histTabDesk = page.getByRole('tab', { name: /Historia|History/i }).first();
+    if (await histTabDesk.isVisible().catch(() => false)) {
+      await histTabDesk.click({ force: true });
+      await page.waitForTimeout(250);
+      audits.push(await auditLayout(page, 'desktop-play-history'));
+    }
+    const playTabDesk = page.getByRole('tab', { name: /Gra i Tor|Play/i }).first();
+    if (await playTabDesk.isVisible().catch(() => false)) {
+      await playTabDesk.click({ force: true });
+      await page.waitForTimeout(200);
+    }
+
+    // 3. Desktop 1440x900 — Research Sweep
+    console.log('[verify:ui] 3. Desktop 1440x900: Research Sweep');
+    await clickHeaderNav(page, /Badania|Research/i);
+    await page.waitForTimeout(500);
+    audits.push(await auditLayout(page, 'desktop-research'));
+    await snap(page, '03-desktop-research.png');
+
+    // 4. Desktop 1440x900 — Docs
+    console.log('[verify:ui] 4. Desktop 1440x900: Docs');
+    await clickHeaderNav(page, /Dokumentacja|Docs|Documentation/i);
+    await page.waitForTimeout(350);
+    audits.push(await auditLayout(page, 'desktop-docs'));
+    await snap(page, '04-desktop-docs.png');
+
+    // 5. Tablet Portrait 768x1024 — Training, Play, Research
+    console.log('[verify:ui] 5. Tablet Portrait 768x1024');
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await clickHeaderNav(page, /Trening|Laboratorium|Training/i);
+    await page.waitForTimeout(550);
+    audits.push(await auditLayout(page, 'tablet-portrait-training'));
+    await snap(page, '05-tablet-portrait-training.png');
+
+    await clickHeaderNav(page, /Graj|Gra vs AI|Play/i);
     await page.waitForTimeout(450);
-    await snap(page, '05-research-sweep.png');
+    audits.push(await auditLayout(page, 'tablet-portrait-play'));
+    await snap(page, '06-tablet-portrait-play.png');
 
-    const runSweepBtn = page
-      .locator('section')
-      .getByRole('button', { name: /Run \(|Uruchom \(|Continue|Kontynuuj/i })
-      .first();
-    if (await runSweepBtn.isVisible().catch(() => false)) {
-      await runSweepBtn.click({ force: true });
-      await page.waitForTimeout(1400);
-      const pauseBtn = page.getByRole('button', { name: /Pause Sweep|Wstrzymaj|Pause/i }).first();
-      if (await pauseBtn.isVisible().catch(() => false)) {
-        await pauseBtn.click({ force: true });
-        await page.waitForTimeout(500);
-        const bodyText = await page.locator('section').first().innerText();
-        findings.push(
-          `sweep_paused_badge=${bodyText.includes('PAUSED') || bodyText.includes('PAUZA')}`
-        );
-      }
-      await snap(page, '06-research-paused.png');
-      const stopBtn = page.getByRole('button', { name: /^Stop$/i }).first();
-      if (await stopBtn.isVisible().catch(() => false)) {
-        await stopBtn.click({ force: true });
-        await page.waitForTimeout(250);
+    await clickHeaderNav(page, /Badania|Research/i);
+    await page.waitForTimeout(450);
+    audits.push(await auditLayout(page, 'tablet-portrait-research'));
+    await snap(page, '07-tablet-portrait-research.png');
+
+    // 6. Tablet Landscape 1024x768 — Training & Play
+    console.log('[verify:ui] 6. Tablet Landscape 1024x768');
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await clickHeaderNav(page, /Trening|Laboratorium|Training/i);
+    await page.waitForTimeout(450);
+    audits.push(await auditLayout(page, 'tablet-landscape-training'));
+    await snap(page, '08-tablet-landscape-training.png');
+
+    await clickHeaderNav(page, /Graj|Gra vs AI|Play/i);
+    await page.waitForTimeout(450);
+    audits.push(await auditLayout(page, 'tablet-landscape-play'));
+    await snap(page, '09-tablet-landscape-play.png');
+
+    // 7. Mobile 390x844 — Training, Arena, Play, Leaderboard, Modals, Research, Docs
+    console.log('[verify:ui] 7. Mobile 390x844');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await clickHeaderNav(page, /Trening|Laboratorium|Training/i);
+    await page.waitForTimeout(550);
+    audits.push(await auditLayout(page, 'mobile-training'));
+    await snap(page, '10-mobile-training.png');
+
+    const arenaBtnMob = page.getByRole('button', { name: /^Arena \(/i }).first();
+    if (await arenaBtnMob.isVisible().catch(() => false)) {
+      await arenaBtnMob.click({ force: true });
+      await page.waitForTimeout(350);
+      audits.push(await auditLayout(page, 'mobile-training-arena'));
+      await snap(page, '16-mobile-training-arena.png');
+    }
+
+    // Open Saved Brains modal from Training strip & verify mobile modal layout
+    const brainsBtn = page.getByRole('button', { name: /Sieci|Brains/i }).first();
+    if (await brainsBtn.isVisible().catch(() => false)) {
+      await brainsBtn.click({ force: true });
+      await page.waitForTimeout(250);
+      await snap(page, '14-mobile-modal-brains.png');
+      const closeBtn = page.getByRole('button', { name: /Zamknij okno|Close modal/i }).first();
+      if (await closeBtn.isVisible().catch(() => false)) {
+        await closeBtn.click({ force: true });
+        await page.waitForTimeout(150);
       }
     }
 
-    // 6. Documentation View
-    console.log('[verify:ui] Step 6: Documentation view');
-    await page.locator('header nav').getByRole('button', { name: /Documentation|Dokumentacja/i }).first().click({ force: true });
+    // Open HowItWorks modal from TopBar & verify mobile modal layout
+    const guideBtn = page.locator('header').getByRole('button', { name: /Jak to działa|How It Works|Pomoc|Guide/i }).first();
+    if (await guideBtn.isVisible().catch(() => false)) {
+      await guideBtn.click({ force: true });
+      await page.waitForTimeout(250);
+      await snap(page, '15-mobile-modal-guide.png');
+      const closeBtn = page.getByRole('button', { name: /Zamknij okno|Close modal|Rozumiem|Got It/i }).first();
+      if (await closeBtn.isVisible().catch(() => false)) {
+        await closeBtn.click({ force: true });
+        await page.waitForTimeout(150);
+      }
+    }
+
+    await clickHeaderNav(page, /Graj|Gra vs AI|Play/i);
+    await page.waitForTimeout(450);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(100);
+    audits.push(await auditLayout(page, 'mobile-play'));
+    await snap(page, '11-mobile-play.png');
+
+    const lbTabMob = page.getByRole('tab', { name: /Tabela|Top/i }).first();
+    if (await lbTabMob.isVisible().catch(() => false)) {
+      await lbTabMob.click({ force: true });
+      await page.waitForTimeout(250);
+      audits.push(await auditLayout(page, 'mobile-play-leaderboard'));
+      await snap(page, '19-mobile-play-leaderboard.png');
+    }
+
+    await clickHeaderNav(page, /Badania|Research/i);
+    await page.waitForTimeout(450);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(100);
+    audits.push(await auditLayout(page, 'mobile-research'));
+    await snap(page, '12-mobile-research.png');
+
+    await clickHeaderNav(page, /Dokumentacja|Docs|Documentation/i);
     await page.waitForTimeout(350);
-    await snap(page, '07-docs-view.png');
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(100);
+    audits.push(await auditLayout(page, 'mobile-docs'));
+    await snap(page, '13-mobile-docs.png');
 
-    // 7. Mobile viewport (390x844) back on Training Lab
-    console.log('[verify:ui] Step 7: Mobile 390x844');
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.locator('header nav').getByRole('button', { name: /Training Lab|Laboratorium Treningu/i }).first().click({ force: true });
-    await page.waitForTimeout(650);
-    const overflowMobile = await page.evaluate(
-      () => document.documentElement.scrollWidth - window.innerWidth
-    );
-    findings.push(`mobile_overflow_px=${overflowMobile}`);
-    await snap(page, '08-mobile-training.png');
-
+    console.log('[verify:ui] Layout Audits:');
+    for (const a of audits) {
+      console.log(
+        `  - ${a.label.padEnd(26)} (${a.viewport}) overflow=${a.overflowPx}px header=${a.headerHeight}px (${a.headerPct}%)`
+      );
+    }
     console.log('[verify:ui] Checks:', findings.join(' | '));
     console.log(`[verify:ui] Screenshots saved to: ${outDir}`);
+
+    const overflowFailures = audits.filter((a) => a.overflowPx > 4);
     if (pageErrors.length > 0 || consoleErrors.length > 0) {
-      console.error('[verify:ui] Errors detected:', { pageErrors, consoleErrors });
+      console.error('[verify:ui] Runtime errors detected:', { pageErrors, consoleErrors });
       process.exitCode = 1;
     }
-    if (overflowDesktop > 4 || overflowMobile > 4) {
-      console.error('[verify:ui] Horizontal overflow detected!');
+    if (overflowFailures.length > 0) {
+      console.error('[verify:ui] Horizontal overflow detected:', overflowFailures);
       process.exitCode = 1;
     }
   } finally {
