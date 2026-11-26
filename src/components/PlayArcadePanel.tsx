@@ -212,7 +212,7 @@ export function PlayArcadePanel({
     <div className="space-y-4">
       {/* Compact Segmented Deck Tabs: Setup | Leaderboard | History */}
       <div
-        className="grid grid-cols-3 gap-1 rounded-xl border border-slate-800 bg-[#0B1120] p-1"
+        className="grid grid-cols-3 gap-1 rounded-xl border border-white/[0.08] bg-[#07080D] p-1"
         role="tablist"
         aria-label={bi('Widoki panelu gry', 'Play panel sections')}
       >
@@ -287,14 +287,14 @@ export function PlayArcadePanel({
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-800 bg-[#0B1120] p-1.5">
+            <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-white/[0.08] bg-[#07080D] p-1">
               <button
                 type="button"
                 onClick={() => onChangePlaySubMode('SOLO')}
-                className={`flex min-h-[46px] items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold cursor-pointer transition-colors ${
+                className={`flex min-h-[44px] items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold cursor-pointer transition-colors ${
                   playSubMode === 'SOLO'
                     ? 'bg-amber-500 text-slate-950 shadow-sm'
-                    : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+                    : 'text-slate-300 hover:bg-white/[0.05] hover:text-white'
                 }`}
               >
                 <Gamepad2 className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -304,10 +304,10 @@ export function PlayArcadePanel({
               <button
                 type="button"
                 onClick={() => onChangePlaySubMode('VS_AI')}
-                className={`flex min-h-[46px] items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold cursor-pointer transition-colors ${
+                className={`flex min-h-[44px] items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold cursor-pointer transition-colors ${
                   playSubMode === 'VS_AI'
                     ? 'bg-cyan-500 text-slate-950 shadow-sm'
-                    : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+                    : 'text-slate-300 hover:bg-white/[0.05] hover:text-white'
                 }`}
               >
                 <Swords className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -316,45 +316,43 @@ export function PlayArcadePanel({
             </div>
           </div>
 
-          {/* Personal Best, Points & Player Nick Profile */}
-          <div className="rounded-xl border border-slate-800 bg-[#0B1120] p-3.5 space-y-3">
+          {/* Personal Best, Points & Player Nick Profile — Editorial Hairline Strip */}
+          <div className="rounded-xl border border-white/[0.08] bg-[#080A10] p-3.5 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Trophy className="h-4 w-4 text-amber-400 shrink-0" aria-hidden="true" />
-                <span className="text-sm font-semibold text-slate-100">
+                <span className="font-display text-sm font-bold tracking-tight text-slate-100">
                   {bi('Profil i Rekordy', 'Profile & Records')}
                 </span>
               </div>
-              <span
-                className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-mono text-[11px] font-semibold ${medal.badgeBg}`}
-              >
+              <span className={`inline-flex items-center gap-1 font-mono text-[11px] font-semibold ${medal.colorClass}`}>
                 <Award className="h-3 w-3 shrink-0" aria-hidden="true" />
                 {bi(medal.labelPl, medal.labelEn)}
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 font-mono tabular-nums">
-              <div className="rounded-lg border border-slate-800/90 bg-[#111827] px-2.5 py-2">
-                <div className="text-[10px] uppercase tracking-wide text-slate-400">
+            <div className="grid grid-cols-3 divide-x divide-white/[0.08] rounded-lg border border-white/[0.08] bg-[#0B0E17] tabular-nums">
+              <div className="px-3 py-2.5">
+                <div className="font-mono text-[10px] tracking-wider text-slate-400">
                   {bi('Rekord PKT', 'Best PTS')}
                 </div>
-                <div className="mt-0.5 text-lg font-bold text-emerald-300">
+                <div className="mt-0.5 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-300">
                   {currentBestPoints.toLocaleString()}
                 </div>
               </div>
-              <div className="rounded-lg border border-slate-800/90 bg-[#111827] px-2.5 py-2">
-                <div className="text-[10px] uppercase tracking-wide text-slate-400">
+              <div className="px-3 py-2.5">
+                <div className="font-mono text-[10px] tracking-wider text-slate-400">
                   {bi('Rekord Rur', 'Best Pipes')}
                 </div>
-                <div className="mt-0.5 text-lg font-bold text-amber-300">
+                <div className="mt-0.5 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-amber-300">
                   {currentBestPipes}
                 </div>
               </div>
-              <div className="rounded-lg border border-slate-800/90 bg-[#111827] px-2.5 py-2">
-                <div className="text-[10px] uppercase tracking-wide text-slate-400">
+              <div className="px-3 py-2.5">
+                <div className="font-mono text-[10px] tracking-wider text-slate-400">
                   {bi('Loty', 'Runs')}
                 </div>
-                <div className="mt-0.5 text-lg font-bold text-slate-100">
+                <div className="mt-0.5 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-slate-100">
                   {playHistory.length || sessionStats.runs}
                 </div>
               </div>
@@ -368,7 +366,7 @@ export function PlayArcadePanel({
                 setNickSavedFlash(true);
                 window.setTimeout(() => setNickSavedFlash(false), 1800);
               }}
-              className="flex items-center gap-1.5 rounded-lg border border-slate-800/90 bg-[#111827] p-1.5"
+              className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-[#0D1019] p-1.5"
             >
               <UserCheck className="ml-1.5 h-3.5 w-3.5 text-cyan-400 shrink-0" aria-hidden="true" />
               <input
@@ -385,7 +383,7 @@ export function PlayArcadePanel({
                 className={`inline-flex min-h-[30px] items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
                   nickSavedFlash
                     ? 'bg-emerald-500 text-slate-950'
-                    : 'bg-slate-800 text-slate-200 hover:bg-cyan-500/20 hover:text-cyan-200'
+                    : 'bg-white/[0.07] text-slate-200 hover:bg-cyan-500/20 hover:text-cyan-200'
                 }`}
               >
                 {nickSavedFlash ? (
@@ -400,7 +398,7 @@ export function PlayArcadePanel({
             </form>
 
             {/* Scoring Rules Strip */}
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 border-t border-slate-800/80 pt-2 font-mono text-[10.5px] text-slate-400">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 border-t border-white/[0.07] pt-2 font-mono text-[10.5px] text-slate-400">
               <span className="inline-flex items-center gap-1 text-amber-300">
                 <Sparkles className="h-3 w-3" aria-hidden="true" />
                 ★ +75p / ◆ +150p
@@ -450,28 +448,26 @@ export function PlayArcadePanel({
                     type="button"
                     onClick={() => onSelectDifficulty(diff)}
                     title={meta.description}
-                    className={`flex min-h-[60px] flex-col justify-between rounded-xl border px-3 py-2 text-left cursor-pointer transition-colors ${
-                      isExtra ? 'col-span-2' : ''
-                    } ${
-                      active
-                        ? isExtra
-                          ? 'border-rose-500/75 bg-rose-500/15 text-rose-50 shadow-sm'
-                          : 'border-amber-500/75 bg-amber-500/15 text-amber-50 shadow-sm'
-                        : 'border-slate-800 bg-[#0B1120] text-slate-200 hover:border-slate-600 hover:text-white'
-                    }`}
+                      className={`flex min-h-[60px] flex-col justify-between rounded-xl border px-3 py-2 text-left cursor-pointer transition-colors ${
+                        isExtra ? 'col-span-2' : ''
+                      } ${
+                        active
+                          ? isExtra
+                            ? 'border-rose-500/75 bg-rose-500/12 text-rose-50'
+                            : 'border-amber-500/75 bg-amber-500/12 text-amber-50'
+                          : 'border-white/[0.08] bg-[#080A10] text-slate-200 hover:border-white/25 hover:text-white'
+                      }`}
                   >
                     <div className="flex w-full items-center justify-between gap-1.5">
-                      <span className="text-xs sm:text-sm font-bold leading-tight">
+                      <span className="font-display text-xs sm:text-sm font-bold leading-tight">
                         {isExtra ? 'Extra Insane' : meta.shortLabel}
                       </span>
                       <span
-                        className={`rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums shrink-0 ${
-                          pbPts > 0 || pbPipes > 0
-                            ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
-                            : 'border-slate-800 bg-slate-900/90 text-slate-500'
+                        className={`font-mono text-[11px] font-bold tabular-nums shrink-0 ${
+                          pbPts > 0 || pbPipes > 0 ? 'text-amber-300' : 'text-slate-500'
                         }`}
                       >
-                        {pbPts > 0 ? `${pbPts}p` : `PB ${pbPipes}`}
+                        {pbPts > 0 ? `${pbPts.toLocaleString()}p` : `PB ${pbPipes}`}
                       </span>
                     </div>
                     <span className="mt-1 text-[11px] leading-snug text-slate-400">
@@ -687,49 +683,45 @@ export function PlayArcadePanel({
               </p>
             </div>
           ) : (
-            <div className="max-h-[420px] space-y-1.5 overflow-y-auto pr-0.5">
+            <div className="max-h-[420px] overflow-y-auto rounded-xl border border-white/[0.08] bg-[#080A10] divide-y divide-white/[0.06]">
               {filteredLeaderboard.map((entry, idx) => {
                 const rank = idx + 1;
-                const rankColor =
+                const rankTextColor =
                   rank === 1
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/45'
+                    ? 'text-amber-300'
                     : rank === 2
-                      ? 'bg-slate-300/15 text-slate-200 border-slate-400/40'
+                      ? 'text-slate-200'
                       : rank === 3
-                        ? 'bg-orange-500/15 text-orange-300 border-orange-500/40'
-                        : 'bg-slate-900 text-slate-400 border-slate-800';
+                        ? 'text-orange-300'
+                        : 'text-slate-500';
                 return (
                   <div
                     key={entry.id}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-slate-800/90 bg-[#0B1120] px-2.5 py-2"
+                    className="flex items-center justify-between gap-2.5 px-3 py-2.5 hover:bg-white/[0.02] transition-colors"
                   >
-                    <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-2.5">
                       <span
-                        className={`inline-flex h-6 w-6 items-center justify-center rounded-md border font-mono text-[11px] font-bold shrink-0 ${rankColor}`}
+                        className={`w-6 font-mono text-xs font-bold tabular-nums shrink-0 ${rankTextColor}`}
                       >
-                        {rank}
+                        {String(rank).padStart(2, '0')}
                       </span>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="truncate text-xs font-bold text-slate-100">
+                        <div className="flex items-center gap-1.5 font-mono text-[10px] text-slate-400">
+                          <span className="font-sans truncate text-xs font-bold text-slate-100">
                             {entry.playerName}
                           </span>
-                          <span className="font-mono text-[10px] text-slate-500 shrink-0">
-                            {getDiffShort(entry.difficulty)}
-                          </span>
+                          <span aria-hidden="true">·</span>
+                          <span className="shrink-0">{getDiffShort(entry.difficulty)}</span>
                           {entry.subMode === 'VS_AI' && (
-                            <span
-                              className={`font-mono text-[9.5px] px-1 rounded ${
-                                entry.wonVsAi
-                                  ? 'bg-emerald-500/15 text-emerald-300'
-                                  : 'bg-cyan-500/10 text-cyan-300'
-                              }`}
-                            >
-                              {entry.wonVsAi ? 'VS AI · W' : 'VS AI'}
-                            </span>
+                            <>
+                              <span aria-hidden="true">·</span>
+                              <span className={entry.wonVsAi ? 'text-emerald-300 font-semibold' : 'text-cyan-300'}>
+                                {entry.wonVsAi ? 'VS AI W' : 'VS AI'}
+                              </span>
+                            </>
                           )}
                         </div>
-                        <div className="font-mono text-[10px] text-slate-500">
+                        <div className="font-mono text-[10px] text-slate-500 tabular-nums">
                           {entry.orbsCollected > 0 ? `★${entry.orbsCollected} · ` : ''}
                           {entry.maxCombo > 1 ? `×${entry.maxCombo} · ` : ''}
                           {formatRunTimestamp(entry.createdAt)}
@@ -822,40 +814,38 @@ export function PlayArcadePanel({
               </p>
             </div>
           ) : (
-            <div className="max-h-[440px] space-y-1.5 overflow-y-auto pr-0.5">
+            <div className="max-h-[440px] overflow-y-auto rounded-xl border border-white/[0.08] bg-[#080A10] divide-y divide-white/[0.06]">
               {playHistory.map((run) => (
                 <div
                   key={run.id}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-slate-800/90 bg-[#0B1120] px-3 py-2"
+                  className="flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-white/[0.02] transition-colors"
                 >
                   <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="truncate text-xs font-semibold text-slate-100">
+                    <div className="flex items-center gap-1.5 font-mono text-[10px] text-slate-400">
+                      <span className="font-sans truncate text-xs font-semibold text-slate-100">
                         {run.playerName}
                       </span>
-                      <span className="rounded border border-slate-800 bg-slate-900 px-1.5 py-0.2 font-mono text-[10px] text-slate-300">
-                        {getDiffShort(run.difficulty)}
-                      </span>
+                      <span aria-hidden="true">·</span>
+                      <span>{getDiffShort(run.difficulty)}</span>
                       {run.subMode === 'VS_AI' && (
-                        <span
-                          className={`font-mono text-[10px] ${
-                            run.wonVsAi ? 'text-emerald-300' : 'text-cyan-300'
-                          }`}
-                        >
-                          {run.wonVsAi ? 'VS AI ★' : 'VS AI'}
-                        </span>
+                        <>
+                          <span aria-hidden="true">·</span>
+                          <span className={run.wonVsAi ? 'text-emerald-300 font-semibold' : 'text-cyan-300'}>
+                            {run.wonVsAi ? 'VS AI ★' : 'VS AI'}
+                          </span>
+                        </>
                       )}
                     </div>
-                    <div className="mt-0.5 font-mono text-[10px] text-slate-500">
+                    <div className="mt-0.5 font-mono text-[10px] text-slate-500 tabular-nums">
                       {formatRunTimestamp(run.createdAt)}
-                      {run.orbsCollected > 0 ? ` · ${run.orbsCollected} orbs` : ''}
+                      {run.orbsCollected > 0 ? ` · ★${run.orbsCollected}` : ''}
                       {run.maxCombo > 1 ? ` · ×${run.maxCombo}` : ''}
                     </div>
                   </div>
 
                   <div className="text-right font-mono tabular-nums shrink-0">
                     <div className="text-xs font-bold text-emerald-300">
-                      {run.points.toLocaleString()} PKT
+                      {run.points.toLocaleString()}p
                     </div>
                     <div className="text-[10.5px] text-slate-400">
                       {run.pipes} {bi('rur', 'pipes')}

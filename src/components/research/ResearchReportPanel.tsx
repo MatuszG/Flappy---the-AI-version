@@ -200,7 +200,7 @@ export const ResearchReportPanel = memo(function ResearchReportPanel({
           <div className="h-12 w-12 overflow-hidden rounded-lg border border-slate-700 bg-[#0B1120] shrink-0 flex items-center justify-center">
             {!emblemError ? (
               <img
-                src="/src/assets/images/research_emblem_1795032939270.jpg"
+                src="./src/assets/images/research_emblem_1795032939270.jpg"
                 alt="Neural network bird research emblem"
                 referrerPolicy="no-referrer"
                 onError={() => setEmblemError(true)}

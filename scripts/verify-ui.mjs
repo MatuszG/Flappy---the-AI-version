@@ -267,6 +267,13 @@ async function run() {
     await page.waitForTimeout(350);
     audits.push(await auditLayout(page, 'desktop-docs'));
     await snap(page, '04-desktop-docs.png');
+    const archSectionBtn = page.locator('button').filter({ hasText: /12 Architektur|12 Architectures/i }).first();
+    if (await archSectionBtn.isVisible().catch(() => false)) {
+      await archSectionBtn.click();
+      await page.waitForTimeout(250);
+      audits.push(await auditLayout(page, 'desktop-docs-archs'));
+      await snap(page, '04b-desktop-docs-archs.png');
+    }
 
     // 5. Tablet Portrait 768x1024 — Training, Play, Research
     console.log('[verify:ui] 5. Tablet Portrait 768x1024');

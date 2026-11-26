@@ -44,7 +44,6 @@ interface ArcadeCanvasProps {
   vsAiSimRef: React.MutableRefObject<FlappySimulation>;
   running: boolean;
   showSensors: boolean;
-  ecoMode?: boolean;
   mode: GameMode;
   playSubMode?: PlaySubMode;
   personalBest?: number;
@@ -1158,7 +1157,6 @@ export function ArcadeCanvas({
   vsAiSimRef,
   running,
   showSensors,
-  ecoMode = false,
   mode,
   playSubMode = 'SOLO',
   personalBest = 0,
@@ -1205,13 +1203,11 @@ export function ArcadeCanvas({
 
   const runningRef = useRef(running);
   const sensorsRef = useRef(showSensors);
-  const ecoModeRef = useRef(ecoMode);
   const modeRef = useRef(mode);
   const playSubModeRef = useRef<PlaySubMode>(playSubMode);
 
   runningRef.current = running;
   sensorsRef.current = showSensors;
-  ecoModeRef.current = ecoMode;
   modeRef.current = mode;
   playSubModeRef.current = playSubMode;
 
@@ -1233,7 +1229,6 @@ export function ArcadeCanvas({
     };
 
     let lastTime = performance.now();
-    let lastDrawTime = 0;
     let accumulator = 0;
     const fixedStepMs = 1000 / 60;
 
@@ -1244,46 +1239,20 @@ export function ArcadeCanvas({
         accumulator += dt;
       }
 
-      let steppedInVs = false;
       if (modeRef.current === 'VS_AI') {
         if (runningRef.current) {
           while (accumulator >= fixedStepMs) {
             vsAiSimRef.current.step();
             accumulator -= fixedStepMs;
-            steppedInVs = true;
           }
         } else {
           accumulator = 0;
         }
         frameTick += 1;
-        const syncModulo = ecoModeRef.current ? 4 : 2;
-        if (frameTick % syncModulo === 0 || !runningRef.current) {
+        if (frameTick % 2 === 0 || !runningRef.current) {
           onSyncVsAiTelemetry();
         }
       }
-
-      // On Eco mobile mode: cap Training canvas draw at ~30fps and avoid redundant 120Hz draws in Play mode when a 60Hz tick hasn't stepped
-      const isEco = ecoModeRef.current;
-      if (isEco) {
-        const minDrawIntervalMs = modeRef.current === 'TRAINING' ? 31 : 15;
-        if (
-          modeRef.current === 'VS_AI' &&
-          runningRef.current &&
-          !steppedInVs &&
-          currentTime - lastDrawTime < 22
-        ) {
-          rafId = requestAnimationFrame(renderFrame);
-          return;
-        }
-        if (
-          modeRef.current === 'TRAINING' &&
-          currentTime - lastDrawTime < minDrawIntervalMs
-        ) {
-          rafId = requestAnimationFrame(renderFrame);
-          return;
-        }
-      }
-      lastDrawTime = currentTime;
 
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d');
@@ -1317,8 +1286,8 @@ export function ArcadeCanvas({
           snap.birds.find((b) => b.isLeader) ??
           snap.birds.find((b) => b.isChampion);
 
-        // Smooth motion ribbon trail behind the active leader bird (omitted in Eco mode on low-power phones)
-        if (leader && leader.alive && !isEco) {
+        // Smooth motion ribbon trail behind the active leader bird
+        if (leader && leader.alive) {
           const trail = trailRef.current;
           const stepDx = snap.tickSpeed || 2.85;
           for (let t = 0; t < trail.length; t++) {

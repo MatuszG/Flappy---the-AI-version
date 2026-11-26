@@ -7,7 +7,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { isSmartphoneDevice } from '../engine/deviceProfile';
 import { analyticsClient } from '../engine/analyticsClient';
 import {
   buildThermalEfficiencySweepQueue,
@@ -70,7 +69,8 @@ export const DEFAULT_SWEEP_CONFIG: ResearchSweepConfig = {
   targetPipeCap: 500,
   verificationSeeds: 3,
   workerThreads: 0,
-  performancePriority: isSmartphoneDevice() ? 40 : 70,
+  performancePriority: 70,
+  gpuLoadPercent: 95,
   computeBackend: 'AUTO',
   auditParallelism: true,
   scheduleMode: 'BALANCED',
@@ -595,6 +595,11 @@ export function useResearchSession(showNotice: (msg: string) => void) {
 
     // Silently probe GitHub Research Data Lake static snapshot (if hosted / synced)
     void fetch('./data/research-lake.json', { cache: 'no-cache' })
+      .then((res) =>
+        res.ok
+          ? res
+          : fetch('./public/data/research-lake.json', { cache: 'no-cache' })
+      )
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (
@@ -1387,7 +1392,12 @@ export function useResearchSession(showNotice: (msg: string) => void) {
 
   const handleLoadGithubLake = useCallback(async () => {
     try {
-      const res = await fetch('./data/research-lake.json', { cache: 'no-cache' });
+      let res = await fetch('./data/research-lake.json', { cache: 'no-cache' });
+      if (!res.ok) {
+        res = await fetch('./public/data/research-lake.json', {
+          cache: 'no-cache',
+        });
+      }
       if (!res.ok) {
         showNotice('GitHub Research Lake snapshot not found yet');
         return;

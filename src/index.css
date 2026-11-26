@@ -9,13 +9,23 @@
 @layer base {
   body {
     font-family: var(--font-sans);
-    background-color: #0B1120;
-    color: #F1F5F9;
+    background-color: #07080D;
+    color: #F4F5F7;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   h1, h2, h3, .font-display {
     font-family: var(--font-display);
+    text-wrap: balance;
   }
+}
+
+/* Subtle architectural coordinate backdrop for gallery obsidian depth */
+.bg-obsidian-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.024) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.024) 1px, transparent 1px);
+  background-size: 48px 48px;
 }
 
 /* Custom crisp range slider for AI Lab controls */

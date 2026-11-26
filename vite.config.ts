@@ -7,12 +7,20 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     base: './',
+    build: {
+      rollupOptions: {
+        output: {
+          entryFileNames: 'assets/app.js',
+          chunkFileNames: 'assets/[name].js',
+          assetFileNames: 'assets/[name].[ext]',
+        },
+      },
+    },
     plugins: [
       react(),
       tailwindcss(),
-      // Copies src/assets into dist/ so root-relative URLs like
-      // "/src/assets/images/..." (e.g. generate_image output) still resolve
-      // in production builds. Do not remove.
+      // Copies src/assets into dist/ so relative URLs like
+      // "./src/assets/images/..." still resolve in production builds.
       {
         name: 'copy-unbundled-src-assets',
         apply: 'build',
@@ -25,6 +33,11 @@ export default defineConfig(() => {
           const distAssets = path.resolve(distDir, 'src/assets');
           if (fs.existsSync(distDir) && fs.existsSync(srcAssets)) {
             fs.cpSync(srcAssets, distAssets, {recursive: true, force: true});
+          }
+          const pubFavicon = path.resolve(__dirname, 'public/favicon.svg');
+          const rootFavicon = path.resolve(__dirname, 'favicon.svg');
+          if (fs.existsSync(pubFavicon) && !fs.existsSync(rootFavicon)) {
+            fs.copyFileSync(pubFavicon, rootFavicon);
           }
         },
       },

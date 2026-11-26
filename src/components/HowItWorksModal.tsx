@@ -30,7 +30,7 @@ export function HowItWorksModal({ open, onClose }: HowItWorksModalProps) {
             <div className="h-9 w-9 sm:h-10 sm:w-10 overflow-hidden rounded-lg border border-slate-700 bg-[#0B1120] shrink-0 flex items-center justify-center">
               {!imgError ? (
                 <img
-                  src="/src/assets/images/research_emblem_1795032939270.jpg"
+                  src="./src/assets/images/research_emblem_1795032939270.jpg"
                   alt="Geometric neural songbird emblem"
                   referrerPolicy="no-referrer"
                   onError={() => setImgError(true)}

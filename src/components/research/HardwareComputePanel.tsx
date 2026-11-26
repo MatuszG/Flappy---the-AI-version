@@ -57,7 +57,7 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
   const priority = clampPriority(sweepConfig.performancePriority);
   const gpuLoadPercent = Math.max(
     10,
-    Math.min(100, Math.round(sweepConfig.gpuLoadPercent ?? 100))
+    Math.min(100, Math.round(sweepConfig.gpuLoadPercent ?? 95))
   );
   const plan = useMemo(
     () => resolvePowerProfile(priority, hardwareCores),

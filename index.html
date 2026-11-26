@@ -1,9 +1,24 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en" class="dark" style="background-color:#07080D;color:#f1f5f9">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function () {
+        if (
+          typeof window !== 'undefined' &&
+          /^https?:$/i.test(window.location.protocol) &&
+          !/\/$/.test(window.location.pathname) &&
+          !/\.[^/]+$/.test(window.location.pathname)
+        ) {
+          window.location.replace(
+            window.location.pathname + '/' + window.location.search + window.location.hash
+          );
+        }
+      })();
+    </script>
     <title>Flappy NeuroLab — AI Neuroevolution & Arcade</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <meta
       name="description"
       content="Watch a population of neural networks evolve to master Flappy Bird in real time, inspect live synapses, tune genetic hyperparameters, and race your trained AI champion."
@@ -18,12 +33,37 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
   </head>
-  <body class="bg-[#0B1120] text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-cyan-100">
+  <body
+    class="bg-[#07080D] text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-cyan-100"
+    style="background-color:#07080D;color:#f1f5f9"
+  >
     <div id="root"></div>
+    <script>
+      (function () {
+        var isViteDev = Boolean(
+          document.querySelector('script[src*="@vite/client"]')
+        );
+        var isBuiltDist = Boolean(
+          document.querySelector('script[src*="./assets/"]') ||
+            document.querySelector('link[href*="./assets/"]')
+        );
+        if (!isViteDev && !isBuiltDist) {
+          var css = document.createElement('link');
+          css.rel = 'stylesheet';
+          css.href = './dist/assets/index.css';
+          document.head.appendChild(css);
+
+          var js = document.createElement('script');
+          js.type = 'module';
+          js.src = './dist/assets/app.js';
+          document.head.appendChild(js);
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

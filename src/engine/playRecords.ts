@@ -58,13 +58,42 @@ export function persistPlayerNick(nick: string): string {
   return cleaned;
 }
 
-function readJsonArray<T>(key: string): T[] {
+function normalizePlayRunRecord(raw: unknown): PlayRunRecord | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.id !== 'string' || typeof r.playerName !== 'string') return null;
+  return {
+    id: r.id,
+    playerName: r.playerName,
+    points: Number.isFinite(Number(r.points)) ? Math.max(0, Math.round(Number(r.points))) : 0,
+    pipes: Number.isFinite(Number(r.pipes)) ? Math.max(0, Math.round(Number(r.pipes))) : 0,
+    orbsCollected: Number.isFinite(Number(r.orbsCollected)) ? Math.max(0, Math.round(Number(r.orbsCollected))) : 0,
+    maxCombo: Number.isFinite(Number(r.maxCombo)) ? Math.max(0, Math.round(Number(r.maxCombo))) : 0,
+    difficulty: typeof r.difficulty === 'string' ? (r.difficulty as DifficultyPreset) : 'MEDIUM',
+    subMode: r.subMode === 'VS_AI' ? 'VS_AI' : 'SOLO',
+    opponentName: typeof r.opponentName === 'string' ? r.opponentName : undefined,
+    wonVsAi: typeof r.wonVsAi === 'boolean' ? r.wonVsAi : null,
+    medalId:
+      r.medalId === 'BRONZE' ||
+      r.medalId === 'SILVER' ||
+      r.medalId === 'GOLD' ||
+      r.medalId === 'PLATINUM'
+        ? r.medalId
+        : 'NONE',
+    createdAt: typeof r.createdAt === 'string' ? r.createdAt : new Date().toISOString(),
+  };
+}
+
+function readJsonArray(key: string): PlayRunRecord[] {
   if (typeof window === 'undefined') return [];
   try {
     const raw = window.localStorage.getItem(key);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as T[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map(normalizePlayRunRecord)
+      .filter((item): item is PlayRunRecord => item !== null);
   } catch {
     return [];
   }
@@ -80,11 +109,11 @@ function writeJson(key: string, value: unknown): void {
 }
 
 export function loadPlayHistory(): PlayRunRecord[] {
-  return readJsonArray<PlayRunRecord>(HISTORY_KEY);
+  return readJsonArray(HISTORY_KEY);
 }
 
 export function loadPlayLeaderboard(): PlayRunRecord[] {
-  return readJsonArray<PlayRunRecord>(LEADERBOARD_KEY);
+  return readJsonArray(LEADERBOARD_KEY);
 }
 
 export function loadBestPointsByDifficulty(): Partial<Record<DifficultyPreset, number>> {

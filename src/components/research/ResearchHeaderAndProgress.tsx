@@ -106,7 +106,7 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
       <div className="relative min-h-[124px] flex flex-col justify-center px-5 py-4 md:px-6 md:py-5">
         {!bannerError ? (
           <img
-            src="/src/assets/images/lab_hero_banner_1795032938322.jpg"
+            src="./src/assets/images/lab_hero_banner_1795032938322.jpg"
             alt="Geometric cyan bird navigating emerald gates with neural network filaments"
             referrerPolicy="no-referrer"
             onError={() => setBannerError(true)}

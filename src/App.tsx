@@ -3,7 +3,6 @@ import {
   Brain,
   Eye,
   EyeOff,
-  Leaf,
   Pause,
   Play,
   RotateCcw,
@@ -127,7 +126,7 @@ function AppContent() {
     mode === 'VS_AI' ? sandbox.vsAiTelemetry : sandbox.trainingTelemetry;
 
   return (
-    <div className="min-h-screen bg-[#0B1120] text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#07080D] bg-obsidian-grid text-slate-100 flex flex-col">
       <TopBar
         mode={mode}
         onSelectMode={sandbox.handleSelectMode}
@@ -190,7 +189,7 @@ function AppContent() {
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 {mode === 'VS_AI' ? (
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 min-w-0">
-                    <h1 className="font-display text-lg sm:text-xl font-bold tracking-tight text-white">
+                    <h1 className="font-display text-xl sm:text-2xl font-extrabold tracking-[-0.03em] text-white">
                       {sandbox.playSubMode === 'SOLO'
                         ? bi('Flappy Arcade · Solo', 'Flappy Arcade · Solo')
                         : bi('Pojedynek: Ty vs AI', 'Duel: Human vs. AI')}
@@ -246,8 +245,8 @@ function AppContent() {
             )}
 
             {mode === 'VS_AI' && (
-              <div className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-slate-800 bg-[#111827] px-2.5 py-2 lg:hidden">
-                <div className="inline-flex rounded-lg border border-slate-800 bg-[#0B1120] p-0.5 shrink-0">
+              <div className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-white/[0.08] bg-[#0C0F17] px-2.5 py-2 lg:hidden">
+                <div className="inline-flex rounded-lg border border-white/[0.08] bg-[#07080D] p-0.5 shrink-0">
                   <button
                     type="button"
                     onClick={() => sandbox.handleChangePlaySubMode('SOLO')}
@@ -324,7 +323,6 @@ function AppContent() {
                       ? false
                       : sandbox.showSensors
                   }
-                  ecoMode={mode === 'TRAINING' ? sandbox.ecoActive : false}
                   mode={mode}
                   playSubMode={sandbox.playSubMode}
                   personalBest={
@@ -376,7 +374,7 @@ function AppContent() {
                 />
 
                 {/* Transport & Simulation Controls Bar */}
-                <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-800 bg-[#111827] px-3 py-2.5 sm:px-4 sm:py-3">
+                <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-white/[0.08] bg-[#0C0F17] px-3 py-2.5 sm:px-4 sm:py-3">
                   {mode === 'TRAINING' ? (
                     <div className="flex flex-wrap items-center gap-2">
                       <button
@@ -640,32 +638,6 @@ function AppContent() {
 
                       <button
                         type="button"
-                        onClick={sandbox.handleCycleEcoMode}
-                        aria-pressed={sandbox.ecoActive}
-                        title={bi(
-                          'Tryb płynny / oszczędzanie zasobów podczas treningu na smartfonach',
-                          'Smooth Eco throttling during Training on smartphones'
-                        )}
-                        className={`inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
-                          sandbox.ecoActive
-                            ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                            : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
-                        }`}
-                      >
-                        <Leaf className="h-3.5 w-3.5" aria-hidden="true" />
-                        <span>
-                          {sandbox.ecoPreference === 'AUTO'
-                            ? sandbox.ecoActive
-                              ? 'Eco (Auto)'
-                              : bi('Auto', 'Auto')
-                            : sandbox.ecoActive
-                              ? 'Eco'
-                              : 'Full'}
-                        </span>
-                      </button>
-
-                      <button
-                        type="button"
                         onClick={sandbox.handleQuickSave}
                         disabled={!sandbox.trainingTelemetry.hasChampionBrain}
                         className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-slate-700 hover:text-white disabled:opacity-40"
@@ -700,7 +672,7 @@ function AppContent() {
 
                 {/* Training Lab Interactive AI & Topology Playground Bar — Clean & Responsive */}
                 {mode === 'TRAINING' && (
-                  <div className="rounded-xl border border-slate-800 bg-[#111827] p-4 space-y-3">
+                  <div className="rounded-xl border border-white/[0.08] bg-[#0C0F17] p-4 space-y-3">
                     {/* Row 1: Optimizer Selection + Bio Benchmark Presets */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300 shrink-0">
@@ -1227,7 +1199,7 @@ function AppContent() {
 
               {/* Right / AI Inspector OR Dedicated Play Arcade Deck */}
               <aside
-                className={`rounded-xl border border-slate-800 bg-[#111827] p-4 sm:p-5 space-y-5 ${
+                className={`rounded-xl border border-white/[0.08] bg-[#0C0F17] p-4 sm:p-5 space-y-5 ${
                   mode === 'VS_AI'
                     ? 'lg:col-span-5 xl:col-span-4'
                     : 'lg:col-span-5'

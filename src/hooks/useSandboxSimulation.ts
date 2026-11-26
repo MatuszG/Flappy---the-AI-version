@@ -1,12 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { arcadeAudio } from '../engine/audio';
-import {
-  isSmartphoneDevice,
-  loadEcoPreference,
-  persistEcoPreference,
-  resolveEcoActive,
-  type EcoModePreference,
-} from '../engine/deviceProfile';
 import { normalizeHiddenLayers } from '../engine/neuralNetwork';
 import {
   addCompletedPlayRun,
@@ -124,6 +117,12 @@ export function useSandboxSimulation(params: {
       ...DEFAULT_EVOLUTION_CONFIG,
       ...loaded,
       difficulty: normalizeDifficultyPreset(loaded.difficulty),
+      hiddenLayers: normalizeHiddenLayers(
+        loaded.hiddenLayers ??
+          loaded.hiddenNodes ??
+          DEFAULT_EVOLUTION_CONFIG.hiddenLayers
+      ),
+      inputFeatures: normalizeInputFeatures(loaded.inputFeatures),
     };
   });
   const [running, setRunning] = useState(true);
@@ -165,15 +164,6 @@ export function useSandboxSimulation(params: {
   playerNickRef.current = playerNick;
   const activeOpponentNameRef = useRef<string>(activeOpponentName);
   activeOpponentNameRef.current = activeOpponentName;
-  const [ecoPreference, setEcoPreference] = useState<EcoModePreference>(() =>
-    loadEcoPreference()
-  );
-  const [smartphoneDetected, setSmartphoneDetected] = useState<boolean>(() =>
-    isSmartphoneDevice()
-  );
-  const ecoActive = resolveEcoActive(ecoPreference, smartphoneDetected);
-  const ecoActiveRef = useRef<boolean>(ecoActive);
-  ecoActiveRef.current = ecoActive;
 
   const vsAiSimRef = useRef<FlappySimulation | null>(null);
   if (!vsAiSimRef.current) {
@@ -328,10 +318,17 @@ export function useSandboxSimulation(params: {
   }, []);
 
   useEffect(() => {
-    const worker = new Worker(
-      new URL('../engine/training.worker.ts', import.meta.url),
-      { type: 'module' }
-    );
+    if (typeof Worker === 'undefined') return;
+    let worker: Worker;
+    try {
+      worker = new Worker(
+        new URL('../engine/training.worker.ts', import.meta.url),
+        { type: 'module' }
+      );
+    } catch (err) {
+      console.error('Failed to start training worker:', err);
+      return;
+    }
     workerRef.current = worker;
 
     worker.onmessage = (ev: MessageEvent<WorkerOutboundMessage>) => {
@@ -345,9 +342,8 @@ export function useSandboxSimulation(params: {
         if (msg.genAdvanced) arcadeAudio.playGenerationAdvance();
 
         const now = performance.now();
-        const uiSyncMinMs = ecoActiveRef.current ? 140 : 55;
         if (
-          now - lastUiSyncRef.current >= uiSyncMinMs ||
+          now - lastUiSyncRef.current >= 55 ||
           msg.genAdvanced ||
           msg.scored
         ) {
@@ -370,6 +366,11 @@ export function useSandboxSimulation(params: {
         ...DEFAULT_EVOLUTION_CONFIG,
         ...initialConfig,
         difficulty: normalizeDifficultyPreset(initialConfig.difficulty),
+        hiddenLayers: normalizeHiddenLayers(
+          initialConfig.hiddenLayers ??
+            initialConfig.hiddenNodes ??
+            DEFAULT_EVOLUTION_CONFIG.hiddenLayers
+        ),
         inputFeatures: normalizeInputFeatures(initialConfig.inputFeatures),
       },
       speed: 1,
@@ -383,37 +384,13 @@ export function useSandboxSimulation(params: {
       } satisfies WorkerInboundMessage);
     };
 
-    const handleResize = () => {
-      setSmartphoneDetected(isSmartphoneDevice());
-    };
-
-    worker.postMessage({
-      type: 'SET_MOBILE_ECO',
-      enabled: ecoActiveRef.current,
-    } satisfies WorkerInboundMessage);
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('resize', handleResize);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('resize', handleResize);
       worker.terminate();
       workerRef.current = null;
     };
   }, []);
-
-  useEffect(() => {
-    persistEcoPreference(ecoPreference);
-    postToWorker({ type: 'SET_MOBILE_ECO', enabled: ecoActive });
-  }, [ecoPreference, ecoActive, postToWorker]);
-
-  const handleCycleEcoMode = useCallback(() => {
-    setEcoPreference((prev) => {
-      if (prev === 'AUTO') return smartphoneDetected ? 'FULL' : 'ECO';
-      if (prev === 'ECO') return 'FULL';
-      return 'AUTO';
-    });
-  }, [smartphoneDetected]);
 
   useEffect(() => {
     saveTrainingConfig(config);
@@ -967,9 +944,6 @@ export function useSandboxSimulation(params: {
     playHistory,
     leaderboard,
     lastCompletedRunId,
-    ecoPreference,
-    ecoActive,
-    smartphoneDetected,
     trainingTelemetry,
     vsAiTelemetry,
     trainingSnapshotRef,
@@ -978,7 +952,6 @@ export function useSandboxSimulation(params: {
     handleChangePlaySubMode,
     handleSelectPlayDifficulty,
     handleUseEvolvedChampionOpponent,
-    handleCycleEcoMode,
     handleToggleRunning,
     handleSelectSpeed,
     handleResetTraining,

@@ -43,8 +43,18 @@ export function loadSavedBrains(): SavedBrain[] {
     if (!raw) return [PRETRAINED_ACE_BRAIN];
     const parsed = JSON.parse(raw) as SavedBrain[];
     if (!Array.isArray(parsed)) return [PRETRAINED_ACE_BRAIN];
-    const hasPreset = parsed.some((b) => b.id === PRETRAINED_ACE_BRAIN.id);
-    return hasPreset ? parsed : [PRETRAINED_ACE_BRAIN, ...parsed];
+    const valid = parsed.filter(
+      (b) =>
+        b &&
+        typeof b === 'object' &&
+        typeof b.id === 'string' &&
+        typeof b.name === 'string' &&
+        b.network &&
+        Array.isArray(b.network.weightsIH) &&
+        Array.isArray(b.network.weightsHO)
+    );
+    const hasPreset = valid.some((b) => b.id === PRETRAINED_ACE_BRAIN.id);
+    return hasPreset ? valid : [PRETRAINED_ACE_BRAIN, ...valid];
   } catch {
     return [PRETRAINED_ACE_BRAIN];
   }

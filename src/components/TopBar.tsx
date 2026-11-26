@@ -53,14 +53,14 @@ export function TopBar({
   ];
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-800/85 bg-[#0B1120]/95 backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-white/[0.08] bg-[#07080D]/90 backdrop-blur-md">
       {/* Main Row: Single-row on Tablet & Desktop (md+); Compact utility row on Mobile (<md) */}
-      <div className="mx-auto flex h-12 md:h-14 max-w-[1440px] items-center justify-between gap-2 px-3 sm:px-5 lg:px-6">
+      <div className="mx-auto flex h-12 md:h-14 max-w-[1440px] items-center justify-between gap-2 sm:gap-8 px-3 sm:px-5 lg:px-6">
         {/* Zone 1: Brand Wordmark */}
         <button
           type="button"
           onClick={() => onSelectMode('VS_AI')}
-          className="font-display text-[15px] sm:text-base lg:text-lg font-bold tracking-tight text-slate-50 whitespace-nowrap shrink-0 cursor-pointer hover:text-amber-300 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-400 rounded-sm"
+          className="font-display text-[15px] sm:text-base lg:text-lg font-extrabold tracking-[-0.03em] text-slate-50 whitespace-nowrap shrink-0 cursor-pointer hover:text-amber-300 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-400 rounded-sm"
         >
           Flappy NeuroLab
         </button>
@@ -68,7 +68,7 @@ export function TopBar({
         {/* Zone 2: Desktop & Tablet Navigation (md+) */}
         <nav
           aria-label="Primary"
-          className="hidden md:flex items-center gap-5 lg:gap-7 text-sm font-medium"
+          className="hidden md:flex items-center gap-6 lg:gap-8 text-[13.5px] font-medium tracking-[-0.01em]"
         >
           {navItems.map((item) => {
             const active = mode === item.id;
@@ -78,13 +78,13 @@ export function TopBar({
                 type="button"
                 onClick={() => onSelectMode(item.id)}
                 className={`relative py-4 whitespace-nowrap shrink-0 cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-400 rounded-sm ${
-                  active ? item.activeText : 'text-slate-400 hover:text-slate-100'
+                  active ? `${item.activeText} font-semibold` : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {item.label}
                 {active && (
                   <span
-                    className={`absolute inset-x-0 bottom-0 h-0.5 ${item.accentBar}`}
+                    className={`absolute inset-x-0 bottom-0 h-[2px] ${item.accentBar}`}
                   />
                 )}
               </button>
@@ -99,7 +99,7 @@ export function TopBar({
             onClick={onOpenHowItWorks}
             title={bi('Jak to działa', 'How It Works')}
             aria-label={bi('Jak to działa', 'How It Works')}
-            className="inline-flex h-8 sm:h-9 items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/80 px-2.5 sm:px-3 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-slate-700 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
+            className="inline-flex h-8 sm:h-9 items-center gap-1.5 rounded-lg border border-white/[0.09] bg-[#0D1018] px-2.5 sm:px-3 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-white/25 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
           >
             <HelpCircle className="h-3.5 w-3.5 text-slate-400 shrink-0" aria-hidden="true" />
             <span className="hidden sm:inline">
@@ -120,7 +120,7 @@ export function TopBar({
                 ? 'Switch interface language to English'
                 : 'Zmień język interfejsu na polski'
             }
-            className="inline-flex h-8 sm:h-9 items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/90 px-2.5 font-mono text-[11px] font-semibold text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-cyan-500/50 hover:bg-slate-800 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
+            className="inline-flex h-8 sm:h-9 items-center gap-1.5 rounded-lg border border-white/[0.09] bg-[#0D1018] px-2.5 font-mono text-[11px] font-semibold text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-cyan-500/50 hover:bg-[#141824] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
           >
             {lang === 'pl' ? (
               <>
@@ -157,7 +157,7 @@ export function TopBar({
       {/* Mobile Primary Mode Bar (<md): 4 equal-width tabs, zero horizontal scroll, zero clipping */}
       <nav
         aria-label="Primary Mobile"
-        className="grid grid-cols-4 border-t border-slate-800/75 md:hidden"
+        className="grid grid-cols-4 border-t border-white/[0.07] md:hidden"
       >
         {navItems.map((item) => {
           const active = mode === item.id;
@@ -168,7 +168,7 @@ export function TopBar({
               onClick={() => onSelectMode(item.id)}
               className={`relative flex h-10 items-center justify-center text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors ${
                 active
-                  ? `${item.activeText} bg-slate-900/55`
+                  ? `${item.activeText} bg-white/[0.04]`
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >

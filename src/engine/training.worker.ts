@@ -12,7 +12,6 @@ export type WorkerInboundMessage =
   | { type: 'SET_RUNNING'; running: boolean }
   | { type: 'SET_SPEED'; speed: SpeedSetting }
   | { type: 'SET_VISIBILITY'; hidden: boolean }
-  | { type: 'SET_MOBILE_ECO'; enabled: boolean }
   | { type: 'STEP_ONCE' }
   | { type: 'UPDATE_CONFIG'; config: EvolutionConfig }
   | { type: 'RESET' }
@@ -40,11 +39,13 @@ const workerScope = self as unknown as {
   onmessage: ((ev: MessageEvent<WorkerInboundMessage>) => void) | null;
 };
 
+const TRAINING_POWER_CAP = 0.95;
+const TRAINING_FRAME_TARGET_MS = 16;
+
 let sim: FlappySimulation | null = null;
 let running = true;
 let speed: SpeedSetting = 1;
 let tabHidden = false;
-let mobileEco = false;
 let timerId: ReturnType<typeof setTimeout> | null = null;
 
 let pendingScored = false;
@@ -90,8 +91,8 @@ function tickLoop(): void {
   const loopStart = performance.now();
 
   if (sim && running) {
-    const targetSteps = speed === 'MAX' ? (mobileEco ? 2400 : 8000) : speed;
-    const budgetMs = tabHidden ? 48 : mobileEco ? 7.5 : 13.5;
+    const targetSteps = speed === 'MAX' ? 6000 : speed;
+    const budgetMs = tabHidden ? 48 : TRAINING_FRAME_TARGET_MS * TRAINING_POWER_CAP;
 
     let stepsDone = 0;
     for (let s = 0; s < targetSteps; s++) {
@@ -137,8 +138,9 @@ function tickLoop(): void {
 
   const workMs = performance.now() - loopStart;
   if (running) {
-    const targetInterval = tabHidden ? 45 : mobileEco ? 28 : 16;
-    const delay = Math.max(mobileEco ? 6 : 1, targetInterval - workMs);
+    const targetInterval = tabHidden ? 45 : TRAINING_FRAME_TARGET_MS;
+    const minPauseMs = tabHidden ? 2 : Math.max(1, Math.round(TRAINING_FRAME_TARGET_MS * (1 - TRAINING_POWER_CAP)));
+    const delay = Math.max(minPauseMs, targetInterval - workMs);
     timerId = setTimeout(tickLoop, delay);
   }
 }
@@ -196,10 +198,6 @@ workerScope.onmessage = (ev: MessageEvent<WorkerInboundMessage>) => {
       if (!tabHidden && running) {
         emitFullFrame();
       }
-      break;
-    }
-    case 'SET_MOBILE_ECO': {
-      mobileEco = Boolean(msg.enabled);
       break;
     }
     case 'STEP_ONCE': {
