@@ -26,6 +26,8 @@ import type {
   ResearchSweepConfig,
   ResearchTrialResult,
 } from '../../engine/types';
+import researchEmblemImg from '../../assets/images/research_emblem_1795032939270.jpg';
+import { useLanguage } from '../../i18n/LanguageContext';
 import { formatNormCompute } from './researchUtils';
 
 interface ResearchReportPanelProps {
@@ -54,6 +56,7 @@ export const ResearchReportPanel = memo(function ResearchReportPanel({
   githubLakeMeta,
   onClearSavedSession,
 }: ResearchReportPanelProps) {
+  const { t } = useLanguage();
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const [emblemError, setEmblemError] = useState(false);
   const [copiedLlmMeta, setCopiedLlmMeta] = useState<string | null>(null);
@@ -200,8 +203,8 @@ export const ResearchReportPanel = memo(function ResearchReportPanel({
           <div className="h-12 w-12 overflow-hidden rounded-lg border border-slate-700 bg-[#0B1120] shrink-0 flex items-center justify-center">
             {!emblemError ? (
               <img
-                src="./src/assets/images/research_emblem_1795032939270.jpg"
-                alt="Neural network bird research emblem"
+                src={researchEmblemImg}
+                alt={t('research.neuralNetworkBirdResearchEmblem')}
                 referrerPolicy="no-referrer"
                 onError={() => setEmblemError(true)}
                 className="h-full w-full object-cover"
@@ -212,12 +215,10 @@ export const ResearchReportPanel = memo(function ResearchReportPanel({
           </div>
           <div>
             <h2 className="font-display text-lg font-semibold text-white">
-              Automated Research Report &amp; World Model Insights
+              {t('research.automatedResearchReportWorldModel')}
             </h2>
             <p className="text-xs text-slate-400">
-              Compute-normalized empirical synthesis, hyperparameter sweet
-              spots, mechanistic policy inspection &amp; off-thread dataset
-              exports
+              {t('research.computeNormalizedEmpiricalSynthesisH')}
             </p>
           </div>
         </div>
@@ -252,8 +253,8 @@ export const ResearchReportPanel = memo(function ResearchReportPanel({
               onClick={onLoadGithubLake}
               title={
                 githubLakeMeta && githubLakeMeta.totalTrials > 0
-                  ? `Load aggregated GitHub Data Lake (${githubLakeMeta.runCount} runs · ${githubLakeMeta.totalTrials} trials · ${githubLakeMeta.totalPerfect} perfect)`
-                  : 'Load aggregated GitHub Research Data Lake snapshot (public/data/research-lake.json)'
+                  ? t('research.loadAggregatedGithubDataLake', { runCount: githubLakeMeta.runCount, totalTrials: githubLakeMeta.totalTrials, totalPerfect: githubLakeMeta.totalPerfect })
+                  : t('research.loadAggregatedGithubResearchData2')
               }
               className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200 whitespace-nowrap cursor-pointer transition-colors hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -270,13 +271,13 @@ export const ResearchReportPanel = memo(function ResearchReportPanel({
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-400 whitespace-nowrap cursor-pointer transition-colors hover:border-red-500/50 hover:text-red-300"
             >
               <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-              Clear Cache
+              {t('research.clearCache')}
             </button>
           )}
           <button
             type="button"
             disabled={results.length === 0 || exportBusy !== null}
-            title="Copy ultra-compact AI Delta-Digest (Paired A/B diffs, Failure Autopsy, Reasoning Telemetry, Anomalies)"
+            title={t('research.copyUltraCompactAiDelta')}
             onClick={() => void handleCopyAiDelta()}
             className="inline-flex items-center gap-2 rounded-lg border border-violet-500/50 bg-violet-500/15 px-3 py-2 text-xs font-semibold text-violet-200 whitespace-nowrap cursor-pointer transition-colors hover:bg-violet-500/25 disabled:cursor-not-allowed disabled:opacity-40"
           >
@@ -288,68 +289,74 @@ export const ResearchReportPanel = memo(function ResearchReportPanel({
             ) : (
               <>
                 <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-                {exportBusy === 'delta' ? 'Compiling…' : 'AI Delta'}
+                {exportBusy === 'delta' ? t('research.compiling') : 'AI Delta'}
               </>
             )}
           </button>
           <button
             type="button"
             disabled={results.length === 0 || exportBusy !== null}
-            title="Copy compact LLM-native digest (~4k–9k tokens, compiled off main thread)"
+            title={t('research.copyCompactLlmNativeDigest')}
             onClick={() => void handleCopyLlmDigest()}
             className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-3.5 py-2 text-xs font-semibold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {copiedLlmMeta ? (
               <>
                 <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                Copied ({copiedLlmMeta})
+                {t('research.copied2')} ({copiedLlmMeta})
               </>
             ) : (
               <>
                 <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-                {exportBusy === 'copy' ? 'Compiling…' : 'Copy for LLM'}
+                {exportBusy === 'copy'
+                  ? t('research.compiling')
+                  : t('research.copyForLlm')}
               </>
             )}
           </button>
           <button
             type="button"
             disabled={results.length === 0 || exportBusy !== null}
-            title="Download compact LLM-ready Markdown digest (compiled off main thread)"
+            title={t('research.downloadCompactLlmReadyMarkdown')}
             onClick={() => void handleExportMd()}
             className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-4 py-2 text-xs font-semibold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <FileText className="h-3.5 w-3.5" aria-hidden="true" />
-            {exportBusy === 'md' ? 'Building…' : 'LLM Report (.md)'}
+            {exportBusy === 'md'
+              ? t('research.building')
+              : t('research.llmReportMd')}
           </button>
           <button
             type="button"
             disabled={results.length === 0 || exportBusy !== null}
-            title="Download LLM Analysis Pack: trials.jsonl + meta-dossier.md"
+            title={t('research.downloadLlmAnalysisPackTrials')}
             onClick={() => void handleExportLlmPack()}
             className="inline-flex items-center gap-2 rounded-lg border border-amber-500/50 bg-amber-500/15 px-3.5 py-2 text-xs font-semibold text-amber-200 whitespace-nowrap cursor-pointer transition-colors hover:bg-amber-500/25 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Download className="h-3.5 w-3.5" aria-hidden="true" />
-            {exportBusy === 'llmpack' ? 'Packing…' : 'LLM Pack (.jsonl + MD)'}
+            {exportBusy === 'llmpack'
+              ? t('research.packing')
+              : 'LLM Pack (.jsonl + MD)'}
           </button>
           <button
             type="button"
             disabled={results.length === 0 || exportBusy !== null}
-            title="Download full raw per-trial dataset as CSV (compiled off main thread)"
+            title={t('research.downloadFullRawPerTrial')}
             onClick={() => void handleExportCsv()}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-medium text-slate-200 whitespace-nowrap cursor-pointer transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Download className="h-3.5 w-3.5" aria-hidden="true" />
-            {exportBusy === 'csv' ? 'Building…' : 'Raw CSV'}
+            {exportBusy === 'csv' ? t('research.building') : 'Raw CSV'}
           </button>
           <button
             type="button"
             disabled={results.length === 0 || exportBusy !== null}
-            title="Download full raw dataset + protocol + brains as JSON (compiled off main thread)"
+            title={t('research.downloadFullRawDatasetProtocol')}
             onClick={() => void handleExportJson()}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-medium text-slate-200 whitespace-nowrap cursor-pointer transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <FileJson className="h-3.5 w-3.5" aria-hidden="true" />
-            {exportBusy === 'json' ? 'Building…' : 'Raw JSON'}
+            {exportBusy === 'json' ? t('research.building') : 'Raw JSON'}
           </button>
         </div>
       </div>
@@ -360,7 +367,7 @@ export const ResearchReportPanel = memo(function ResearchReportPanel({
             <div className="grid grid-cols-2 gap-2.5">
               <div className="rounded-lg border border-slate-800 bg-[#0B1120] p-3">
                 <div className="text-[11px] font-medium text-slate-400">
-                  Verified Perfection
+                  {t('research.verifiedPerfection')}
                 </div>
                 <div className="mt-1 font-mono text-lg font-semibold tabular-nums text-emerald-300">
                   {(
@@ -378,21 +385,21 @@ export const ResearchReportPanel = memo(function ResearchReportPanel({
 
               <div className="rounded-lg border border-slate-800 bg-[#0B1120] p-3">
                 <div className="text-[11px] font-medium text-slate-400">
-                  Regime Compute Split
+                  {t('research.regimeComputeSplit')}
                 </div>
                 <div className="mt-1 font-mono text-lg font-semibold tabular-nums text-cyan-300">
-                  {findings.regimeSplit.solvedScenarios.length} Solved /{' '}
+                  {findings.regimeSplit.solvedScenarios.length} {t('research.solved')} /{' '}
                   {findings.regimeSplit.unsolvedScenarios.length} Frontier
                 </div>
                 <div className="mt-0.5 font-mono text-[11px] tabular-nums text-slate-400">
                   {findings.regimeSplit.solvedComputePct}% vs{' '}
-                  {findings.regimeSplit.unsolvedComputePct}% compute
+                  {findings.regimeSplit.unsolvedComputePct}% {t('research.compute')}
                 </div>
               </div>
 
               <div className="rounded-lg border border-slate-800 bg-[#0B1120] p-3">
                 <div className="text-[11px] font-medium text-slate-400">
-                  Fastest Perfection
+                  {t('research.fastestPerfection')}
                 </div>
                 <div className="mt-1 font-mono text-lg font-semibold tabular-nums text-white">
                   {findings.fastestPerfectTrial
@@ -402,13 +409,13 @@ export const ResearchReportPanel = memo(function ResearchReportPanel({
                 <div className="mt-0.5 font-mono text-[11px] tabular-nums text-slate-400 truncate">
                   {findings.fastestPerfectTrial
                     ? `${ALGORITHM_SHORT_LABELS[findings.fastestPerfectTrial.algorithm]} · ${findings.fastestPerfectTrial.topologyLabel} (${findings.fastestPerfectTrial.parameterCount}p, G${findings.fastestPerfectTrial.generationsRun})`
-                    : 'No verified perfect trial yet'}
+                    : t('research.noVerifiedPerfectTrialYet')}
                 </div>
               </div>
 
               <div className="rounded-lg border border-slate-800 bg-[#0B1120] p-3">
                 <div className="text-[11px] font-medium text-slate-400">
-                  Peak Compression
+                  {t('research.peakCompression')}
                 </div>
                 <div className="mt-1 font-mono text-lg font-semibold tabular-nums text-amber-300">
                   {findings.mostDenseTrial

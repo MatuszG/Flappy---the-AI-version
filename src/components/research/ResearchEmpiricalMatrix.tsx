@@ -32,6 +32,7 @@ import {
   type MatrixInputOption,
   type MatrixRowTopology,
 } from './researchUtils';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 interface ResearchEmpiricalMatrixProps {
   sweepConfig: ResearchSweepConfig;
@@ -78,6 +79,7 @@ export const ResearchEmpiricalMatrix = memo(function ResearchEmpiricalMatrix({
   onLoadTrialIntoLab,
   onRaceTrial,
 }: ResearchEmpiricalMatrixProps) {
+  const { t } = useLanguage();
   const [internalMatrixView, setInternalMatrixView] = useState<
     'TOPO_SCENARIO' | 'ALGO_TOPO'
   >('TOPO_SCENARIO');
@@ -106,12 +108,11 @@ export const ResearchEmpiricalMatrix = memo(function ResearchEmpiricalMatrix({
         <div>
           <h2 className="font-display text-base font-semibold text-white">
             {matrixView === 'TOPO_SCENARIO'
-              ? 'Topology × Scenario Matrix'
-              : 'AI Algorithm × Topology Matrix'}
+              ? t('research.topologyScenarioMatrix')
+              : t('research.aiAlgorithmTopologyMatrix')}
           </h2>
           <p className="text-xs text-slate-400">
-            Worst-case across {sweepConfig.verificationSeeds} unseen seeds ·
-            Kliknij komórkę, aby zbadać lub przetestować
+            {t('research.worstCaseAcrossUnseenSeeds', { verificationSeeds: sweepConfig.verificationSeeds })}
           </p>
         </div>
 
@@ -127,7 +128,7 @@ export const ResearchEmpiricalMatrix = memo(function ResearchEmpiricalMatrix({
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                Topology × Scenario
+                {t('research.topologyScenario')}
               </button>
               <button
                 type="button"
@@ -138,21 +139,21 @@ export const ResearchEmpiricalMatrix = memo(function ResearchEmpiricalMatrix({
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                AI × Topology
+                {t('research.aiTopology2')}
               </button>
             </div>
           )}
 
           {matrixView === 'TOPO_SCENARIO' ? (
             <select
-              aria-label="Filter matrix by AI algorithm"
+              aria-label={t('research.filterMatrixByAiAlgorithm')}
               value={matrixAlgoFilter}
               onChange={(e) =>
                 onChangeAlgoFilter(e.target.value as LearningAlgorithm | 'ALL')
               }
               className="rounded-lg border border-slate-800 bg-[#0B1120] px-2.5 py-1.5 font-mono text-xs text-slate-200 focus:border-cyan-400 focus:outline-none"
             >
-              <option value="ALL">All Algos</option>
+              <option value="ALL">{t('research.allAlgos')}</option>
               {sweepConfig.algorithms.map((a) => (
                 <option key={a} value={a}>
                   {ALGORITHM_SHORT_LABELS[a]}
@@ -161,14 +162,14 @@ export const ResearchEmpiricalMatrix = memo(function ResearchEmpiricalMatrix({
             </select>
           ) : (
             <select
-              aria-label="Filter matrix by scenario"
+              aria-label={t('research.filterMatrixByScenario')}
               value={matrixDiffFilter}
               onChange={(e) =>
                 onChangeDiffFilter(e.target.value as DifficultyPreset | 'ALL')
               }
               className="rounded-lg border border-slate-800 bg-[#0B1120] px-2.5 py-1.5 font-mono text-xs text-slate-200 focus:border-cyan-400 focus:outline-none"
             >
-              <option value="ALL">All Scenarios</option>
+              <option value="ALL">{t('research.allScenarios')}</option>
               {sweepConfig.difficulties.map((d) => (
                 <option key={d} value={d}>
                   {resolveEnvironment(d, sweepConfig.customEnvironment).label}
@@ -179,13 +180,13 @@ export const ResearchEmpiricalMatrix = memo(function ResearchEmpiricalMatrix({
 
           {matrixInputOptions.length > 1 && (
             <select
-              aria-label="Filter matrix by sensor input subset"
+              aria-label={t('research.filterMatrixBySensorInput')}
               value={matrixInputFilter}
               onChange={(e) => onChangeInputFilter(e.target.value)}
               className="rounded-lg border border-slate-800 bg-[#0B1120] px-2.5 py-1.5 font-mono text-xs text-cyan-200 focus:border-cyan-400 focus:outline-none"
             >
               <option value="ALL">
-                All Inputs ({matrixInputOptions.length})
+                {t('research.allInputs')} ({matrixInputOptions.length})
               </option>
               {matrixInputOptions.map((opt) => (
                 <option key={opt.key} value={opt.key}>
@@ -200,14 +201,14 @@ export const ResearchEmpiricalMatrix = memo(function ResearchEmpiricalMatrix({
               type="text"
               value={matrixTopoSearch}
               onChange={(e) => setMatrixTopoSearch(e.target.value)}
-              placeholder={`Filter ${matrixRowTopologies.length} topologies…`}
-              aria-label="Filter matrix topologies"
+              placeholder={t('research.filterTopologies2', { matrixRowTopologie: matrixRowTopologies.length })}
+              aria-label={t('research.filterMatrixTopologies')}
               className="w-40 rounded-lg border border-slate-800 bg-[#0B1120] px-2.5 py-1.5 font-mono text-xs text-slate-200 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
             />
           )}
 
           <span className="font-mono text-xs tabular-nums text-emerald-300">
-            Cap: {sweepConfig.targetPipeCap.toLocaleString()}
+            {t('research.cap')}: {sweepConfig.targetPipeCap.toLocaleString()}
           </span>
         </div>
       </div>
@@ -218,7 +219,7 @@ export const ResearchEmpiricalMatrix = memo(function ResearchEmpiricalMatrix({
             <thead className="sticky top-0 z-20 bg-[#111827]">
               <tr className="border-b border-slate-800 text-slate-400">
                 <th className="sticky left-0 z-30 bg-[#111827] py-2 pl-2 pr-3 font-medium">
-                  Topology ({filteredMatrixRowTopologies.length})
+                  {t('research.topology2')} ({filteredMatrixRowTopologies.length})
                 </th>
                 {sweepConfig.difficulties.map((d) => (
                   <th

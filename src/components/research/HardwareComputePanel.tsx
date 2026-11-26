@@ -16,23 +16,25 @@ import {
   type WebGpuProbeInfo,
 } from '../../engine/webgpuEvaluator';
 import { useLanguage } from '../../i18n/LanguageContext';
+import { getPowerProfileText } from '../../i18n/catalog';
 import { InfoTooltip } from '../InfoTooltip';
 
 const QUICK_POWER_STOPS = [
-  { labelPl: 'Cichy', labelEn: 'Quiet', priority: 25 },
-  { labelPl: 'Eco', labelEn: 'Eco', priority: 50 },
-  { labelPl: 'Balans', labelEn: 'Balanced', priority: 75 },
-  { labelPl: '100% Max', labelEn: '100% Max', priority: 100 },
+  { key: 'hardware.powerStops.p25' as const, priority: 25 },
+  { key: 'hardware.powerStops.p50' as const, priority: 50 },
+  { key: 'hardware.powerStops.p75' as const, priority: 75 },
+  { key: 'hardware.powerStops.p100' as const, priority: 100 },
 ] as const;
 
 const GPU_LOAD_STOPS = [
   { label: '25%', value: 25 },
   { label: '50%', value: 50 },
   { label: '75%', value: 75 },
-  { label: '100% Max', value: 100 },
+  { label: '95%', value: 95 },
+  { label: '100%', value: 100 },
 ] as const;
 
-const AUTOSAVE_CYCLE = [30, 60, 120, 0] as const;
+const AUTOSAVE_CYCLE = [20, 30, 60, 120, 0] as const;
 
 interface HardwareComputePanelProps {
   sweepConfig: ResearchSweepConfig;
@@ -51,7 +53,7 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
   onChangePriority,
   onChangeGpuLoad,
 }: HardwareComputePanelProps) {
-  const { bi } = useLanguage();
+  const { lang, t } = useLanguage();
   const hardwareCores = useMemo(() => getHardwareCores(), []);
   const autoWorkers = useMemo(() => resolveAutoWorkerCount(), []);
   const priority = clampPriority(sweepConfig.performancePriority);
@@ -91,7 +93,7 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
       })
       .catch((err) => {
         setGpuBenchResult(
-          `${bi('Błąd', 'Error')}: ${err instanceof Error ? err.message : String(err)}`
+          `${t('hardware.errorPrefix')}: ${err instanceof Error ? err.message : String(err)}`
         );
       })
       .finally(() => {
@@ -120,14 +122,11 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
         <div className="flex items-center justify-between gap-2 text-xs">
           <span className="inline-flex items-center gap-1.5 font-medium text-slate-200">
             <Cpu className="h-3.5 w-3.5 text-cyan-400" aria-hidden="true" />
-            {bi('Silnik obliczeń', 'Compute Backend')}
+            {t('hardware.computeBackend')}
             <InfoTooltip
               align="left"
-              label={bi('Backend obliczeń', 'Compute Backend')}
-              text={bi(
-                'Auto wybiera najszybszy silnik w locie. CPU używa wyłącznie Web Workerów f64. GPU uruchamia dynamiczne tiery WebGPU (8/12 → 64/64) z kalibracją rejestrów i ochroną TDR + wątki CPU dla równoległego audytu f64. Hybrid uruchamia oba naraz.',
-                'Auto picks the fastest backend at runtime. CPU uses f64 Web Workers only. GPU runs dynamic WebGPU tiers (8/12 → 64/64) with startup register calibration & TDR guard + CPU threads for parallel f64 audit. Hybrid runs both.'
-              )}
+              label={t('hardware.computeBackend2')}
+              text={t('hardware.autoPicksTheFastestBackend')}
             />
           </span>
           <div className="flex items-center gap-2 min-w-0">
@@ -215,18 +214,15 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
           <span className="inline-flex items-center gap-1.5 font-medium text-slate-200">
             <Zap className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
-            {bi('Obciążenie GPU (WebGPU)', 'GPU Load (WebGPU)')}
+            {t('hardware.gpuLoadWebgpu')}
             <InfoTooltip
               align="left"
-              label={bi('Obciążenie GPU i ochrona TDR', 'GPU Load & TDR Watchdog')}
-              text={bi(
-                '100% = pełne nasycenie GPU bez sztucznych przerw (z automatyczną ochroną Windows TDR <400ms i auto-tunerem rejestrów). Obniż wartość na laptopach/iGPU, aby zachować płynny pulpit i niższą temperaturę.',
-                '100% = full GPU saturation with zero artificial rest (with automatic Windows TDR <400ms watchdog & startup register auto-tuner). Lower on laptops/iGPUs for cooler temps and smooth desktop video.'
-              )}
+              label={t('hardware.gpuLoadTdrWatchdog')}
+              text={t('hardware.k100FullGpuSaturationWith')}
             />
             {isRunning && progress.gpuActive && (
               <span className="font-mono text-[10px] text-emerald-300">
-                · {bi('na żywo', 'live')}
+                · {t('hardware.live')}
               </span>
             )}
           </span>
@@ -234,8 +230,8 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
           <span className="font-mono text-[11px] tabular-nums text-slate-300">
             <strong className="text-emerald-300">{gpuLoadPercent}%</strong> ·{' '}
             {gpuLoadPercent >= 98
-              ? bi('Pełny focus · TDR guard', 'Full focus · TDR guard')
-              : bi('Duty-cycle · płynny pulpit', 'Duty-cycle · smooth UI')}
+              ? t('hardware.fullFocusTdrGuard')
+              : t('hardware.dutyCycleSmoothUi')}
           </span>
         </div>
 
@@ -245,14 +241,14 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
           max={100}
           step={5}
           value={gpuLoadPercent}
-          aria-label={bi('Docelowe obciążenie GPU w procentach', 'Target GPU load percentage')}
+          aria-label={t('hardware.targetGpuLoadPercentage')}
           onChange={(e) => onChangeGpuLoad(Number(e.target.value))}
           className="lab-slider w-full cursor-pointer"
         />
 
-        <div className="grid grid-cols-4 gap-1">
+        <div className="grid grid-cols-5 gap-1">
           {GPU_LOAD_STOPS.map((stop) => {
-            const active = Math.abs(gpuLoadPercent - stop.value) <= 5;
+            const active = Math.abs(gpuLoadPercent - stop.value) <= 2;
             return (
               <button
                 key={stop.value}
@@ -275,14 +271,11 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-xs">
           <span className="inline-flex items-center gap-1.5 font-medium text-slate-200">
-            {bi('Limit wątków CPU', 'CPU Thread Limit')}
+            {t('hardware.cpuThreadLimit')}
             <InfoTooltip
               align="left"
-              label={bi('Wątki CPU', 'CPU Threads')}
-              text={bi(
-                'Ustawia łączny limit wątków CPU dla treningu i równoległego audytu f64 (wszystkie dostępne wątki audytu działają automatycznie przy >1 ziarnie).',
-                'Sets total CPU thread budget for training and parallel f64 verification audit (automatically uses all available audit threads when verification seeds > 1).'
-              )}
+              label={t('hardware.cpuThreads')}
+              text={t('hardware.setsTotalCpuThreadBudget')}
             />
           </span>
           <span className="font-mono text-[11px] text-cyan-300 tabular-nums">
@@ -336,7 +329,7 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
           </div>
 
           <select
-            aria-label={bi('Własna liczba wątków CPU', 'Custom CPU thread count')}
+            aria-label={t('hardware.customCpuThreadCount')}
             disabled={isBusy}
             value={
               sweepConfig.workerThreads > 0 ? sweepConfig.workerThreads : ''
@@ -350,11 +343,11 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
             className="rounded-lg border border-slate-800 bg-[#0B1120] px-2.5 py-2 font-mono text-[11px] text-slate-300 focus:border-cyan-400 focus:outline-none disabled:opacity-40"
           >
             <option value="" disabled>
-              {bi('Własne…', 'Custom…')}
+              {t('hardware.custom')}
             </option>
             {manualThreadOptions.map((n) => (
               <option key={n} value={n}>
-                {n} {bi('wątków', 'threads')}
+                {n} {t('hardware.threads')}
               </option>
             ))}
           </select>
@@ -372,18 +365,20 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
             ) : (
               <Flame className="h-3.5 w-3.5 text-rose-400" aria-hidden="true" />
             )}
-            {bi('Moc & Temperatura CPU', 'CPU Power & Thermal')}
+            {t('hardware.cpuPowerThermal')}
             {isRunning && (
               <span className="font-mono text-[10px] text-emerald-300">
-                · {bi('na żywo', 'live')}
+                · {t('hardware.live')}
               </span>
             )}
           </span>
 
           <span className="font-mono text-[11px] tabular-nums text-slate-300">
             <strong className="text-white">{priority}%</strong> ·{' '}
-            {plan.thermalBadge} ·{' '}
-            {plan.workerRestMs > 0 ? `${plan.workerRestMs}ms rest` : '0ms rest'}
+            {getPowerProfileText(lang, plan.modeId).thermalBadge} ·{' '}
+            {plan.workerRestMs > 0
+              ? `${plan.workerRestMs}ms ${t('hardware.restLabel')}`
+              : `0ms ${t('hardware.restLabel')}`}
             {isRunning && (progress.liveTicksPerSec ?? 0) > 0 && (
               <span className="text-emerald-300">
                 {' '}
@@ -399,7 +394,7 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
           max={100}
           step={1}
           value={priority}
-          aria-label={bi('Priorytet mocy CPU względem temperatury', 'CPU performance vs thermal priority')}
+          aria-label={t('hardware.cpuPerformanceVsThermalPriority')}
           onChange={(e) => onChangePriority(Number(e.target.value))}
           className="lab-slider w-full cursor-pointer"
         />
@@ -418,7 +413,7 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
                     : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200'
                 }`}
               >
-                {bi(stop.labelPl, stop.labelEn)}
+                {t(stop.key)}
               </button>
             );
           })}
@@ -430,10 +425,7 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
         <button
           type="button"
           disabled={isBusy}
-          title={bi(
-            'Balanced miesza ciężkie i lekkie próby; LPT uruchamia najcięższe najpierw',
-            'Balanced mixes heavy & light trials; LPT runs heaviest first'
-          )}
+          title={t('hardware.balancedMixesHeavyLightTrials')}
           onClick={() =>
             onChangeConfig({
               ...sweepConfig,
@@ -445,7 +437,7 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
           }
           className="flex items-center justify-between rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-slate-300 cursor-pointer hover:border-cyan-500/40 disabled:opacity-50"
         >
-          <span className="text-slate-400">{bi('Kolejka zadań', 'Job Schedule')}</span>
+          <span className="text-slate-400">{t('hardware.jobSchedule')}</span>
           <span className="text-cyan-300 font-semibold">
             {(sweepConfig.scheduleMode ?? 'BALANCED') === 'BALANCED'
               ? 'Balanced'
@@ -455,17 +447,14 @@ export const HardwareComputePanel = memo(function HardwareComputePanel({
 
         <button
           type="button"
-          title={bi(
-            'Interwał autozapisu checkpointów w IndexedDB',
-            'IndexedDB checkpoint autosave interval'
-          )}
+          title={t('hardware.indexeddbCheckpointAutosaveInterval')}
           onClick={cycleAutosave}
           className="flex items-center justify-between rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-slate-300 cursor-pointer hover:border-emerald-500/40"
         >
-          <span className="text-slate-400">{bi('Autozapis', 'Autosave')}</span>
+          <span className="text-slate-400">{t('hardware.autosave')}</span>
           <span className="text-emerald-300 font-semibold">
             {activeAutosave === 0
-              ? bi('Ręczny', 'Manual')
+              ? t('hardware.manual')
               : activeAutosave >= 120
                 ? '2m'
                 : `${activeAutosave}s`}

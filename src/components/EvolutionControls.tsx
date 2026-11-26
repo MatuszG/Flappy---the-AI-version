@@ -37,6 +37,7 @@ import type {
   SensorFeatureId,
 } from '../engine/types';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getDifficultyText, getSensorText } from '../i18n/catalog';
 import { InfoTooltip } from './InfoTooltip';
 import { TopologyDiagram } from './research/TopologyDiagram';
 
@@ -62,7 +63,9 @@ const SCENARIOS = ALL_DIFFICULTIES_ORDERED.map((id) => ({
   id,
   label: DIFFICULTY_META[id].shortLabel,
   tier: DIFFICULTY_META[id].tier,
+  tierPl: DIFFICULTY_META[id].tierPl,
   desc: DIFFICULTY_META[id].description,
+  descPl: DIFFICULTY_META[id].descriptionPl,
 }));
 
 const TOPOLOGY_PRESETS: { label: string; layers: number[] }[] = [
@@ -81,7 +84,7 @@ export function EvolutionControls({
   onLoadFruitFlyPreset,
   onLoadDecoupledCortexPreset,
 }: EvolutionControlsProps) {
-  const { bi } = useLanguage();
+  const { lang, t } = useLanguage();
   const [showExtendedOptimizers, setShowExtendedOptimizers] = useState(false);
   const hiddenLayers = normalizeHiddenLayers(
     config.hiddenLayers !== undefined ? config.hiddenLayers : config.hiddenNodes
@@ -181,13 +184,10 @@ export function EvolutionControls({
     <div className="space-y-4">
       <div className="border-b border-slate-800/80 pb-3">
         <h2 className="font-display text-base font-semibold text-slate-100">
-          {bi('Sterowanie Ewolucją, Topologią i Fizyką', 'Evolution, Topology & Physics Controls')}
+          {t('training.evolutionTopologyPhysicsControls')}
         </h2>
         <p className="text-xs text-slate-400">
-          {bi(
-            'Suwaki populacji i mutacji działają od kolejnego pokolenia · Zmiana metody lub kształtu resetuje stado',
-            'Hyperparameters apply next gen · Changing method or topology resets flock'
-          )}
+          {t('training.hyperparametersApplyNextGenChanging')}
         </p>
       </div>
 
@@ -195,14 +195,11 @@ export function EvolutionControls({
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-xs">
           <span className="inline-flex items-center gap-1.5 font-medium text-slate-300">
-            {bi('Metoda Optymalizacji AI (Core 3)', 'AI Optimization Method (Core 3)')}
+            {t('training.aiOptimizationMethodCore3')}
             <InfoTooltip
               align="left"
-              label={bi('O metodach optymalizacji', 'About consolidated optimization tiers')}
-              text={bi(
-                '3 główne algorytmy pokrywają wszystkie reżimy: Neuro-CMA (najszybsza zbieżność G1 ≤100 param.), Diff. Evol. (33.5% ogólnej skuteczności) oraz GA (krzyżowanie). Pozostałe warianty ES/Swarm są w rozwijanym pasku.',
-                '26,700 empirical trials proved 3 core optimizers cover all regimes: Neuro-CMA (fastest G1 convergence ≤100p), Diff. Evol. (33.5% overall vector sweet-spot), and GA (crossover).'
-              )}
+              label={t('training.aboutConsolidatedOptimizationTiers')}
+              text={t('training.k26700EmpiricalTrialsProved')}
             />
           </span>
           <button
@@ -211,8 +208,8 @@ export function EvolutionControls({
             className="font-mono text-[10px] text-cyan-300 hover:text-cyan-200 cursor-pointer"
           >
             {showExtendedOptimizers || isExtendedOptimizerActive
-              ? bi('Ukryj +5 ES', 'Hide Extended ES')
-              : bi('+5 metod ES/Swarm', '+5 Extended ES/Swarm')}
+              ? t('training.hideExtendedEs')
+              : t('training.k5ExtendedEsSwarm')}
           </button>
         </div>
 
@@ -274,20 +271,17 @@ export function EvolutionControls({
       <div className="space-y-2 rounded-lg border border-slate-800 bg-[#0B1120]/70 p-3">
         <div className="flex items-center justify-between text-xs">
           <span className="inline-flex items-center gap-1.5 font-medium text-slate-200">
-            {bi('Percepcja & Niestacjonarny Świat', 'Perception & Non-Stationary World')}
+            {t('training.perceptionNonStationaryWorld')}
             <InfoTooltip
               align="left"
-              label={bi('O oku złożonym 16-Ray i anomaliach', 'About Compound-Eye Retinal Pixels & Anomaly Zones')}
-              text={bi(
-                'Zastępuje dokładną telemetrię laboratoryjną 16-promieniowym wachlarzem siatkówki oka złożonego (Ommatidia), filtrem kontrastu L1/L2 ΔI(t) oraz detektorami ruchu T4/T5. Anomalie modulują grawitację (0.78g–1.22g) w trakcie lotu.',
-                'Replaces exact laboratory telemetry with a biological 16-Ommatidia retinal ray fan, Lamina L1/L2 temporal high-pass contrast filter ΔI(t), and T4/T5 Reichardt motion correlators. Anomaly Zones periodically modulate gravity (0.78g–1.22g) mid-flight to require real-time adaptation.'
-              )}
+              label={t('training.aboutCompoundEyeRetinalPixels')}
+              text={t('training.replacesExactLaboratoryTelemetryWith')}
             />
           </span>
           <span className="font-mono text-[10px] text-emerald-300">
             {(config.perceptionMode ?? 'GEOMETRIC_LAB') === 'COMPOUND_EYE_PIXELS'
               ? '16-Ray Ommatidia'
-              : bi('Dokładna Lab', 'Exact Lab')}
+              : t('training.exactLab')}
           </span>
         </div>
 
@@ -301,7 +295,7 @@ export function EvolutionControls({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            {bi('Telemetria Lab (Dokładna)', 'Lab Telemetry (Exact)')}
+            {t('training.labTelemetryExact')}
           </button>
           <button
             type="button"
@@ -312,7 +306,7 @@ export function EvolutionControls({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            {bi('Oko Złożone 16-Ray (Piksele)', 'Compound-Eye Pixels')}
+            {t('training.compoundEyePixels')}
           </button>
         </div>
 
@@ -320,7 +314,7 @@ export function EvolutionControls({
           <div className="space-y-1 pt-0.5">
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-slate-400">
-                {bi('Szum Kontrastu Optycznego & Odblaski', 'Optical Contrast Noise & Glare')}
+                {t('training.opticalContrastNoiseGlare')}
               </span>
               <span className="font-mono tabular-nums text-emerald-300">
                 {Math.round((config.opticalNoiseLevel ?? 0.04) * 100)}%
@@ -343,7 +337,7 @@ export function EvolutionControls({
         <div className="grid grid-cols-2 gap-1.5 pt-0.5 font-mono text-[10px]">
           <button
             type="button"
-            title="Periodic in-flight gravity & contrast anomalies (0.78g ↔ 1.22g) that force online adaptation instead of single-seed memorization"
+            title={t('training.periodicInFlightGravityContrast')}
             onClick={() =>
               updateField(
                 'nonStationaryAnomalies',
@@ -356,21 +350,15 @@ export function EvolutionControls({
                 : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200'
             }`}
           >
-            {bi('Anomalie:', 'Anomalies:')} {config.nonStationaryAnomalies ? 'ON (0.78–1.22g)' : 'OFF'}
+            {t('training.anomalies')} {config.nonStationaryAnomalies ? 'ON (0.78–1.22g)' : 'OFF'}
           </button>
           <button
             type="button"
             disabled={!hasFlyCortexActive}
             title={
               !hasFlyCortexActive
-                ? bi(
-                    'Plastyczność dopaminowa (DA) działa w banku pamięci Fly-Cortex (DECOUPLED_FLY_CORTEX lub Arena)',
-                    'Online Dopamine (DA) plasticity applies to the Fly-Cortex associative bank (DECOUPLED_FLY_CORTEX or Arena)'
-                  )
-                : bi(
-                    'Plastyczność dopaminowa w locie: aktualizuje sloty pamięci FlyHash APL w czasie rzeczywistym na podstawie błędu predykcji nagrody',
-                    'Online Lifetime Dopamine Plasticity: updates active FlyHash APL associative skill slots during flight based on real-time survival reward prediction error'
-                  )
+                ? t('training.onlineDopamineDaPlasticityApplies')
+                : t('training.onlineLifetimeDopaminePlasticityUpda')
             }
             onClick={() =>
               updateField('onlinePlasticity', !config.onlinePlasticity)
@@ -382,7 +370,7 @@ export function EvolutionControls({
                 : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200'
             }`}
           >
-            {bi('Plastyczność DA Online:', 'Online DA Plasticity:')}{' '}
+            {t('training.onlineDaPlasticity')}{' '}
             {!hasFlyCortexActive
               ? 'N/A (Fly-Cortex)'
               : config.onlinePlasticity || activeArch === 'DECOUPLED_FLY_CORTEX'
@@ -397,17 +385,11 @@ export function EvolutionControls({
         <div className="space-y-2 rounded-lg border border-emerald-500/30 bg-[#0B1120]/80 p-3">
           <div className="flex items-center justify-between text-xs">
             <span className="inline-flex items-center gap-1.5 font-medium text-emerald-200">
-              {bi(
-                'Strumienie Płata Wzrokowego (z 16-Ray Ommatidia)',
-                'Optic Lobe Streams (from 16-Ray Ommatidia)'
-              )}
+              {t('training.opticLobeStreamsFrom16')}
               <InfoTooltip
                 align="left"
-                label={bi('Dlaczego ukryto sensory geometryczne?', 'Why are geometric sensors replaced?')}
-                text={bi(
-                  'W trybie Siatkówki 16-Ray ptak nie korzysta z ręcznych laserów współrzędnych (DX, Top, Bot). Zamiast tego 16 fotoreceptorów (-68°..+68°) trafia do płata wzrokowego Lamina L1/L2 i Medulla T4/T5, który wylicza biologiczne strumienie przepływu optycznego podawane na wejścia sieci.',
-                  'In 16-Ray Retina mode the bird does not use manual geometric coordinate lasers (DX, Top, Bot). Instead, 16 photoreceptors (-68°..+68°) feed the Lamina L1/L2 and Medulla T4/T5 optic lobe to produce biological optical flow streams.'
-                )}
+                label={t('training.whyAreGeometricSensorsReplaced')}
+                text={t('training.in16RayRetinaMode')}
               />
             </span>
             <span className="font-mono text-[11px] tabular-nums text-emerald-300">
@@ -421,7 +403,7 @@ export function EvolutionControls({
               return (
                 <span
                   key={id}
-                  title={meta.opticalDescPl}
+                  title={getSensorText(lang, id).opticalDesc}
                   className="rounded border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] text-emerald-200"
                 >
                   {meta.opticalShortLabel}
@@ -434,15 +416,15 @@ export function EvolutionControls({
             {(
               [
                 {
-                  label: bi('5 Strumieni (Bliskie Pole)', '5 Streams (Near Field)'),
+                  label: t('training.k5StreamsNearField'),
                   features: ['BIRD_Y', 'VEL_VY', 'PIPE_DX', 'TOP_CLEAR', 'BOT_CLEAR'] as SensorFeatureId[],
                 },
                 {
-                  label: bi('6 Strumieni (+T4/T5 Ruch)', '6 Streams (+T4/T5 Motion)'),
+                  label: t('training.k6StreamsT4T5Motion'),
                   features: ['BIRD_Y', 'VEL_VY', 'PIPE_DX', 'TOP_CLEAR', 'BOT_CLEAR', 'PIPE_VY'] as SensorFeatureId[],
                 },
                 {
-                  label: bi('8 Strumieni (+Dalekie Pole #2)', '8 Streams (+Far Field #2)'),
+                  label: t('training.k8StreamsFarField2'),
                   features: [
                     'VEL_VY',
                     'PIPE_DX',
@@ -455,7 +437,7 @@ export function EvolutionControls({
                   ] as SensorFeatureId[],
                 },
                 {
-                  label: bi('12 Strumieni (Pełny Płat + Tau)', '12 Streams (Full Lobe + Tau)'),
+                  label: t('training.k12StreamsFullLobeTau'),
                   features: [...ALL_SENSOR_FEATURES],
                 },
               ] as const
@@ -484,14 +466,11 @@ export function EvolutionControls({
         <div className="space-y-2 rounded-lg border border-slate-800 bg-[#0B1120]/70 p-3">
           <div className="flex items-center justify-between text-xs">
             <span className="inline-flex items-center gap-1.5 font-medium text-slate-200">
-              {bi('Sensory Wejściowe (Pula 1–12)', 'Sensor Inputs (1–12 Pool)')}
+              {t('training.sensorInputs112Pool')}
               <InfoTooltip
                 align="left"
-                label={bi('O 12 sensorach', 'About 12-sensor dual-pipe pool')}
-                text={bi(
-                  'Rura #1 (DX, Top, Bot, PVy), Rura #2 (N2Y, N2Top, N2Bot, N2DX, N2PVy) oraz Bird Y, Vy i czas dolotu TTF. Wymagany jest min. 1 sensor szczeliny (Top lub Bot), a prędkości rur (PVy) są aktywne tylko dla ruchomych rur.',
-                  'Pipe #1 (DX, Top, Bot, PVy), Pipe #2 lookahead (N2Y, N2Top, N2Bot, N2DX, N2PVy), plus Bird Y, Vy, and Time-To-Pipe (TTF).'
-                )}
+                label={t('training.about12SensorDualPipe')}
+                text={t('training.pipe1DxTopBot')}
               />
             </span>
             <span className="font-mono text-[11px] tabular-nums text-cyan-300">
@@ -517,16 +496,10 @@ export function EvolutionControls({
                   disabled={staticBlocked || isLastClearance}
                   title={
                     staticBlocked
-                      ? bi(
-                          `${meta.label}: wyłączone przy statycznych rurach`,
-                          `${meta.label}: disabled for static pipes`
-                        )
+                      ? t('training.disabledForStaticPipes', { label: meta.label })
                       : isLastClearance
-                        ? bi(
-                            'Wymagany min. 1 sensor szczeliny (TOP_CLEAR lub BOT_CLEAR)',
-                            'Requires at least 1 gap clearance sensor (TOP_CLEAR or BOT_CLEAR)'
-                          )
-                        : `${meta.label}: ${meta.description}`
+                        ? t('training.requiresAtLeast1Gap2')
+                        : `${meta.label}: ${getSensorText(lang, id).description}`
                   }
                   onClick={() => toggleSensor(id)}
                   className={`rounded-md border py-1 text-center font-mono text-[10px] font-medium cursor-pointer transition-colors disabled:opacity-35 disabled:cursor-not-allowed ${
@@ -565,18 +538,15 @@ export function EvolutionControls({
       <div className="space-y-2.5 rounded-lg border border-slate-800 bg-[#0B1120]/70 p-3">
         <div className="flex items-center justify-between text-xs">
           <span className="inline-flex items-center gap-1.5 font-medium text-slate-200">
-            {bi('Topologia Sieci (Głębokość × Szerokość)', 'Network Topology (Depth × Width)')}
+            {t('training.networkTopologyDepthWidth')}
             <InfoTooltip
               align="left"
-              label={bi('O topologii sieci', 'About topology')}
-              text={bi(
-                'Określa liczbę warstw ukrytych i liczbę neuronów w każdej warstwie (do 64 neuronów z akceleracją WebGPU). Mniejsze sieci uczą się błyskawicznie; głębsze dają większą pojemność nieliniową.',
-                'Controls hidden layers and neurons per layer (up to 64 neurons with WebGPU acceleration).'
-              )}
+              label={t('training.aboutTopology')}
+              text={t('training.controlsHiddenLayersAndNeurons')}
             />
           </span>
           <span className="font-mono tabular-nums text-emerald-300">
-            {topoLabel} · {paramCount} {bi('param.', 'params')}
+            {topoLabel} · {paramCount} {t('training.params')}
           </span>
         </div>
 
@@ -598,10 +568,7 @@ export function EvolutionControls({
                 disabled={skipLinearDisabled}
                 title={
                   skipLinearDisabled
-                    ? bi(
-                        'Residual Skip na głębokości 0 (Lin) jest matematycznie identyczny z MLP',
-                        'Residual Skip at Depth 0 (Lin) is mathematically identical to MLP'
-                      )
+                    ? t('training.residualSkipAtDepth02')
                     : undefined
                 }
                 onClick={() => {
@@ -615,7 +582,7 @@ export function EvolutionControls({
                 }`}
               >
                 {preset.layers.length === 0
-                  ? `${bi('Lin', 'Lin')} (${inputCount + 1} param.)`
+                  ? t('training.linearParamsChip', { count: inputCount + 1 })
                   : preset.label}
               </button>
             );
@@ -627,7 +594,7 @@ export function EvolutionControls({
             className="inline-flex items-center justify-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 py-1 text-[11px] font-medium text-slate-200 cursor-pointer hover:border-emerald-500/50 disabled:opacity-40"
           >
             <Plus className="h-3 w-3" aria-hidden="true" />
-            {bi('Warstwa', 'Layer')}
+            {t('training.layer')}
           </button>
         </div>
 
@@ -636,7 +603,7 @@ export function EvolutionControls({
             {hiddenLayers.map((width, idx) => (
               <div key={idx} className="flex items-center gap-2 text-xs">
                 <span className="w-20 font-mono text-[11px] text-slate-400">
-                  {bi(`Warstwa H${idx + 1}`, `Layer H${idx + 1}`)}
+                  {t('training.layerH', { val0: idx + 1 })}
                 </span>
                 <input
                   type="range"
@@ -653,11 +620,11 @@ export function EvolutionControls({
                   className="lab-slider flex-1"
                 />
                 <span className="w-12 text-right font-mono tabular-nums text-cyan-300">
-                  {width} {bi('neur.', 'neur.')}
+                  {width} {t('training.neur')}
                 </span>
                 <button
                   type="button"
-                  title={bi('Usuń warstwę', 'Remove layer')}
+                  title={t('training.removeLayer')}
                   onClick={() => applyLayers(hiddenLayers.filter((_, i) => i !== idx))}
                   className="rounded p-1 text-slate-500 hover:bg-slate-800 hover:text-red-400 cursor-pointer"
                 >
@@ -673,7 +640,7 @@ export function EvolutionControls({
       <div className="space-y-2 rounded-lg border border-slate-800 bg-[#0B1120]/70 p-3">
         <div className="flex items-center justify-between gap-2 text-xs">
           <span className="font-medium text-slate-200 truncate">
-            {bi('Architektura Neuronowa (12 typów)', 'Architecture (Bio + MoE)')}
+            {t('training.architectureBioMoe')}
           </span>
           <div className="flex items-center gap-1.5 shrink-0 font-mono text-[10px] tabular-nums">
             <span
@@ -728,17 +695,17 @@ export function EvolutionControls({
         </div>
         {activeArch === 'HYBRID_MOE' && (
           <p className="font-mono text-[10px] leading-snug text-amber-200/90">
-            Starts as lean MLP core · Progressively spawns Zero-Init LTC / MinGRU / Ponder experts on stagnation with FLOPs ROI rollback.
+            {t('training.startsAsLeanMlpCore')}
           </p>
         )}
         {activeArch === 'DROSOPHILA_CONNECTOME' && (
           <p className="font-mono text-[10px] leading-snug text-amber-200/90">
-            Fruit-Fly Connectome (◆ WebGPU Lockstep): Optic Lobe T4/T5 LTC + Mushroom Body APL lateral inhibition + Octopamine arousal gain + Giant Fiber direct sensory→motor reflex bypass.
+            {t('training.fruitFlyConnectomeWebgpuLockstep')}
           </p>
         )}
         {activeArch === 'DECOUPLED_FLY_CORTEX' && (
           <p className="font-mono text-[10px] leading-snug text-emerald-200/90">
-            Decoupled Reasoning vs Knowledge Brain: Compact Giant-Fiber + T4/T5 Executive Core separated from a 16-Slot FlyHash APL Associative Skill Bank updated live in-flight via Dopamine Prediction-Error Plasticity.
+            {t('training.decoupledReasoningVsKnowledgeBrain')}
           </p>
         )}
         <div className="grid grid-cols-1 gap-1.5">
@@ -748,7 +715,7 @@ export function EvolutionControls({
               onClick={onLoadFruitFlyPreset}
               className="w-full rounded-md border border-amber-500/45 bg-amber-500/12 px-2.5 py-1.5 font-mono text-[10.5px] font-semibold text-amber-200 cursor-pointer transition-colors hover:border-amber-400 hover:bg-amber-500/20"
             >
-              Load Fruit Fly (Drosophila 6→4 · WebGPU Lockstep)
+              {t('training.loadFruitFlyDrosophila6')}
             </button>
           )}
           {onLoadDecoupledCortexPreset && (
@@ -757,7 +724,7 @@ export function EvolutionControls({
               onClick={onLoadDecoupledCortexPreset}
               className="w-full rounded-md border border-emerald-500/45 bg-emerald-500/12 px-2.5 py-1.5 font-mono text-[10.5px] font-semibold text-emerald-200 cursor-pointer transition-colors hover:border-emerald-400 hover:bg-emerald-500/20"
             >
-              Load Decoupled Fly-Cortex (Compound-Eye Pixels + Online DA Memory)
+              {t('training.loadDecoupledFlyCortexCompound')}
             </button>
           )}
         </div>
@@ -766,7 +733,7 @@ export function EvolutionControls({
           activeArch === 'HYBRID_MOE') && (
           <div className="flex items-center justify-between gap-2 pt-1 text-[11px]">
             <span className="text-slate-400">
-              {bi('Kroki Myślenia (K)', 'Thinking Steps (K)')}
+              {t('training.thinkingStepsK')}
             </span>
             <div className="flex gap-1">
               {[2, 3, 4].map((k) => (
@@ -792,14 +759,11 @@ export function EvolutionControls({
       <div className="space-y-2 rounded-lg border border-slate-800 bg-[#0B1120]/70 p-3">
         <div className="flex items-center justify-between gap-2">
           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-200">
-            {bi('Samorosnąca Morfogeneza Sieci', 'Self-Growing Morphogenesis')}
+            {t('training.selfGrowingMorphogenesis')}
             <InfoTooltip
               align="left"
-              label={bi('O morfogenezie sieci', 'About self-growing morphogenesis')}
-              text={bi(
-                'Startuje z małego zalążka (seedling), chroni wyuczone wagi przez mielinizację i dodaje nowe neurony, kroki myślenia K lub sensory w przypadku stagnacji — oraz przycina zbędne synapsy.',
-                'Starts from a compact seedling core, shields learned weights via myelination, and grows new neurons, reasoning steps K, or deferred sensors on stagnation — plus synaptic pruning when bloated.'
-              )}
+              label={t('training.aboutSelfGrowingMorphogenesis')}
+              text={t('training.startsFromACompactSeedling')}
             />
           </span>
           <button
@@ -811,7 +775,7 @@ export function EvolutionControls({
                 : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-slate-200'
             }`}
           >
-            {config.morphogenesis ? bi('AKTYWNA', 'ACTIVE') : bi('STATYCZNA', 'STATIC')}
+            {config.morphogenesis ? t('training.active') : t('training.static')}
           </button>
         </div>
         {config.morphogenesis && (
@@ -830,7 +794,10 @@ export function EvolutionControls({
                   : 'border-slate-800 bg-slate-950 text-slate-400'
               }`}
             >
-              Sensors: {morphCfg.progressiveSensors ? 'Wave Unlock' : 'All Gen0'}
+              {t('training.sensors2')}{' '}
+              {morphCfg.progressiveSensors
+                ? t('training.waveUnlock')
+                : t('training.allGen0')}
             </button>
             <button
               type="button"
@@ -842,15 +809,12 @@ export function EvolutionControls({
               }
               className="rounded border border-slate-800 bg-slate-950 px-2 py-1 text-left text-slate-300 cursor-pointer hover:border-cyan-500/40"
             >
-              Seedling: {Math.round(morphCfg.initialWidthRatio * 100)}% width
+              {t('training.seedling')} {Math.round(morphCfg.initialWidthRatio * 100)}% {t('training.width')}
             </button>
             {hasMoeActive && (
               <button
                 type="button"
-                title={bi(
-                  'Automatyczne dokładanie wyspecjalizowanych ekspertów (LTC, MinGRU, Ponder) dla Hybrid MoE',
-                  'Toggle compute-justified expert module spawning (LTC, MinGRU, Ponder) for Hybrid MoE'
-                )}
+                title={t('training.toggleComputeJustifiedExpertModule')}
                 onClick={() =>
                   updateField('morphogenesisConfig', {
                     ...morphCfg,
@@ -863,17 +827,14 @@ export function EvolutionControls({
                     : 'border-slate-800 bg-slate-950 text-slate-400'
                 }`}
               >
-                {bi('Eksperci:', 'Experts:')}{' '}
+                {t('training.experts')}{' '}
                 {(morphCfg.allowExpertSpawning ?? true) ? 'Auto-Spawn' : 'Locked'}
               </button>
             )}
             {hasReasoningKActive && (
               <button
                 type="button"
-                title={bi(
-                  'Start od K=1 (szybki odruch) i dokładanie kolejnych kroków rozumowania przy stagnacji',
-                  'Start at K=1 fast reflex and grow reasoning steps K on stagnation'
-                )}
+                title={t('training.startAtK1Fast')}
                 onClick={() =>
                   updateField('morphogenesisConfig', {
                     ...morphCfg,
@@ -886,16 +847,13 @@ export function EvolutionControls({
                     : 'border-slate-800 bg-slate-950 text-slate-400'
                 }`}
               >
-                {bi('Kroki K:', 'Steps K:')}{' '}
-                {morphCfg.growReasoningSteps ? '1→maxK' : bi('Stałe K', 'Fixed K')}
+                {t('training.stepsK')}{' '}
+                {morphCfg.growReasoningSteps ? '1→maxK' : t('training.fixedK')}
               </button>
             )}
             <button
               type="button"
-              title={bi(
-                'Zmiana kary obliczeniowej FLOPs na 100 nadmiarowych FLOPs/klatkę',
-                'Cycle FLOPs compute penalty per 100 excess FLOPs/frame'
-              )}
+              title={t('training.cycleFlopsComputePenaltyPer')}
               onClick={() => {
                 const cur = morphCfg.flopsPenaltyWeight ?? 0.004;
                 const next = cur === 0.004 ? 0.01 : cur === 0.01 ? 0 : 0.004;
@@ -906,7 +864,7 @@ export function EvolutionControls({
               }}
               className="rounded border border-slate-800 bg-slate-950 px-2 py-1 text-left text-slate-300 cursor-pointer hover:border-amber-500/40"
             >
-              FLOPs Pen: {(morphCfg.flopsPenaltyWeight ?? 0.004).toFixed(3)}
+              {t('training.flopsPen')} {(morphCfg.flopsPenaltyWeight ?? 0.004).toFixed(3)}
             </button>
           </div>
         )}
@@ -920,18 +878,15 @@ export function EvolutionControls({
               htmlFor="pop-slider"
               className="inline-flex items-center gap-1.5 font-medium text-slate-300"
             >
-              {bi('Rozmiar Populacji', 'Population Size')}
+              {t('training.populationSize')}
               <InfoTooltip
                 align="left"
-                label={bi('O rozmiarze populacji', 'About population size')}
-                text={bi(
-                  'Liczba sieci neuronowych ocenianych równolegle w każdym pokoleniu. Większe stado eksploruje więcej rozwiązań naraz.',
-                  'Number of candidate neural networks evaluated in parallel each generation. Larger flocks explore more solutions per generation at higher CPU cost per tick.'
-                )}
+                label={t('training.aboutPopulationSize')}
+                text={t('training.numberOfCandidateNeuralNetworks')}
               />
             </label>
             <span className="font-mono tabular-nums text-cyan-300">
-              {config.populationSize} {bi('ptaków', 'birds')}
+              {config.populationSize} {t('training.birds')}
             </span>
           </div>
           <input
@@ -957,8 +912,8 @@ export function EvolutionControls({
                   {paramSupport.mutationRateLabel}
                   <InfoTooltip
                     align="left"
-                    label="About mutation probability"
-                    text="Probability each individual weight is perturbed during GA / Adaptive ES reproduction, or binomial crossover rate CR in DE."
+                    label={t('training.aboutMutationProbability')}
+                    text={t('training.probabilityEachIndividualWeightIs')}
                   />
                 </label>
                 <span className="font-mono tabular-nums text-cyan-300">
@@ -982,15 +937,15 @@ export function EvolutionControls({
             <div className="rounded-lg border border-slate-800/90 bg-[#0B1120] px-2.5 py-2 flex flex-col justify-between">
               <div className="flex items-center justify-between text-[11px]">
                 <span className="font-medium text-slate-300">
-                  Perturbation Mode
+                  {t('training.perturbationMode')}
                 </span>
                 <span className="font-mono text-[10px] text-cyan-300">
-                  100% Dense
+                  {t('training.k100Dense')}
                 </span>
               </div>
               <p className="mt-1 font-mono text-[9.5px] leading-snug text-slate-400">
                 {paramSupport.rateDisabledReason ??
-                  'Continuous covariance / gradient step updates all weights every generation.'}
+                  t('training.continuousCovarianceGradientStepUpda')}
               </p>
             </div>
           )}
@@ -1015,8 +970,8 @@ export function EvolutionControls({
                 {paramSupport.mutationStrengthLabel}
                 <InfoTooltip
                   align="right"
-                  label="About mutation sigma"
-                  text="Gaussian perturbation scale (σ) applied to weights. Larger values (0.3–0.5) escape local optima faster; smaller values (0.1–0.2) fine-tune an existing champion."
+                  label={t('training.aboutMutationSigma')}
+                  text={t('training.gaussianPerturbationScaleAppliedTo')}
                 />
               </label>
               <span className="font-mono tabular-nums text-cyan-300">
@@ -1042,14 +997,11 @@ export function EvolutionControls({
       <div className="space-y-2.5">
         <div className="flex items-center justify-between text-xs">
           <span className="inline-flex items-center gap-1.5 font-medium text-slate-300">
-            {bi('Scenariusz Środowiska (Poziomy + Custom)', 'Environment Scenario (Tiers + Custom)')}
+            {t('training.environmentScenarioTiersCustom')}
             <InfoTooltip
               align="left"
-              label={bi('O poziomach trudności', 'About verified difficulty tiers')}
-              text={bi(
-                'Poziomy trudności (Easy, Medium, Hard, Insane, Extra Insane) oraz Custom. Każdy poziom ma wyliczony matematyczny dowód przechodniości balistycznej.',
-                'Consolidated tiers (Easy, Medium, Hard, Insane, Extra Insane) plus Custom. Every tier is mathematically verified using worst-case ballistic climb/dive and moving-lip corridor proofs.'
-              )}
+              label={t('training.aboutVerifiedDifficultyTiers')}
+              text={t('training.consolidatedTiersEasyMediumHard')}
             />
           </span>
         </div>
@@ -1070,7 +1022,7 @@ export function EvolutionControls({
               <button
                 key={s.id}
                 type="button"
-                title={`${s.tier}: ${s.desc}`}
+                title={`${getDifficultyText(lang, s.id).tier}: ${getDifficultyText(lang, s.id).description}`}
                 onClick={() => updateField('difficulty', s.id)}
                 className={`rounded-md py-1.5 px-1 text-[11px] font-medium whitespace-nowrap cursor-pointer transition-colors ${
                   active
@@ -1100,16 +1052,18 @@ export function EvolutionControls({
                   : 'font-semibold text-rose-300'
               }
             >
-              {envProof.solvable ? 'PROVEN SOLVABLE' : 'UNSOLVABLE RISK'}
+              {envProof.solvable
+                ? t('training.provenSolvable')
+                : t('training.unsolvableRisk')}
             </span>
             <span className="text-slate-400">
-              dt≥{envProof.dtMinFrames}f · gap≥{envProof.minGapPx}px
+              dt≥{envProof.dtMinFrames}f · {t('training.gap')}≥{envProof.minGapPx}px
             </span>
           </div>
           <div className="mt-1 text-slate-400">
-            climb {envProof.climbSlackPx >= 0 ? '+' : ''}
-            {envProof.climbSlackPx}px · dive {envProof.diveSlackPx >= 0 ? '+' : ''}
-            {envProof.diveSlackPx}px · transit{' '}
+            {t('training.climb')} {envProof.climbSlackPx >= 0 ? '+' : ''}
+            {envProof.climbSlackPx}px · {t('training.dive')} {envProof.diveSlackPx >= 0 ? '+' : ''}
+            {envProof.diveSlackPx}px · {t('training.transit')}{' '}
             {envProof.transitClearancePx >= 0 ? '+' : ''}
             {envProof.transitClearancePx}px
           </div>
@@ -1119,14 +1073,11 @@ export function EvolutionControls({
         <div className="space-y-2 rounded-lg border border-slate-800 bg-[#0B1120]/70 p-3">
           <div className="flex items-center justify-between text-[11px] text-slate-400">
             <span className="inline-flex items-center gap-1">
-              {bi('Strojenie Fizyki & Zagrożeń', 'Physics & Hazard Tuning')}
+              {t('training.physicsHazardTuning')}
               <InfoTooltip
                 align="left"
-                label={bi('O suwakach fizyki', 'About custom physics sliders')}
-                text={bi(
-                  'Zmiana dowolnego suwaka automatycznie przełącza scenariusz na Custom, pozwalając badać pojedyncze zagrożenia (wiatr, grawitację, szerokość szczelin).',
-                  'Adjusting any slider automatically switches to the Custom scenario so you can isolate individual hazards like wind gusts, gap variance, or gravity.'
-                )}
+                label={t('training.aboutCustomPhysicsSliders')}
+                text={t('training.adjustingAnySliderAutomaticallySwitc')}
               />
             </span>
             <span className="font-mono text-slate-300">{activeEnv.label}</span>
@@ -1135,8 +1086,10 @@ export function EvolutionControls({
           <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-[11px]">
             <div>
               <div className="flex justify-between text-slate-300">
-                <span title="Mean vertical opening height between top and bottom pipes">
-                  Gap Width
+                <span
+                  title={t('training.meanVerticalOpeningHeightBetween')}
+                >
+                  {t('training.gapWidth')}
                 </span>
                 <span className="font-mono text-cyan-300">{activeEnv.gap}px</span>
               </div>
@@ -1153,8 +1106,10 @@ export function EvolutionControls({
 
             <div>
               <div className="flex justify-between text-slate-300">
-                <span title="Random per-pipe variation around the base gap width">
-                  Gap Variance
+                <span
+                  title={t('training.randomPerPipeVariationAround')}
+                >
+                  {t('training.gapVariance')}
                 </span>
                 <span className="font-mono text-cyan-300">±{activeEnv.gapVariance}px</span>
               </div>
@@ -1171,8 +1126,10 @@ export function EvolutionControls({
 
             <div>
               <div className="flex justify-between text-slate-300">
-                <span title="Base horizontal scroll speed of pipes in pixels per tick">
-                  Base Speed
+                <span
+                  title={t('training.baseHorizontalScrollSpeedOf')}
+                >
+                  {t('training.baseSpeed')}
                 </span>
                 <span className="font-mono text-cyan-300">{activeEnv.pipeSpeed.toFixed(2)}</span>
               </div>
@@ -1189,8 +1146,10 @@ export function EvolutionControls({
 
             <div>
               <div className="flex justify-between text-slate-300">
-                <span title="Non-periodic multi-sine wind gusts modulating horizontal pipe speed">
-                  Speed Gusts
+                <span
+                  title={t('training.nonPeriodicMultiSineWind')}
+                >
+                  {t('training.speedGusts')}
                 </span>
                 <span className="font-mono text-cyan-300">
                   ±{Math.round(activeEnv.speedVariability * 100)}%
@@ -1211,8 +1170,10 @@ export function EvolutionControls({
 
             <div>
               <div className="flex justify-between text-slate-300">
-                <span title="Multiplier on downward gravity; flap impulse scales by √g to keep jump arc playable">
-                  Gravity Scale
+                <span
+                  title={t('training.multiplierOnDownwardGravityFlap')}
+                >
+                  {t('training.gravityScale')}
                 </span>
                 <span className="font-mono text-cyan-300">
                   {activeEnv.gravityScale.toFixed(2)}x
@@ -1255,7 +1216,9 @@ export function EvolutionControls({
                     : 'border-slate-700 bg-slate-800/80 text-slate-400 hover:text-slate-200'
                 }`}
               >
-                {activeEnv.movingPipes ? 'Moving Pipes: On' : 'Moving Pipes: Off'}
+                {activeEnv.movingPipes
+                  ? t('training.movingPipesOn')
+                  : t('training.movingPipesOff')}
               </button>
             </div>
           </div>

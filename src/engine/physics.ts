@@ -238,85 +238,121 @@ export const DIFFICULTY_META: Record<
   DifficultyPreset,
   {
     tier: DifficultyTier;
+    tierPl: string;
     shortLabel: string;
     description: string;
+    descriptionPl: string;
   }
 > = {
   EASY: {
     tier: 'Calm',
+    tierPl: 'Spokojny',
     shortLabel: 'Easy',
     description:
       'Calm baseline: wide 156px static gaps, gentle 2.55 speed, 1.0x gravity.',
+    descriptionPl:
+      'Spokojny tor bazowy: szerokie statyczne szczeliny 156px, łagodna prędkość 2.55, grawitacja 1.0x.',
   },
   MEDIUM: {
     tier: 'Moderate',
+    tierPl: 'Umiarkowany',
     shortLabel: 'Medium',
     description:
       'Variable gaps (130±22px) + ±25% wind gusts at 3.0 speed. Tests lookahead and arrival timing.',
+    descriptionPl:
+      'Zmienne szczeliny (130±22px) + porywy wiatru ±25% przy prędkości 3.0. Testuje wyprzedzenie i wyczucie czasu.',
   },
   HARD: {
     tier: 'Dynamic',
+    tierPl: 'Dynamiczny',
     shortLabel: 'Hard',
     description:
       'Oscillating pipes (±20px) + variable gaps (120±18px) + ±30% gusts + 1.08x gravity.',
+    descriptionPl:
+      'Ruchome rury (±20px) + zmienne szczeliny (120±18px) + porywy ±30% + grawitacja 1.08x.',
   },
   INSANE: {
     tier: 'Frontier',
+    tierPl: 'Frontier',
     shortLabel: 'Insane',
     description:
       'Full coupled frontier: narrow moving gaps (112±20px, ±24px oscillation), ±38% gusts, 3.50 speed, 1.15x gravity — mathematically verified passable.',
+    descriptionPl:
+      'Pełny tor Frontier: wąskie ruchome szczeliny (112±20px, oscylacja ±24px), porywy ±38%, prędkość 3.50, grawitacja 1.15x — z dowodem przechodniości.',
   },
   EXTRA_INSANE: {
     tier: 'Extreme',
+    tierPl: 'Ekstremalny',
     shortLabel: 'Extra Insane',
     description:
       'Unproven Overdrive beyond deterministic ballistic guarantees: 96±24px gaps, ±34px fast moving pipes, ±48% gusts, 4.15 speed, 1.24x gravity — tests phase anticipation and real-time plasticity.',
+    descriptionPl:
+      'Tryb Overdrive poza gwarancją balistyczną: szczeliny 96±24px, szybkie ruchome rury ±34px, porywy ±48%, prędkość 4.15, grawitacja 1.24x — testuje antycypację fazy i plastyczność.',
   },
   STANDARD: {
     tier: 'Calm',
+    tierPl: 'Spokojny',
     shortLabel: 'Standard',
     description: 'Legacy alias mapped to Easy/Calm baseline.',
+    descriptionPl: 'Starszy alias zmapowany na spokojny tor bazowy Easy.',
   },
   VARIABLE_SPEED: {
     tier: 'Moderate',
+    tierPl: 'Umiarkowany',
     shortLabel: 'Var Speed',
     description: 'Legacy alias mapped to Medium.',
+    descriptionPl: 'Starszy alias zmapowany na poziom Medium.',
   },
   DYNAMIC_GAPS: {
     tier: 'Moderate',
+    tierPl: 'Umiarkowany',
     shortLabel: 'Dyn Gaps',
     description: 'Legacy alias mapped to Medium.',
+    descriptionPl: 'Starszy alias zmapowany na poziom Medium.',
   },
   MOVING_GAPS: {
     tier: 'Dynamic',
+    tierPl: 'Dynamiczny',
     shortLabel: 'Mov+Gaps',
     description: 'Legacy alias mapped to Hard.',
+    descriptionPl: 'Starszy alias zmapowany na poziom Hard.',
   },
   MOVING_GUSTS: {
     tier: 'Dynamic',
+    tierPl: 'Dynamiczny',
     shortLabel: 'Mov+Gusts',
     description: 'Legacy alias mapped to Hard.',
+    descriptionPl: 'Starszy alias zmapowany na poziom Hard.',
   },
   HEAVY_GRAVITY: {
     tier: 'Dynamic',
+    tierPl: 'Dynamiczny',
     shortLabel: 'High Grav',
     description: 'Legacy alias mapped to Hard.',
+    descriptionPl: 'Starszy alias zmapowany na poziom Hard.',
   },
   GUST_CHAOS: {
     tier: 'Frontier',
+    tierPl: 'Frontier',
     shortLabel: 'Chaos',
     description: 'Legacy alias mapped to Insane.',
+    descriptionPl: 'Starszy alias zmapowany na poziom Insane.',
   },
   TURBULENCE_EXTREME: {
     tier: 'Extreme',
+    tierPl: 'Ekstremalny',
     shortLabel: 'Ext Turb',
     description: 'Legacy alias mapped to Insane.',
+    descriptionPl: 'Starszy alias zmapowany na poziom Insane.',
   },
   CUSTOM: {
     tier: 'Custom',
+    tierPl: 'Własny',
     shortLabel: 'Custom',
     description:
       'Custom physics sandbox tuned with your own gap, speed, gusts, gravity, and moving-pipe sliders.',
+    descriptionPl:
+      'Własna fizyka dostrojona suwakami szerokości szczeliny, prędkości, porywów, grawitacji i ruchu rur.',
   },
 };
 

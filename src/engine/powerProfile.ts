@@ -12,8 +12,11 @@ export interface PowerProfilePlan {
   priority: number; // 0..100
   modeId: PowerModeId;
   label: string;
+  labelPl: string;
   shortLabel: string;
+  shortLabelPl: string;
   description: string;
+  descriptionPl: string;
   /** Recommended CPU training threads for this priority level (respecting OS headroom) */
   targetCpuThreads: number;
   /** Fraction of logical cores used (0..1) */
@@ -28,6 +31,7 @@ export interface PowerProfilePlan {
   autoTuneObjective: 'EFFICIENCY' | 'BALANCED' | 'SPEED';
   /** Estimated thermal headroom tag */
   thermalBadge: 'Ultra-Cool' | 'Cool' | 'Warm' | 'Hot / Max TDP';
+  thermalBadgePl: 'Ultra-chłodny' | 'Chłodny' | 'Ciepły' | 'Gorący / Max TDP';
   /** Estimated relative power draw (0.25 .. 1.00 normalized to full-TDP turbo) */
   estimatedRelativePower: number;
 }
@@ -56,7 +60,7 @@ export const POWER_PRESET_STOPS: {
   hint: string;
 }[] = [
   { priority: 15, modeId: 'SILENT', label: 'Silent / Cool', hint: 'Max Perf/W · Whisper fans · P-core low-V' },
-  { priority: 45, modeId: 'ECO', label: 'Eco Sweet-Spot', hint: 'Best Perf/W · Cool sustained runs' },
+  { priority: 45, modeId: 'ECO', label: 'Efficient Sweet-Spot', hint: 'Best Perf/W · Cool sustained runs' },
   { priority: 70, modeId: 'BALANCED', label: 'Balanced', hint: 'High speed · Smooth UI · Low lag' },
   { priority: 88, modeId: 'PERFORMANCE', label: 'Performance', hint: 'Near-full cores · Fast sweeps' },
   { priority: 100, modeId: 'TURBO', label: 'Max Speed', hint: 'Full TDP · Max raw throughput' },
@@ -78,14 +82,6 @@ export function resolvePowerProfile(
   const priority = clampPriority(rawPriority);
   const cores = Math.max(2, Math.min(32, hardwareCores));
 
-  // Map 0..100 priority onto core fraction (~0.24 at 0 -> ~0.95 at 100)
-  // On 22 cores:
-  //   p=0   -> 5 threads  (23%) + 14ms rest  (ultra-silent)
-  //   p=15  -> 7 threads  (32%) + 8ms rest   (silent/cool)
-  //   p=45  -> 11 threads (50%) + 2ms rest   (eco sweet-spot perf/W)
-  //   p=70  -> 15 threads (68%) + 0ms rest   (balanced smooth UI, 7 cores free for OS/UI!)
-  //   p=88  -> 18 threads (82%) + 0ms rest   (high performance, 4 cores free)
-  //   p=100 -> 20 threads (91%) + 0ms rest   (max speed, 2 cores free so PC never locks up)
   const t = priority / 100;
   const maxSafeThreads = cores >= 12 ? cores - 2 : Math.max(2, cores - 1);
   const minThreads = Math.max(1, Math.min(maxSafeThreads, Math.round(cores * 0.22)));
@@ -93,9 +89,6 @@ export function resolvePowerProfile(
   const targetCpuThreads = Math.max(1, Math.min(maxSafeThreads, Math.round(rawThreads)));
   const coreFraction = targetCpuThreads / cores;
 
-  // Worker duty pacing:
-  // Below 55, insert gentle cooling micro-pauses between short compute slices so
-  // laptop boost clocks stay in their low-voltage efficiency knee & fans stay quiet.
   let workerChunkMs = 30;
   let workerRestMs = 0;
   if (priority < 25) {
@@ -115,50 +108,74 @@ export function resolvePowerProfile(
 
   let modeId: PowerModeId;
   let label: string;
+  let labelPl: string;
   let shortLabel: string;
+  let shortLabelPl: string;
   let description: string;
+  let descriptionPl: string;
   let thermalBadge: PowerProfilePlan['thermalBadge'];
+  let thermalBadgePl: PowerProfilePlan['thermalBadgePl'];
   let allowIntegratedGpu: boolean;
   let autoTuneObjective: PowerProfilePlan['autoTuneObjective'];
 
   if (priority < 25) {
     modeId = 'SILENT';
     label = 'Silent / Ultra-Cool';
+    labelPl = 'Cichy / Ultra-chłodny';
     shortLabel = 'Silent';
+    shortLabelPl = 'Cichy';
     description = 'Lowest heat & fan noise. P-core efficiency knee with thermal micro-rests; iGPU off.';
+    descriptionPl = 'Najniższe ciepło i hałas wentylatorów. Krótkie przerwy chłodzące rdzeni; iGPU wyłączone.';
     thermalBadge = 'Ultra-Cool';
+    thermalBadgePl = 'Ultra-chłodny';
     allowIntegratedGpu = false;
     autoTuneObjective = 'EFFICIENCY';
   } else if (priority < 55) {
     modeId = 'ECO';
-    label = 'Eco Perf/Watt';
-    shortLabel = 'Eco';
+    label = 'Efficient Perf/Watt';
+    labelPl = 'Oszczędny Perf/W';
+    shortLabel = 'Efficient';
+    shortLabelPl = 'Oszczędny';
     description = 'Sweet-spot performance per watt. Avoids thermal throttling & E-core voltage cliff.';
+    descriptionPl = 'Optymalna wydajność na wat. Unika throttlingu termicznego i wysokich napięć.';
     thermalBadge = 'Cool';
+    thermalBadgePl = 'Chłodny';
     allowIntegratedGpu = false;
     autoTuneObjective = 'EFFICIENCY';
   } else if (priority < 80) {
     modeId = 'BALANCED';
     label = 'Balanced';
+    labelPl = 'Zbalansowany';
     shortLabel = 'Balanced';
+    shortLabelPl = 'Balans';
     description = 'High throughput with generous OS/UI headroom for stutter-free multitasking.';
+    descriptionPl = 'Wysoka przepustowość z zapasem rdzeni dla płynnego systemu i interfejsu.';
     thermalBadge = 'Warm';
+    thermalBadgePl = 'Ciepły';
     allowIntegratedGpu = true;
     autoTuneObjective = 'BALANCED';
   } else if (priority < 95) {
     modeId = 'PERFORMANCE';
     label = 'High Performance';
+    labelPl = 'Wysoka Wydajność';
     shortLabel = 'Perf';
+    shortLabelPl = 'Wydajny';
     description = 'Near-full CPU saturation with responsive UI guardrails.';
+    descriptionPl = 'Prawie pełne nasycenie CPU z rezerwą dla responsywnego interfejsu.';
     thermalBadge = 'Warm';
+    thermalBadgePl = 'Ciepły';
     allowIntegratedGpu = true;
     autoTuneObjective = 'SPEED';
   } else {
     modeId = 'TURBO';
     label = 'Max Speed / Turbo';
+    labelPl = 'Maksymalna Moc / Turbo';
     shortLabel = 'Turbo';
+    shortLabelPl = 'Turbo';
     description = 'Maximum raw ticks/sec across almost all logical cores at full SoC TDP.';
+    descriptionPl = 'Maksymalna liczba klatek/s na niemal wszystkich wątkach przy pełnym TDP.';
     thermalBadge = 'Hot / Max TDP';
+    thermalBadgePl = 'Gorący / Max TDP';
     allowIntegratedGpu = true;
     autoTuneObjective = 'SPEED';
   }
@@ -175,8 +192,11 @@ export function resolvePowerProfile(
     priority,
     modeId,
     label,
+    labelPl,
     shortLabel,
+    shortLabelPl,
     description,
+    descriptionPl,
     targetCpuThreads,
     coreFraction,
     workerChunkMs,
@@ -184,6 +204,7 @@ export function resolvePowerProfile(
     allowIntegratedGpu,
     autoTuneObjective,
     thermalBadge,
+    thermalBadgePl,
     estimatedRelativePower,
   };
 }

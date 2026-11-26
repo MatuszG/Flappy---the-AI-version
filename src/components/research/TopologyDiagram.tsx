@@ -35,8 +35,7 @@ const SKIP_ARCHS = new Set<NetworkArchitecture>([
 ]);
 
 function formatTierBadge(
-  tier: GpuTopologyTier,
-  lang: 'pl' | 'en'
+  tier: GpuTopologyTier
 ): { label: string; tone: string } {
   switch (tier) {
     case 'FAST':
@@ -57,7 +56,7 @@ function formatTierBadge(
       return { label: 'WebGPU BIO 64/64', tone: 'text-amber-300' };
     default:
       return {
-        label: lang === 'pl' ? 'CPU Workers' : 'CPU Workers',
+        label: 'CPU Workers',
         tone: 'text-slate-400',
       };
   }
@@ -69,7 +68,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
   architecture,
   paramCount,
 }) => {
-  const { lang } = useLanguage();
+  const { t } = useLanguage();
 
   const metrics = useMemo(() => {
     const safeIn = Math.max(1, inputCount);
@@ -106,8 +105,8 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
       const overflow = size > maxVisibleNodes ? size - maxVisibleNodes : 0;
       const ys: number[] = [];
       for (let i = 0; i < visible; i++) {
-        const t = visible === 1 ? 0.5 : i / (visible - 1);
-        ys.push(padY + t * innerH);
+        const ratio = visible === 1 ? 0.5 : i / (visible - 1);
+        ys.push(padY + ratio * innerH);
       }
       return {
         colIdx,
@@ -151,7 +150,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
     return lines;
   }, [layerColumns]);
 
-  const tierMeta = formatTierBadge(metrics.tier, lang);
+  const tierMeta = formatTierBadge(metrics.tier);
   const shapeText = metrics.layers.join('→');
 
   return (
@@ -161,30 +160,26 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
           <span className="text-slate-100 font-semibold">{shapeText}</span>
           <span className="text-slate-600">·</span>
           <span className="text-cyan-300">
-            {metrics.params}{' '}
-            {lang === 'pl' ? 'param. (wagi+biasy)' : 'params (weights+biases)'}
+            {metrics.params} {t('research.topology.paramsLabel')}
           </span>
           <span className="text-slate-600">·</span>
           <span className="text-emerald-300/90">
-            {metrics.totalHidden}{' '}
-            {lang === 'pl' ? 'neur. ukrytych' : 'hidden neurons'}
+            {metrics.totalHidden} {t('research.topology.hiddenNeuronsLabel')}
           </span>
           <span className="text-slate-600">·</span>
           <span className="text-slate-400">
-            {lang === 'pl'
-              ? `${metrics.depth} warstw ukr. (D${metrics.depth})`
-              : `${metrics.depth} hidden layers (D${metrics.depth})`}
+            {t('research.topology.hiddenLayersCount', { depth: metrics.depth })}
           </span>
         </div>
         <div className="flex items-center gap-2 text-[10px] font-mono">
           {metrics.isRecurrent && (
             <span className="text-violet-300">
-              {lang === 'pl' ? 'pętla stanu' : 'stateful loop'}
+              {t('research.topology.statefulLoop')}
             </span>
           )}
           {metrics.hasSkip && (
             <span className="text-amber-300">
-              {lang === 'pl' ? 'skrót skip' : 'skip arc'}
+              {t('research.topology.skipArc')}
             </span>
           )}
           <span className={`font-semibold ${tierMeta.tone}`}>

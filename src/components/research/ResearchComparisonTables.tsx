@@ -4,6 +4,7 @@ import {
   type ResearchFindings,
 } from '../../engine/researchReport';
 import { resolveEnvironment } from '../../engine/simulation';
+import { useLanguage } from '../../i18n/LanguageContext';
 import { formatNormCompute } from './researchUtils';
 
 interface ResearchComparisonTablesProps {
@@ -13,6 +14,7 @@ interface ResearchComparisonTablesProps {
 export const ResearchComparisonTables = memo(function ResearchComparisonTables({
   findings,
 }: ResearchComparisonTablesProps) {
+  const { t } = useLanguage();
   const [topoTableSearch, setTopoTableSearch] = useState('');
 
   const filteredPerTopology = useMemo(() => {
@@ -37,12 +39,10 @@ export const ResearchComparisonTables = memo(function ResearchComparisonTables({
         <div className="rounded-xl border border-slate-800 bg-[#111827] p-5">
           <div className="border-b border-slate-800 pb-3">
             <h2 className="font-display text-base font-semibold text-white">
-              Sensor Input Ablation (1–7 Arguments, Pipe Vy &amp; Lookahead)
+              {t('research.sensorInputAblation112')}
             </h2>
             <p className="text-xs text-slate-400">
-              Compare minimal sensory representations and Pipe Vy derivative
-              tracking on perfection rate, minimum parameters, and compute
-              efficiency
+              {t('research.compareMinimalSensoryRepresentations')}
             </p>
           </div>
           <div className="mt-3 overflow-x-auto">
@@ -105,12 +105,10 @@ export const ResearchComparisonTables = memo(function ResearchComparisonTables({
         <div className="rounded-xl border border-slate-800 bg-[#111827] p-5">
           <div className="border-b border-slate-800 pb-3">
             <h2 className="font-display text-base font-semibold text-white">
-              Bio-Inspired Neuron Architecture Comparison
+              {t('research.bioInspiredNeuronArchitectureCompari')}
             </h2>
             <p className="text-xs text-slate-400">
-              Drosophila leaky continuous-time, neurochemical modulation &amp;
-              short-term synaptic plasticity vs. standard MLP under identical
-              parameter caps
+              {t('research.drosophilaLeakyContinuousTimeNeuroch')}
             </p>
           </div>
           <div className="mt-3 overflow-x-auto">
@@ -181,10 +179,10 @@ export const ResearchComparisonTables = memo(function ResearchComparisonTables({
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
             <div>
               <h2 className="font-display text-base font-semibold text-white">
-                FLOPs-vs-Score Pareto Frontier &amp; Hardware Auto-Routing
+                {t('research.flopsVsScoreParetoFrontier')}
               </h2>
               <p className="text-xs text-slate-400">
-                Non-dominated trials maximizing unseen pipe score per FLOP/frame across ◆ GPU Lockstep and ◇ CPU-Only execution paths
+                {t('research.nonDominatedTrialsMaximizingUnseen')}
               </p>
             </div>
             {findings.computeRoiSummary && (
@@ -308,10 +306,10 @@ export const ResearchComparisonTables = memo(function ResearchComparisonTables({
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
               <div>
                 <h2 className="font-display text-base font-semibold text-white">
-                  Multi-Architecture Island Speciation Competition
+                  {t('research.multiArchitectureIslandSpeciationCom')}
                 </h2>
                 <p className="text-xs text-slate-400">
-                  Compensatory FLOPs-efficiency population sharing across competing architecture islands ({findings.islandWinnerSummary.totalIslandTrials} trials · {findings.islandWinnerSummary.rebalanceEventsTotal} rebalances)
+                  {t('research.compensatoryFlopsEfficiencyPopulatio', { totalIslandTrials: findings.islandWinnerSummary.totalIslandTrials, rebalanceEventsTot: findings.islandWinnerSummary.rebalanceEventsTotal })}
                 </p>
               </div>
             </div>
@@ -363,11 +361,10 @@ export const ResearchComparisonTables = memo(function ResearchComparisonTables({
         <div className="rounded-xl border border-slate-800 bg-[#111827] p-5">
           <div className="border-b border-slate-800 pb-3">
             <h2 className="font-display text-base font-semibold text-white">
-              Weight Bit-Precision &amp; Information Compression (Pipes / Bit)
+              {t('research.weightBitPrecisionInformationCompres')}
             </h2>
             <p className="text-xs text-slate-400">
-              Straight-through quantized synapses from 32-bit float down to
-              1.58-bit Ternary &amp; 1-bit Binary
+              {t('research.straightThroughQuantizedSynapsesFrom')}
             </p>
           </div>
           <div className="mt-3 overflow-x-auto">
@@ -433,11 +430,10 @@ export const ResearchComparisonTables = memo(function ResearchComparisonTables({
       <div className="rounded-xl border border-slate-800 bg-[#111827] p-5">
         <div className="border-b border-slate-800 pb-3">
           <h2 className="font-display text-base font-semibold text-white">
-            AI Optimization Method Adaptability Leaderboard
+            {t('research.aiOptimizationMethodAdaptabilityLead')}
           </h2>
           <p className="text-xs text-slate-400">
-            Hardware-independent compute cost (norm-ms), bird-episodes (Pop ×
-            Gen), and static vs. dynamic perfection across all 8 optimizers
+            {t('research.hardwareIndependentComputeCostNorm')}
           </p>
         </div>
         <div className="mt-3 overflow-x-auto">
@@ -501,11 +497,10 @@ export const ResearchComparisonTables = memo(function ResearchComparisonTables({
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
           <div>
             <h2 className="font-display text-base font-semibold text-white">
-              Topology Shape (Neurons × Weights × Depth) Analysis
+              {t('research.topologyShapeNeuronsWeightsDepth')}
             </h2>
             <p className="text-xs text-slate-400">
-              Compare narrow 2×N chains, bottlenecks, and Iso-Parameter shapes
-              using hardware-independent compute &amp; sample budgets
+              {t('research.compareNarrow2NChains')}
             </p>
           </div>
           {findings.perTopology.length > 12 && (
@@ -513,8 +508,8 @@ export const ResearchComparisonTables = memo(function ResearchComparisonTables({
               type="text"
               value={topoTableSearch}
               onChange={(e) => setTopoTableSearch(e.target.value)}
-              placeholder={`Filter ${findings.perTopology.length} topologies…`}
-              aria-label="Filter topology analysis rows"
+              placeholder={t('research.filterTopologies', { perTopology: findings.perTopology.length })}
+              aria-label={t('research.filterTopologyAnalysisRows')}
               className="w-44 rounded-lg border border-slate-800 bg-[#0B1120] px-2.5 py-1.5 font-mono text-xs text-slate-200 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
             />
           )}

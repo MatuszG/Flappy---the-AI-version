@@ -34,7 +34,7 @@ export function BrainManagerModal({
   onDeleteBrain,
   onImportBrain,
 }: BrainManagerModalProps) {
-  const { bi } = useLanguage();
+  const { t } = useLanguage();
   const [brainName, setBrainName] = useState('');
   const [importError, setImportError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -43,7 +43,9 @@ export function BrainManagerModal({
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = brainName.trim() || `Champion Gen ${currentGeneration}`;
+    const trimmed =
+      brainName.trim() ||
+      t('modals.championGen', { currentGeneration });
     onSaveCurrent(trimmed);
     setBrainName('');
   };
@@ -75,7 +77,9 @@ export function BrainManagerModal({
           !Array.isArray(network.weightsIH) ||
           !Array.isArray(network.weightsHO)
         ) {
-          throw new Error('File does not contain valid neural network weights.');
+          throw new Error(
+            t('modals.fileDoesNotContainValid')
+          );
         }
         const importedName =
           typeof parsed.name === 'string'
@@ -84,7 +88,9 @@ export function BrainManagerModal({
         onImportBrain(importedName, network);
       } catch (err) {
         setImportError(
-          err instanceof Error ? err.message : 'Unable to parse JSON brain file.'
+          err instanceof Error
+            ? err.message
+            : t('modals.unableToParseJsonBrain')
         );
       }
     };
@@ -110,19 +116,16 @@ export function BrainManagerModal({
               id="brain-modal-title"
               className="font-display text-base sm:text-lg font-semibold text-white truncate"
             >
-              {bi('Zapisane Sieci Neuronowe', 'Saved Neural Brains')}
+              {t('modals.savedNeuralBrains')}
             </h2>
             <p className="text-xs text-slate-400">
-              {bi(
-                'Zapisuj mistrzów, importuj JSON lub wyścig z gotowym asem.',
-                'Save champions, import JSON, or race the ace.'
-              )}
+              {t('modals.saveChampionsImportJsonOr')}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label={bi('Zamknij okno', 'Close modal')}
+            aria-label={t('modals.closeModal')}
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700 hover:text-white cursor-pointer"
           >
             <X className="h-4 w-4" />
@@ -136,10 +139,7 @@ export function BrainManagerModal({
               type="text"
               value={brainName}
               onChange={(e) => setBrainName(e.target.value)}
-              placeholder={bi(
-                `Nazwa mistrza (${currentBestScore} rur)`,
-                `Champion name (${currentBestScore} pipes)`
-              )}
+              placeholder={t('modals.championNamePipes', { currentBestScore })}
               className="col-span-2 sm:flex-1 min-w-0 rounded-lg border border-slate-700 bg-[#0B1120] px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-500 focus:outline-none"
             />
             <button
@@ -148,7 +148,7 @@ export function BrainManagerModal({
               className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-2 text-xs font-semibold text-slate-950 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Save className="h-3.5 w-3.5" aria-hidden="true" />
-              {bi('Zapisz Lidera', 'Save Best')}
+              {t('modals.saveBest')}
             </button>
 
             <input
@@ -164,7 +164,7 @@ export function BrainManagerModal({
               className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-medium text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-slate-700"
             >
               <Upload className="h-3.5 w-3.5" aria-hidden="true" />
-              {bi('Import JSON', 'Import JSON')}
+              {t('modals.importJson')}
             </button>
           </form>
 
@@ -186,7 +186,7 @@ export function BrainManagerModal({
                     {brain.name}
                   </p>
                   <p className="mt-0.5 font-mono text-xs tabular-nums text-slate-400">
-                    {brain.bestScore.toLocaleString()} {bi('rur', 'pipes')} · Gen {brain.generation} ·{' '}
+                    {brain.bestScore.toLocaleString()} {t('modals.pipes')} · Gen {brain.generation} ·{' '}
                     {formatTopologyLabel(
                       normalizeHiddenLayers(
                         brain.network.hiddenLayers !== undefined
@@ -207,7 +207,7 @@ export function BrainManagerModal({
                     }}
                     className="min-h-[36px] rounded-md border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 whitespace-nowrap cursor-pointer transition-colors hover:border-cyan-500/50 hover:text-cyan-200"
                   >
-                    {bi('Do Treningu', 'Seed Lab')}
+                    {t('modals.seedLab')}
                   </button>
                   <button
                     type="button"
@@ -218,13 +218,13 @@ export function BrainManagerModal({
                     className="inline-flex min-h-[36px] items-center gap-1.5 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-amber-400"
                   >
                     <Play className="h-3 w-3" aria-hidden="true" />
-                    {bi('Wyścig', 'Race')}
+                    {t('modals.race')}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleExport(brain)}
-                    aria-label={`Export ${brain.name} as JSON`}
-                    title="Export JSON"
+                    aria-label={t('modals.exportAsJson', { name: brain.name })}
+                    title={t('modals.exportJson')}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-400 hover:bg-slate-800 hover:text-slate-100 cursor-pointer"
                   >
                     <Download className="h-3.5 w-3.5" />
@@ -233,8 +233,8 @@ export function BrainManagerModal({
                     <button
                       type="button"
                       onClick={() => onDeleteBrain(brain.id)}
-                      aria-label={`Delete ${brain.name}`}
-                      title="Delete"
+                      aria-label={t('modals.delete', { name: brain.name })}
+                      title={t('modals.delete2')}
                       className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-400 hover:bg-slate-800 hover:text-red-400 cursor-pointer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />

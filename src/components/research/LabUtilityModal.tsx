@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 interface LabUtilityModalProps {
   open: boolean;
@@ -20,6 +21,7 @@ export function LabUtilityModal({
   onClose,
   children,
 }: LabUtilityModalProps) {
+  const { t } = useLanguage();
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -60,7 +62,7 @@ export function LabUtilityModal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Zamknij okno"
+            aria-label={t('modals.closeDialog')}
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-400 cursor-pointer transition-colors hover:border-slate-600 hover:text-white"
           >
             <X className="h-4 w-4" aria-hidden="true" />

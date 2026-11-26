@@ -51,6 +51,7 @@ import type {
 import { useResearchSession } from './hooks/useResearchSession';
 import { useSandboxSimulation } from './hooks/useSandboxSimulation';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
+import { getSensorText } from './i18n/catalog';
 
 const PLAYGROUND_TOPOLOGIES: { label: string; layers: number[] }[] = [
   { label: '5→1', layers: [] },
@@ -87,7 +88,7 @@ export default function App() {
 }
 
 function AppContent() {
-  const { bi } = useLanguage();
+  const { lang, t } = useLanguage();
   const [mode, setMode] = useState<GameMode>('VS_AI');
   const [deckTab, setDeckTab] = useState<'history' | 'params'>('history');
   const [brainsModalOpen, setBrainsModalOpen] = useState(false);
@@ -191,8 +192,8 @@ function AppContent() {
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 min-w-0">
                     <h1 className="font-display text-xl sm:text-2xl font-extrabold tracking-[-0.03em] text-white">
                       {sandbox.playSubMode === 'SOLO'
-                        ? bi('Flappy Arcade · Solo', 'Flappy Arcade · Solo')
-                        : bi('Pojedynek: Ty vs AI', 'Duel: Human vs. AI')}
+                        ? t('training.flappyArcadeSolo')
+                        : t('training.duelHumanVsAi')}
                     </h1>
                     <p className="font-mono text-[11px] sm:text-xs tabular-nums text-slate-400">
                       <span className="text-slate-200">
@@ -256,7 +257,7 @@ function AppContent() {
                         : 'text-slate-300 hover:text-white'
                     }`}
                   >
-                    {bi('Solo', 'Solo')}
+                    {t('training.solo')}
                   </button>
                   <button
                     type="button"
@@ -267,16 +268,16 @@ function AppContent() {
                         : 'text-slate-300 hover:text-white'
                     }`}
                   >
-                    {bi('VS AI', 'VS AI')}
+                    {t('training.vsAi')}
                   </button>
                 </div>
 
                 <label className="flex min-w-0 flex-1 items-center justify-end gap-2">
                   <span className="font-mono text-[11px] text-slate-400 shrink-0">
-                    {bi('Tor:', 'Track:')}
+                    {t('training.track')}
                   </span>
                   <select
-                    aria-label={bi('Wybierz tor', 'Select track')}
+                    aria-label={t('training.selectTrack')}
                     value={sandbox.config.difficulty}
                     onChange={(e) =>
                       sandbox.handleSelectPlayDifficulty(
@@ -389,12 +390,12 @@ function AppContent() {
                         {sandbox.running ? (
                           <>
                             <Pause className="h-3.5 w-3.5" aria-hidden="true" />
-                            {bi('Pauza', 'Pause')}
+                            {t('training.pause')}
                           </>
                         ) : (
                           <>
                             <Play className="h-3.5 w-3.5" aria-hidden="true" />
-                            {bi('Wznów', 'Resume')}
+                            {t('training.resume')}
                           </>
                         )}
                       </button>
@@ -402,33 +403,33 @@ function AppContent() {
                       <button
                         type="button"
                         onClick={sandbox.handleStepFrame}
-                        title={bi('Przesuń symulację o 1 klatkę', 'Advance one simulation tick')}
+                        title={t('training.advanceOneSimulationTick')}
                         className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-slate-700 hover:text-white"
                       >
                         <SkipForward
                           className="h-3.5 w-3.5"
                           aria-hidden="true"
                         />
-                        {bi('Krok', 'Step')}
+                        {t('training.step')}
                       </button>
 
                       <button
                         type="button"
                         onClick={sandbox.handleResetTraining}
-                        title={bi('Zresetuj populację i trening', 'Reset training population')}
+                        title={t('training.resetTrainingPopulation')}
                         className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-slate-700 hover:text-white"
                       >
                         <RotateCcw
                           className="h-3.5 w-3.5"
                           aria-hidden="true"
                         />
-                        {bi('Reset', 'Reset')}
+                        {t('training.reset')}
                       </button>
 
                       <div
                         className="flex flex-wrap items-center gap-1 rounded-lg border border-slate-800 bg-[#0B1120] p-1"
                         role="group"
-                        aria-label={bi('Mnożnik prędkości symulacji', 'Simulation speed multiplier')}
+                        aria-label={t('training.simulationSpeedMultiplier')}
                       >
                         {SPEED_OPTIONS.map((opt) => (
                           <button
@@ -459,7 +460,7 @@ function AppContent() {
                           }}
                           className="inline-flex min-h-[54px] sm:min-h-[46px] w-full sm:w-auto sm:px-7 items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-base font-bold text-slate-950 whitespace-nowrap select-none touch-none cursor-pointer transition-colors active:bg-amber-400 hover:bg-amber-400 shadow-sm"
                         >
-                          {bi('SKOK (FLAP)', 'FLAP')}
+                          {t('training.flap')}
                         </button>
 
                         <div className="flex items-center justify-between sm:justify-start gap-2">
@@ -473,12 +474,12 @@ function AppContent() {
                                 {sandbox.running ? (
                                   <>
                                     <Pause className="h-3.5 w-3.5" aria-hidden="true" />
-                                    {bi('Pauza', 'Pause')}
+                                    {t('training.pause')}
                                   </>
                                 ) : (
                                   <>
                                     <Play className="h-3.5 w-3.5" aria-hidden="true" />
-                                    {bi('Wznów', 'Resume')}
+                                    {t('training.resume')}
                                   </>
                                 )}
                               </button>
@@ -487,11 +488,11 @@ function AppContent() {
                             <button
                               type="button"
                               onClick={sandbox.handleRematchVsAi}
-                              title={bi('Rozpocznij od nowa (R)', 'Restart flight (R)')}
+                              title={t('training.restartFlightR')}
                               className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-[#0B1120] px-3.5 py-2 text-xs font-medium text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-amber-500/50 hover:text-amber-200"
                             >
                               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-                              <span>{bi('Od nowa', 'Restart')}</span>
+                              <span>{t('training.restart')}</span>
                             </button>
                           </div>
 
@@ -513,7 +514,7 @@ function AppContent() {
                                 ) : (
                                   <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
                                 )}
-                                {bi('Sensory', 'Sensors')}
+                                {t('training.sensors')}
                               </button>
                             )}
 
@@ -532,7 +533,7 @@ function AppContent() {
                               ) : (
                                 <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
                               )}
-                              {sandbox.muted ? bi('Wyciszono', 'Muted') : 'Audio'}
+                              {sandbox.muted ? t('training.muted') : 'Audio'}
                             </button>
                           </div>
                         </div>
@@ -544,10 +545,7 @@ function AppContent() {
                             type="button"
                             onClick={() => sandbox.setShowSensors((s) => !s)}
                             aria-pressed={sandbox.showSensors}
-                            title={bi(
-                              'Pokaż na planszy linie aktywnych sensorów wybranego mózgu',
-                              'Toggle live canvas overlay showing active sensor inputs'
-                            )}
+                            title={t('training.toggleLiveCanvasOverlayShowing')}
                             className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
                               sandbox.showSensors
                                 ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
@@ -559,7 +557,7 @@ function AppContent() {
                             ) : (
                               <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
                             )}
-                            {bi('Sensory', 'Sensors')}
+                            {t('training.sensors')}
                           </button>
                         )}
 
@@ -569,8 +567,8 @@ function AppContent() {
                           aria-pressed={!sandbox.muted}
                           aria-label={
                             sandbox.muted
-                              ? bi('Włącz dźwięk', 'Unmute arcade sound')
-                              : bi('Wycisz dźwięk', 'Mute arcade sound')
+                              ? t('training.unmuteArcadeSound')
+                              : t('training.muteArcadeSound')
                           }
                           className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
                             !sandbox.muted
@@ -583,7 +581,7 @@ function AppContent() {
                           ) : (
                             <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
                           )}
-                          {sandbox.muted ? bi('Wyciszono', 'Muted') : 'Audio'}
+                          {sandbox.muted ? t('training.muted') : 'Audio'}
                         </button>
                       </div>
                     </div>
@@ -595,10 +593,7 @@ function AppContent() {
                         type="button"
                         onClick={() => sandbox.setShowSensors((s) => !s)}
                         aria-pressed={sandbox.showSensors}
-                        title={bi(
-                          'Pokaż na planszy linie aktywnych sensorów wybranego mózgu',
-                          'Toggle live canvas overlay showing active sensor inputs'
-                        )}
+                        title={t('training.toggleLiveCanvasOverlayShowing')}
                         className={`inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
                           sandbox.showSensors
                             ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
@@ -610,7 +605,7 @@ function AppContent() {
                         ) : (
                           <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
                         )}
-                        {bi('Sensory', 'Sensors')}
+                        {t('training.sensors')}
                       </button>
 
                       <button
@@ -619,8 +614,8 @@ function AppContent() {
                         aria-pressed={!sandbox.muted}
                         aria-label={
                           sandbox.muted
-                            ? bi('Włącz dźwięk', 'Unmute arcade sound')
-                            : bi('Wycisz dźwięk', 'Mute arcade sound')
+                            ? t('training.unmuteArcadeSound')
+                            : t('training.muteArcadeSound')
                         }
                         className={`inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
                           !sandbox.muted
@@ -633,7 +628,7 @@ function AppContent() {
                         ) : (
                           <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
                         )}
-                        {sandbox.muted ? bi('Wyciszono', 'Muted') : 'Audio'}
+                        {sandbox.muted ? t('training.muted') : 'Audio'}
                       </button>
 
                       <button
@@ -646,7 +641,7 @@ function AppContent() {
                           className="h-3.5 w-3.5"
                           aria-hidden="true"
                         />
-                        {bi('Zapisz lidera', 'Save Best')}
+                        {t('training.saveBest')}
                       </button>
 
                       <button
@@ -655,7 +650,7 @@ function AppContent() {
                         className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-cyan-500/50 hover:text-cyan-200"
                       >
                         <Brain className="h-3.5 w-3.5 text-cyan-400" aria-hidden="true" />
-                        {bi('Sieci', 'Brains')}
+                        {t('training.brains')}
                       </button>
 
                       <button
@@ -664,7 +659,7 @@ function AppContent() {
                         className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-amber-500 px-3.5 py-2 text-xs font-semibold text-slate-950 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-amber-400"
                       >
                         <Swords className="h-3.5 w-3.5" aria-hidden="true" />
-                        {bi('Ścigaj się z AI', 'Race AI')}
+                        {t('training.raceAi')}
                       </button>
                     </div>
                   )}
@@ -676,14 +671,11 @@ function AppContent() {
                     {/* Row 1: Optimizer Selection + Bio Benchmark Presets */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300 shrink-0">
-                        {bi('Optymalizator', 'Optimizer')}
+                        {t('training.optimizer')}
                         <InfoTooltip
                           align="left"
-                          label={bi('O optymalizatorach', 'About AI optimizers')}
-                          text={bi(
-                            'Neuro-CMA (najszybsza zbieżność dla małych sieci ≤100 param.), Diff. Evol. (najwyższa skuteczność ogólna 33.5%) oraz GA (krzyżowanie populacji).',
-                            'Neuro-CMA (fastest G1 convergence ≤100 params), Diff. Evol. (33.5% overall sweet-spot), and GA (population crossover).'
-                          )}
+                          label={t('training.aboutAiOptimizers')}
+                          text={t('training.neuroCmaFastestG1Convergence')}
                         />
                       </span>
                       <div
@@ -733,8 +725,8 @@ function AppContent() {
                           EXTENDED_OPTIMIZER_ALGORITHMS.includes(
                             sandbox.config.algorithm
                           )
-                            ? bi('Mniej', 'Less')
-                            : bi('+5 metod ES', '+5 ES/Swarm')}
+                            ? t('training.less')
+                            : t('training.k5EsSwarm')}
                         </button>
                       </div>
                     </div>
@@ -774,14 +766,11 @@ function AppContent() {
                     {/* Row 2: Quick Topology + Morphogenesis */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-slate-800/80 pt-3">
                       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300 shrink-0">
-                        {bi('Warstwy ukryte', 'Hidden Layers')}
+                        {t('training.hiddenLayers')}
                         <InfoTooltip
                           align="left"
-                          label={bi('O topologii sieci', 'About network topology')}
-                          text={bi(
-                            'Liczba neuronów w warstwach ukrytych. N→1 to brak warstw ukrytych; np. 6·2 oznacza dwie warstwy (6 i 2 neurony).',
-                            'Hidden layer widths between inputs and Flap output. N→1 has 0 hidden layers; 6·2 has two (6 and 2 neurons).'
-                          )}
+                          label={t('training.aboutNetworkTopology')}
+                          text={t('training.hiddenLayerWidthsBetweenInputs')}
                         />
                       </span>
                       <div
@@ -812,10 +801,7 @@ function AppContent() {
                               disabled={skipLinearDisabled}
                               title={
                                 skipLinearDisabled
-                                  ? bi(
-                                      'Residual Skip przy 0 warstwach ukrytych jest identyczny z MLP',
-                                      'Residual Skip at Depth 0 is identical to linear MLP'
-                                    )
+                                  ? t('training.residualSkipAtDepth0')
                                   : undefined
                               }
                               onClick={() => {
@@ -850,17 +836,14 @@ function AppContent() {
                               morphogenesis: !sandbox.config.morphogenesis,
                             })
                           }
-                          title={bi(
-                            'Samorozrost sieci (Morphogenesis): startuje od małego zalążka i dodaje neurony przy stagnacji.',
-                            'Self-growing morphogenesis: starts lean and expands width on stagnation.'
-                          )}
+                          title={t('training.selfGrowingMorphogenesisStartsLean')}
                           className={`rounded-md border px-2 py-1 font-mono text-[10.5px] font-medium cursor-pointer transition-colors ${
                             sandbox.config.morphogenesis
                               ? 'border-amber-500/60 bg-amber-500/15 text-amber-200'
                               : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
                           }`}
                         >
-                          {bi('Samorozrost:', 'Auto-Grow:')}{' '}
+                          {t('training.autoGrow')}{' '}
                           {sandbox.config.morphogenesis ? 'ON' : 'OFF'}
                         </button>
                         <button
@@ -868,7 +851,7 @@ function AppContent() {
                           onClick={() => setDeckTab('params')}
                           className="rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1 text-[11px] font-medium text-slate-200 whitespace-nowrap cursor-pointer transition-colors hover:border-cyan-500/50 hover:text-cyan-200"
                         >
-                          {bi('Suwaki (do 64)', 'Sliders (≤64)')}
+                          {t('training.sliders64')}
                         </button>
                       </div>
                     </div>
@@ -878,14 +861,11 @@ function AppContent() {
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300">
-                            {bi('Percepcja:', 'Perception:')}
+                            {t('training.perception')}
                             <InfoTooltip
                               align="left"
-                              label={bi('Tryby zmysłów', 'Perception modes')}
-                              text={bi(
-                                '1) Sensory Geometryczne: dokładne współrzędne (Y, Vy, DX, Top, Bot). 2) Siatkówka 16-Ray: wachlarz 16 promieni (-68°..+68°) przetwarzany przez płat L1/L2 + T4/T5.',
-                                '1) Geometric Sensors: exact coordinates (Y, Vy, DX, Top, Bot). 2) 16-Ray Retina: 16 optical rays (-68°..+68°) processed via L1/L2 + T4/T5 streams.'
-                              )}
+                              label={t('training.perceptionModes')}
+                              text={t('training.k1GeometricSensorsExactCoordinates')}
                             />
                           </span>
                           <div className="inline-flex rounded-lg border border-slate-800 bg-[#0B1120] p-0.5">
@@ -904,10 +884,7 @@ function AppContent() {
                                   : 'text-slate-400 hover:text-slate-200'
                               }`}
                             >
-                              {bi(
-                                `Sensory Geometryczne (${normalizeInputFeatures(sandbox.config.inputFeatures).length}/12)`,
-                                `Geometric Sensors (${normalizeInputFeatures(sandbox.config.inputFeatures).length}/12)`
-                              )}
+                              {t('training.geometricSensors12', { inputFeatures: normalizeInputFeatures(sandbox.config.inputFeatures).length })}
                             </button>
                             <button
                               type="button"
@@ -923,10 +900,7 @@ function AppContent() {
                                   : 'text-slate-400 hover:text-slate-200'
                               }`}
                             >
-                              {bi(
-                                'Siatkówka 16-Ray (Ommatidia T4/T5)',
-                                '16-Ray Retina (Ommatidia T4/T5)'
-                              )}
+                              {t('training.k16RayRetinaOmmatidiaT4')}
                             </button>
                           </div>
                         </div>
@@ -934,15 +908,15 @@ function AppContent() {
                         {sandbox.config.perceptionMode !== 'COMPOUND_EYE_PIXELS' && (
                           <div className="flex flex-wrap items-center gap-1">
                             <span className="text-[10.5px] text-slate-500 mr-0.5">
-                              {bi('Presety:', 'Presets:')}
+                              {t('training.presets')}
                             </span>
                             {[
                               { idx: 0, short: '1 (Bot)' },
                               { idx: 1, short: '2 (DX+Bot)' },
-                              { idx: 2, short: '4 (R1+R2)' },
+                              { idx: 2, short: t('training.k4P1P2') },
                               { idx: 3, short: '6 (Geo)' },
-                              { idx: 4, short: '8 (Ruch)' },
-                              { idx: 6, short: '12 (Pełny)' },
+                              { idx: 4, short: t('training.k8Motion') },
+                              { idx: 6, short: t('training.k12Full') },
                             ].map(({ idx, short }) => {
                               const preset = INPUT_SUBSET_PRESETS[idx];
                               if (!preset) return null;
@@ -987,15 +961,12 @@ function AppContent() {
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="text-[11px] text-slate-300">
                               <span className="font-semibold text-emerald-300">
-                                {bi(
-                                  'Siatkówka 16-Ray (-68°..+68°) · L1/L2 + T4/T5',
-                                  '16-Ray Retina (-68°..+68°) · L1/L2 + T4/T5'
-                                )}
+                                {t('training.k16RayRetina6868')}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <span className="text-[10.5px] text-slate-400 font-mono">
-                                {bi('Szum optyczny:', 'Optical noise:')}{' '}
+                                {t('training.opticalNoise')}{' '}
                                 <strong className="text-emerald-300">
                                   {Math.round(
                                     (sandbox.config.opticalNoiseLevel ?? 0) * 100
@@ -1023,7 +994,7 @@ function AppContent() {
                           <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-800/80">
                             <div className="flex flex-wrap items-center gap-1">
                               <span className="text-[10px] font-mono text-slate-400 mr-1">
-                                {bi('Wyjścia Płata Wzrokowego:', 'Optic Lobe Outputs:')}
+                                {t('training.opticLobeOutputs')}
                               </span>
                               {normalizeInputFeatures(
                                 sandbox.config.inputFeatures
@@ -1032,7 +1003,7 @@ function AppContent() {
                                 return (
                                   <span
                                     key={feat}
-                                    title={meta.opticalDescPl}
+                                    title={getSensorText(lang, feat).opticalDesc}
                                     className="rounded border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] text-emerald-200"
                                   >
                                     {meta.opticalShortLabel}
@@ -1043,12 +1014,12 @@ function AppContent() {
 
                             <div className="flex flex-wrap items-center gap-1">
                               <span className="text-[10px] text-slate-400 mr-0.5">
-                                {bi('Strumienie T4/T5:', 'T4/T5 Streams:')}
+                                {t('training.t4T5Streams')}
                               </span>
                               {(
                                 [
                                   {
-                                    label: bi('5 (Bliskie Pole)', '5 (Near Field)'),
+                                    label: t('training.k5NearField'),
                                     features: [
                                       'BIRD_Y',
                                       'VEL_VY',
@@ -1058,7 +1029,7 @@ function AppContent() {
                                     ] as SensorFeatureId[],
                                   },
                                   {
-                                    label: bi('6 (+Ruch Krawędzi)', '6 (+Edge Motion)'),
+                                    label: t('training.k6EdgeMotion'),
                                     features: [
                                       'BIRD_Y',
                                       'VEL_VY',
@@ -1069,7 +1040,7 @@ function AppContent() {
                                     ] as SensorFeatureId[],
                                   },
                                   {
-                                    label: bi('8 (+Dalekie Pole #2)', '8 (+Far Field #2)'),
+                                    label: t('training.k8FarField2'),
                                     features: [
                                       'VEL_VY',
                                       'PIPE_DX',
@@ -1082,7 +1053,7 @@ function AppContent() {
                                     ] as SensorFeatureId[],
                                   },
                                   {
-                                    label: bi('12 (Pełny Płat + Tau)', '12 (Full Lobe + Tau)'),
+                                    label: t('training.k12FullLobeTau'),
                                     features: [...ALL_SENSOR_FEATURES],
                                   },
                                 ] as const
@@ -1148,15 +1119,9 @@ function AppContent() {
                                 disabled={staticBlocked || isLastClearance}
                                 title={
                                   staticBlocked
-                                    ? bi(
-                                        `${meta.label}: wyłączone przy statycznych rurach`,
-                                        `${meta.label}: disabled for static pipes`
-                                      )
+                                    ? t('training.disabledForStaticPipes', { label: meta.label })
                                     : isLastClearance
-                                      ? bi(
-                                          'Wymagany min. 1 sensor szczeliny (Top lub Bot)',
-                                          'Requires at least 1 gap clearance sensor (Top or Bot)'
-                                        )
+                                      ? t('training.requiresAtLeast1Gap')
                                       : `${meta.label}: ${meta.description}`
                                 }
                                 onClick={() => {
@@ -1266,7 +1231,7 @@ function AppContent() {
                               : 'text-slate-400 hover:text-slate-200'
                           }`}
                         >
-                          {bi('Wykres Ewolucji', 'Evolution History')}
+                          {t('training.evolutionHistory')}
                         </button>
                         <button
                           type="button"
@@ -1277,7 +1242,7 @@ function AppContent() {
                               : 'text-slate-400 hover:text-slate-200'
                           }`}
                         >
-                          {bi('Ustawienia & Fizyka', 'Hyperparameters')}
+                          {t('training.hyperparameters')}
                         </button>
                       </div>
 

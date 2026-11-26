@@ -16,6 +16,7 @@ import {
   TIER_2_LEGACY_ARCHITECTURES,
 } from '../../engine/architectureCatalog';
 import {
+  getLocalizedPreset,
   getPresetById,
   RESEARCH_PRESETS,
   type PresetId,
@@ -83,6 +84,7 @@ import type {
   WeightPrecision,
 } from '../../engine/types';
 import { useLanguage } from '../../i18n/LanguageContext';
+import { getArchText, getMorphogenesisText } from '../../i18n/catalog';
 import { InfoTooltip } from '../InfoTooltip';
 import { LabUtilityModal } from './LabUtilityModal';
 import { TopologyDiagram } from './TopologyDiagram';
@@ -194,12 +196,12 @@ const TOPOLOGY_BUNDLES: Record<
   },
 };
 
-const MAX_PARAM_PRESETS: { value: number | null; labelPl: string; labelEn: string }[] = [
-  { value: 25, labelPl: '≤25 param.', labelEn: '≤25 params' },
-  { value: 50, labelPl: '≤50 param.', labelEn: '≤50 params' },
-  { value: 100, labelPl: '≤100 param.', labelEn: '≤100 params' },
-  { value: null, labelPl: 'Bez limitu', labelEn: 'No Cap' },
-];
+const MAX_PARAM_PRESETS = [
+  { value: 25 as number | null, key: 'research.protocol.paramCaps.cap25' as const },
+  { value: 50 as number | null, key: 'research.protocol.paramCaps.cap50' as const },
+  { value: 100 as number | null, key: 'research.protocol.paramCaps.cap100' as const },
+  { value: null as number | null, key: 'research.protocol.paramCaps.noCap' as const },
+] as const;
 
 const ALL_POPULATIONS = [60, 150, 300, 500];
 const ALL_MUTATION_RATES = [0.08, 0.16, 0.25];
@@ -224,7 +226,7 @@ export const ResearchProtocolConfigurator = memo(
     onChangeActiveRunLabel,
     onEnqueuePreset,
   }: ResearchProtocolConfiguratorProps) {
-    const { lang, bi } = useLanguage();
+    const { lang, t } = useLanguage();
     const [customTopoInput, setCustomTopoInput] = useState('12, 8, 4');
     const [hoveredTopology, setHoveredTopology] = useState<number[] | null>(
       null
@@ -924,15 +926,12 @@ export const ResearchProtocolConfigurator = memo(
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-800 bg-[#111827] px-3.5 py-2.5">
           <button
             type="button"
-            title={bi(
-              '19 presetów badawczych (Frontier, Diagnostic, Classic)',
-              '19 curated research presets (Frontier, Diagnostic, Classic)'
-            )}
+            title={t('research.k19CuratedResearchPresetsFrontier')}
             onClick={() => setShowPresetsModal(true)}
             className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-[#0B1120] px-3 py-1.5 text-xs font-semibold text-amber-200 transition-colors hover:border-amber-400 hover:bg-amber-500/10 cursor-pointer"
           >
             <Sparkles className="h-3.5 w-3.5 text-amber-300 shrink-0" aria-hidden="true" />
-            <span>{bi('Presety', 'Presets')}</span>
+            <span>{t('research.presets')}</span>
             <span className="font-mono text-[10px] text-amber-300/80">
               {RESEARCH_PRESETS.length}
             </span>
@@ -945,7 +944,7 @@ export const ResearchProtocolConfigurator = memo(
             className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-[#0B1120] px-3 py-1.5 text-xs font-semibold text-slate-100 transition-colors hover:border-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
           >
             <Layers className="h-3.5 w-3.5 text-emerald-300 shrink-0" aria-hidden="true" />
-            <span>{bi('Scenariusze', 'Scenarios')}</span>
+            <span>{t('research.scenarios')}</span>
             <span className="font-mono text-[10px] text-emerald-300 tabular-nums">
               {sweepConfig.difficulties.length}/{ALL_DIFFICULTIES.length}
             </span>
@@ -958,7 +957,7 @@ export const ResearchProtocolConfigurator = memo(
             className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/40 bg-[#0B1120] px-3 py-1.5 text-xs font-semibold text-slate-100 transition-colors hover:border-violet-400 hover:bg-violet-500/10 cursor-pointer"
           >
             <Cpu className="h-3.5 w-3.5 text-violet-300 shrink-0" aria-hidden="true" />
-            <span>{bi('Optymalizatory', 'Optimizers')}</span>
+            <span>{t('research.optimizers')}</span>
             <span className="font-mono text-[10px] text-violet-300 tabular-nums">
               {activeGlobalAlgorithms.length}/8
             </span>
@@ -974,7 +973,7 @@ export const ResearchProtocolConfigurator = memo(
               className="h-3.5 w-3.5 text-cyan-300 shrink-0"
               aria-hidden="true"
             />
-            <span>{bi('Trening & Audyt', 'Training & Audit')}</span>
+            <span>{t('research.trainingAudit')}</span>
           </button>
         </div>
 
@@ -991,39 +990,18 @@ export const ResearchProtocolConfigurator = memo(
               inspectedArch === 'LOOPED_REASONER' ||
               inspectedArch === 'PONDER_ACT' ||
               inspectedArch === 'LATENT_ROLLOUT'
-                ? bi(
-                    'Wcześniejsze warstwy kodują wejście, a ostatnia warstwa (lastH) wyznacza rozmiar macierzy rekurencyjnej (lastH×lastH). WebGPU 8/12 → 64/64.',
-                    'Earlier layers encode inputs while the last layer (lastH) sizes the recurrent reasoning matrix (lastH×lastH). WebGPU 8/12 → 64/64.'
-                  )
+                ? t('research.earlierLayersEncodeInputsWhile')
                 : inspectedArch === 'HYBRID_MOE'
-                  ? bi(
-                      'Definiuje rdzeń refleksyjny MLP; szerokość 1. warstwy ustala rozmiar 3 ekspertów (LTC, MinGRU, Ponder) na CPU.',
-                      'Defines the MLP reflex core; 1st layer width sizes the 3 adaptive experts (LTC, MinGRU, Ponder) on CPU.'
-                    )
+                  ? t('research.definesTheMlpReflexCore')
                   : isFlyCortex
-                    ? bi(
-                        'Określa rozmiar rdzenia wykonawczego LTC (+ Giant Fiber przy D≥1); 16-slotowa pamięć FlyHash APL ma stały rozmiar (CPU).',
-                        'Sizes the executive LTC core (+ Giant Fiber at D≥1); the 16-slot FlyHash APL memory has fixed size (CPU).'
-                      )
+                    ? t('research.sizesTheExecutiveLtcCore')
                     : isDrosophila
-                      ? bi(
-                          'Określa rozmiar płata wzrokowego LTC (+ Giant Fiber przy D≥1). Dynamiczny WebGPU do D≤4, szer.≤64, suma≤64n.',
-                          'Sizes the optic-lobe LTC core (+ Giant Fiber at D≥1). Dynamic WebGPU up to D≤4, width≤64, total≤64n.'
-                        )
+                      ? t('research.sizesTheOpticLobeLtc')
                       : inspectedArch === 'RESIDUAL_SKIP'
-                        ? bi(
-                            'Przy Depth≥1 dodaje bezpośredni bypass sensory→motor. Depth 0 (Linear) jest wyłączony przy aktywnym MLP (matematycznie identyczny).',
-                            'At Depth≥1 adds a direct sensory→motor bypass. Depth 0 is disabled alongside MLP (0 extra params, identical forward/learning).'
-                          )
+                        ? t('research.atDepth1AddsA')
                         : inspectedArch === 'MLP'
-                          ? bi(
-                              'Klasyczne warstwy gęste tanh — pełne przyspieszenie WebGPU (FAST / DEEP 24 / DEEP 64 do 64 neuronów/warstwę).',
-                              'Classic dense tanh layers — full WebGPU acceleration (FAST / DEEP 24 / DEEP 64 up to 64 neurons/layer).'
-                            )
-                          : bi(
-                              'Każdy ukryty neuron otrzymuje stanową dynamikę bio-membrany. Dynamiczny WebGPU w 4 tierach (8/12 → 16/24 → 32/36 → 64/64, D≤4).',
-                              'Each hidden neuron runs stateful bio-membrane dynamics. Dynamic 4-tier WebGPU (8/12 → 16/24 → 32/36 → 64/64, D≤4).'
-                            );
+                          ? t('research.classicDenseTanhLayersFull')
+                          : t('research.eachHiddenNeuronRunsStateful');
             const hasReasoningK =
               inspectedArch === 'PONDER_ACT' ||
               inspectedArch === 'LOOPED_REASONER';
@@ -1128,7 +1106,7 @@ export const ResearchProtocolConfigurator = memo(
                       {archMenuOpen && (
                         <div
                           role="listbox"
-                          aria-label={bi('Wybór architektury', 'Select architecture')}
+                          aria-label={t('research.selectArchitecture')}
                           className="absolute left-0 top-full z-40 mt-1.5 w-[330px] sm:w-[400px] rounded-xl border border-slate-700/90 bg-[#0B1120] p-2.5 shadow-2xl shadow-black/70"
                         >
                           <div className="mb-2 flex items-center justify-between gap-2 border-b border-slate-800 pb-2 font-mono text-[10.5px]">
@@ -1147,7 +1125,7 @@ export const ResearchProtocolConfigurator = memo(
                                 }
                                 className="text-slate-400 hover:text-white cursor-pointer disabled:opacity-50"
                               >
-                                {bi('Tylko ta', 'Only this')}
+                                {t('research.onlyThis')}
                               </button>
                               <span className="text-slate-700">·</span>
                               <button
@@ -1175,7 +1153,7 @@ export const ResearchProtocolConfigurator = memo(
                                 }
                                 className="text-emerald-300 hover:text-emerald-200 cursor-pointer disabled:opacity-50"
                               >
-                                {bi('Wszystkie', 'All')}
+                                {t('research.all')}
                               </button>
                             </div>
                           </div>
@@ -1183,7 +1161,7 @@ export const ResearchProtocolConfigurator = memo(
                           <div className="max-h-[360px] space-y-2.5 overflow-y-auto pr-0.5">
                             <div className="space-y-1">
                               <div className="px-1.5 text-[10px] font-semibold uppercase tracking-wider text-cyan-400/80">
-                                {bi('Tier 1 — Główne', 'Tier 1 — Core')}
+                                {t('research.tier1Core')}
                               </div>
                               {TIER_1_ARCHITECTURES.map((arch) => {
                                 const m = ARCHITECTURE_META[arch];
@@ -1349,14 +1327,10 @@ export const ResearchProtocolConfigurator = memo(
 
                   <div className="lg:col-span-7 text-[11.5px] leading-relaxed text-slate-300">
                     <span className="font-semibold text-slate-100">
-                      {lang === 'pl'
-                        ? inspCat?.fullNamePl ?? inspMeta.label
-                        : inspMeta.label}
+                      {getArchText(lang, inspectedArch)?.fullName ?? inspMeta.label}
                       :{' '}
                     </span>
-                    {lang === 'pl'
-                      ? inspCat?.whatItDoesPl ?? inspMeta.description
-                      : inspMeta.description}
+                    {getArchText(lang, inspectedArch)?.summary ?? inspMeta.description}
                   </div>
                 </div>
 
@@ -1367,23 +1341,17 @@ export const ResearchProtocolConfigurator = memo(
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
                     <span className="inline-flex items-center gap-1.5 font-medium text-slate-200">
-                      {bi('Morphogenesis (Samorozrost)', 'Morphogenesis (Growth)')}
+                      {t('research.morphogenesisGrowth')}
                       <InfoTooltip
                         align="left"
-                        label={bi(
-                          'Morphogenesis dla tej architektury',
-                          'Morphogenesis for this architecture'
-                        )}
-                        text={bi(
-                          'Zaznacz Static, Growing lub OBA naraz (test A/B porównujący sieć stałą z samorozrastającą się). Pokazujemy tu wyłącznie parametry mające zastosowanie do tej architektury.',
-                          'Select Static, Growing, or BOTH (an A/B test comparing fixed networks against self-growing networks). Only parameters supported by this architecture are shown.'
-                        )}
+                        label={t('research.morphogenesisForThisArchitecture')}
+                        text={t('research.selectStaticGrowingOrBoth')}
                       />
                     </span>
                     <div className="flex items-center gap-2 font-mono text-[10px]">
                       <span className="text-amber-300">
                         {isIslandSpeciation
-                          ? bi('Wyłączone (Islands)', 'Disabled (Islands)')
+                          ? t('research.disabledIslands')
                           : archMorphModes.length === 2
                             ? 'A/B (Static + Grow)'
                             : archHasGrowing
@@ -1397,7 +1365,7 @@ export const ResearchProtocolConfigurator = memo(
                           onClick={() => applyArchMorphToAll(inspectedArch)}
                           className="text-slate-400 hover:text-cyan-300 cursor-pointer disabled:opacity-50"
                         >
-                          {bi('· Dla wszystkich', '· Apply to all')}
+                          {t('research.applyToAll')}
                         </button>
                       )}
                     </div>
@@ -1405,10 +1373,7 @@ export const ResearchProtocolConfigurator = memo(
 
                   {isIslandSpeciation ? (
                     <div className="rounded border border-amber-500/30 bg-amber-500/5 px-2.5 py-1.5 font-mono text-[10px] text-amber-200/90">
-                      {bi(
-                        'Tryb 5-Arch Islands automatycznie wyłącza Morphogenesis (wyspy rywalizują równolegle).',
-                        '5-Arch Islands mode automatically disables Morphogenesis (islands compete in parallel).'
-                      )}
+                      {t('research.k5ArchIslandsModeAutomatically')}
                     </div>
                   ) : (
                     <>
@@ -1417,19 +1382,13 @@ export const ResearchProtocolConfigurator = memo(
                           [
                             {
                               id: 'STATIC',
-                              label: bi('Static (stała sieć)', 'Static (fixed size)'),
-                              desc: bi(
-                                'Pełny rozmiar od 1. pokolenia',
-                                'Full width from generation 1'
-                              ),
+                              label: t('research.staticFixedSize'),
+                              desc: t('research.fullWidthFromGeneration1'),
                             },
                             {
                               id: 'GROWING',
-                              label: bi('Growing (samorozrost)', 'Growing (morphogenesis)'),
-                              desc: bi(
-                                `Start ${Math.round(morphCfg.initialWidthRatio * 100)}% + mielinizacja`,
-                                `Start ${Math.round(morphCfg.initialWidthRatio * 100)}% + myelination`
-                              ),
+                              label: t('research.growingMorphogenesis'),
+                              desc: t('research.startMyelination', { val0: Math.round(morphCfg.initialWidthRatio * 100) }),
                             },
                           ] as const
                         ).map((opt) => {
@@ -1483,7 +1442,7 @@ export const ResearchProtocolConfigurator = memo(
                                   key={prof.id}
                                   type="button"
                                   disabled={isBusy}
-                                  title={`${prof.hypothesisPl} · ${prof.idealForPl}`}
+                                  title={`${getMorphogenesisText(lang, prof.id).hypothesis} · ${getMorphogenesisText(lang, prof.id).idealFor}`}
                                   onClick={() =>
                                     onChangeConfig({
                                       ...sweepConfig,
@@ -1497,10 +1456,10 @@ export const ResearchProtocolConfigurator = memo(
                                   }`}
                                 >
                                   <div className="text-[10.5px] font-semibold leading-tight truncate">
-                                    {prof.namePl}
+                                    {getMorphogenesisText(lang, prof.id).name}
                                   </div>
                                   <div className="mt-0.5 font-mono text-[9px] text-amber-300/90 leading-tight truncate">
-                                    {prof.badgePl}
+                                    {getMorphogenesisText(lang, prof.id).badge}
                                   </div>
                                 </button>
                               );
@@ -1511,7 +1470,7 @@ export const ResearchProtocolConfigurator = memo(
                             <button
                               type="button"
                               disabled={isBusy}
-                              title="Rozmiar startowy zalążka sieci (warstwy ukryte)"
+                              title={t('research.initialSeedlingWidthRatioHidden')}
                               onClick={() =>
                                 onChangeConfig({
                                   ...sweepConfig,
@@ -1536,7 +1495,7 @@ export const ResearchProtocolConfigurator = memo(
                             <button
                               type="button"
                               disabled={isBusy}
-                              title="Pokolenia stagnacji przed rozrostem"
+                              title={t('research.stagnationGenerationsBeforeStructura')}
                               onClick={() =>
                                 onChangeConfig({
                                   ...sweepConfig,
@@ -1553,7 +1512,9 @@ export const ResearchProtocolConfigurator = memo(
                               }
                               className="rounded border border-slate-800 bg-slate-950 px-2 py-1 text-slate-300 cursor-pointer hover:border-cyan-500/40 disabled:opacity-50"
                             >
-                              <span className="text-slate-500">Stagnacja: </span>
+                              <span className="text-slate-500">
+                                {t('research.stagnation')}
+                              </span>
                               <span className="font-semibold text-amber-300">
                                 {morphCfg.growthStagnationTrigger}g
                               </span>
@@ -1561,7 +1522,7 @@ export const ResearchProtocolConfigurator = memo(
                             <button
                               type="button"
                               disabled={isBusy}
-                              title="Stopniowe odblokowywanie końcowych sensorów predykcyjnych (PIPE_VY, NEXT_*, TTF)"
+                              title={t('research.progressiveWaveUnlockingOfPredictive')}
                               onClick={() =>
                                 onChangeConfig({
                                   ...sweepConfig,
@@ -1577,9 +1538,13 @@ export const ResearchProtocolConfigurator = memo(
                                   : 'border-slate-800 bg-slate-950 text-slate-400'
                               }`}
                             >
-                              <span className="text-slate-500">Sensory: </span>
+                              <span className="text-slate-500">
+                                {t('research.sensors')}
+                              </span>
                               <span className="font-semibold">
-                                {morphCfg.progressiveSensors ? 'Fale' : 'Od razu'}
+                                {morphCfg.progressiveSensors
+                                  ? t('research.waves')
+                                  : t('research.gen0')}
                               </span>
                             </button>
 
@@ -1589,7 +1554,7 @@ export const ResearchProtocolConfigurator = memo(
                                 <button
                                   type="button"
                                   disabled={isBusy}
-                                  title="Okres próbny nowych ekspertów MoE przed commit/rollback"
+                                  title={t('research.trialWindowForNewMoe')}
                                   onClick={() => {
                                     const cur = morphCfg.expertTrialWindowGens ?? 12;
                                     const next = cur === 12 ? 8 : cur === 8 ? 20 : 12;
@@ -1611,7 +1576,7 @@ export const ResearchProtocolConfigurator = memo(
                                 <button
                                   type="button"
                                   disabled={isBusy}
-                                  title="Automatyczne dokładanie nowych ekspertów (LTC / SSM / Ponder)"
+                                  title={t('research.automaticSpawningOfNewExperts')}
                                   onClick={() =>
                                     onChangeConfig({
                                       ...sweepConfig,
@@ -1629,7 +1594,9 @@ export const ResearchProtocolConfigurator = memo(
                                       : 'border-slate-800 bg-slate-950 text-slate-400'
                                   }`}
                                 >
-                                  <span className="text-slate-400">Eksperci: </span>
+                                  <span className="text-slate-400">
+                                    {t('research.experts')}
+                                  </span>
                                   <span className="font-semibold">
                                     {(morphCfg.allowExpertSpawning ?? true)
                                       ? 'Auto-Spawn'
@@ -1870,19 +1837,13 @@ export const ResearchProtocolConfigurator = memo(
                   <div className="pt-3.5 border-t border-slate-800/70 space-y-2">
                     <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
                       <span className="font-medium text-slate-200">
-                        {bi(
-                          `Sensory (${activeInputSets.length} zestawów)`,
-                          `Sensors (${activeInputSets.length} subsets)`
-                        )}
+                        {t('research.sensorsSubsets', { activeInputSets: activeInputSets.length })}
                       </span>
                       <div className="flex items-center gap-2 font-mono text-[10px]">
                         <button
                           type="button"
                           disabled={isBusy}
-                          title={bi(
-                            'Zaznacz wszystkie 10 gotowych presetów poniżej',
-                            'Select all 10 built-in sensor presets below'
-                          )}
+                          title={t('research.selectAll10BuiltIn')}
                           onClick={() => applySensorBundle('ALL_PRESETS')}
                           className={`cursor-pointer transition-colors disabled:opacity-50 ${
                             allPresetsSelected
@@ -1890,7 +1851,7 @@ export const ResearchProtocolConfigurator = memo(
                               : 'text-slate-400 hover:text-emerald-300'
                           }`}
                         >
-                          {bi('Wszystkie 10', 'All 10')}
+                          {t('research.all10')}
                         </button>
                         <span className="text-slate-600">·</span>
                         <button
@@ -1899,8 +1860,8 @@ export const ResearchProtocolConfigurator = memo(
                           className="text-cyan-400 hover:text-cyan-300 cursor-pointer"
                         >
                           {showCustomSensorBuilder
-                            ? bi('▲ Ukryj własny', '▲ Hide custom')
-                            : bi('+ Własny', '+ Custom')}
+                            ? t('research.hideCustom')
+                            : t('research.custom')}
                         </button>
                       </div>
                     </div>
@@ -1985,7 +1946,7 @@ export const ResearchProtocolConfigurator = memo(
                       <div className="rounded border border-slate-800 bg-slate-950/80 px-2 py-1.5 space-y-1.5">
                         <div className="flex items-center justify-between gap-2 font-mono text-[10px]">
                           <span className="text-slate-400">
-                            +{extraNonPresetSensorSets.length} dodatkowych spoza 10 presetów
+                            {t('research.customSetsBeyond10Presets', { extraNonPresetSens: extraNonPresetSensorSets.length })}
                           </span>
                           <button
                             type="button"
@@ -1993,8 +1954,8 @@ export const ResearchProtocolConfigurator = memo(
                             className="text-cyan-400 hover:text-cyan-300 cursor-pointer whitespace-nowrap"
                           >
                             {showActiveSensorList
-                              ? '▲ Ukryj dodatkowe'
-                              : `▼ Pokaż (${extraNonPresetSensorSets.length})`}
+                              ? t('research.hideCustom2')
+                              : t('research.show', { extraNonPresetSens: extraNonPresetSensorSets.length })}
                           </button>
                         </div>
                         {showActiveSensorList && (
@@ -2006,7 +1967,7 @@ export const ResearchProtocolConfigurator = memo(
                                   key={key}
                                   type="button"
                                   disabled={isBusy || activeInputSets.length <= 1}
-                                  title="Kliknij, aby usunąć ten zestaw z aktywnych"
+                                  title={t('research.clickToRemoveThisSensor')}
                                   onClick={() => toggleInputFeatureSet(set)}
                                   className="rounded border border-slate-700 bg-[#0B1120] px-1.5 py-0.5 font-mono text-[9.5px] text-slate-300 hover:border-rose-500/50 hover:text-rose-200 cursor-pointer disabled:opacity-50"
                                 >
@@ -2041,15 +2002,9 @@ export const ResearchProtocolConfigurator = memo(
                                 disabled={isBusy || isStaticBlocked || isLastClearance}
                                 title={
                                   isStaticBlocked
-                                    ? bi(
-                                        `${meta.label}: wyłączone przy statycznych rurach`,
-                                        `${meta.label}: disabled for static-pipe scenarios`
-                                      )
+                                    ? t('research.disabledForStaticPipeScenarios', { label: meta.label })
                                     : isLastClearance
-                                      ? bi(
-                                          'Wymagany min. 1 sensor szczeliny (TOP_CLEAR lub BOT_CLEAR)',
-                                          'Requires at least 1 gap clearance sensor (TOP_CLEAR or BOT_CLEAR)'
-                                        )
+                                      ? t('research.requiresAtLeast1Gap')
                                       : `${meta.label}: ${meta.description}`
                                 }
                                 onClick={() => toggleCustomSensor(id)}
@@ -2073,7 +2028,7 @@ export const ResearchProtocolConfigurator = memo(
                           className="w-full inline-flex items-center justify-center gap-1 rounded border border-slate-700 bg-slate-800/80 py-1 text-[10.5px] font-medium text-slate-200 cursor-pointer hover:border-cyan-500/50 disabled:opacity-50"
                         >
                           <Plus className="h-3 w-3" aria-hidden="true" />
-                          {bi('Dodaj:', 'Add:')}{' '}
+                          {t('research.add')}{' '}
                           {formatInputSubsetLabel(sanitizedCustomSensors)}
                         </button>
                       </div>
@@ -2087,33 +2042,30 @@ export const ResearchProtocolConfigurator = memo(
                 <div className="xl:col-span-6 space-y-3 xl:border-l xl:border-slate-800/70 xl:pl-5">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-[11px] font-medium text-slate-200">
-                      {bi('Topologie: Głębokość × Szerokość', 'Topologies: Depth × Width')} ({inspectedTopologies.length}) ·{' '}
+                      {t('research.topologiesDepthWidth')} ({inspectedTopologies.length}) ·{' '}
                       <span className="text-emerald-300 font-mono text-[10px]">
                         {inspCat?.shortLabel ?? inspMeta.shortLabel}
                       </span>
                     </span>
                     <div className="flex items-center gap-2 font-mono text-[10px]">
                       <span className="text-slate-400">
-                        {bi(`Wejścia IN: ${inputCountRangeLabel}`, `Inputs IN: ${inputCountRangeLabel}`)}
+                        {t('research.inputsIn', { inputCountRangeLab: inputCountRangeLabel })}
                       </span>
                       <span className="text-slate-600">·</span>
                       <span className="text-emerald-300">
                         {activeMaxParams !== null
-                          ? bi(`Limit ≤${activeMaxParams} param.`, `Cap ≤${activeMaxParams} params`)
-                          : bi('Bez limitu param.', 'No param cap')}
+                          ? t('research.capParams', { activeMaxParams })
+                          : t('research.noParamCap')}
                       </span>
                       <span className="text-slate-600">·</span>
                       <button
                         type="button"
                         disabled={isBusy}
-                        title={bi(
-                          'Zastosuj te topologie dla wszystkich architektur',
-                          'Apply these topologies to all architectures'
-                        )}
+                        title={t('research.applyTheseTopologiesToAll')}
                         onClick={() => applyArchTopologiesToAll(inspectedArch)}
                         className="text-slate-400 hover:text-cyan-300 cursor-pointer disabled:opacity-50"
                       >
-                        {bi('Dla wszystkich', 'Apply All')}
+                        {t('research.applyAll')}
                       </button>
                     </div>
                   </div>
@@ -2138,18 +2090,15 @@ export const ResearchProtocolConfigurator = memo(
                   <div className="flex flex-wrap items-center gap-1.5">
                     <div
                       className="flex flex-1 min-w-[240px] items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-950 px-2 py-1"
-                      title={bi(
-                        'Górny limit parametrów (wag + biasów): próby przekraczające ten budżet zostaną automatycznie pominięte',
-                        'Upper parameter cap (weights + biases): trials exceeding this budget are automatically skipped'
-                      )}
+                      title={t('research.upperParameterCapWeightsBiases')}
                     >
                       <span className="text-[10px] text-slate-400 whitespace-nowrap">
-                        {bi('Limit wag:', 'Param cap:')}
+                        {t('research.paramCap')}
                       </span>
                       <div className="grid flex-1 grid-cols-4 gap-1">
                         {MAX_PARAM_PRESETS.map((cap) => (
                           <button
-                            key={cap.labelEn}
+                            key={cap.key}
                             type="button"
                             disabled={isBusy}
                             onClick={() =>
@@ -2161,7 +2110,7 @@ export const ResearchProtocolConfigurator = memo(
                                 : 'text-slate-400 hover:text-slate-200'
                             }`}
                           >
-                            {lang === 'pl' ? cap.labelPl : cap.labelEn}
+                            {t(cap.key)}
                           </button>
                         ))}
                       </div>
@@ -2170,14 +2119,11 @@ export const ResearchProtocolConfigurator = memo(
                     <button
                       type="button"
                       disabled={isBusy}
-                      title={bi(
-                        'Wyczyść zaznaczenie do pojedynczej bazowej sieci [4]',
-                        'Reset selection to a single baseline [4] network'
-                      )}
+                      title={t('research.resetSelectionToASingle')}
                       onClick={clearArchTopologies}
                       className="rounded-lg border border-rose-500/35 bg-rose-500/10 px-2.5 py-1.5 font-mono text-[10px] font-medium text-rose-200 whitespace-nowrap cursor-pointer transition-colors hover:border-rose-400 disabled:opacity-50"
                     >
-                      {bi('Wyczyść (1)', 'Clear (1)')}
+                      {t('research.clear1')}
                     </button>
 
                     <button
@@ -2186,7 +2132,7 @@ export const ResearchProtocolConfigurator = memo(
                       onClick={selectAllVisibleTopologies}
                       className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1.5 font-mono text-[10px] font-semibold text-emerald-200 whitespace-nowrap cursor-pointer transition-colors hover:border-emerald-400 disabled:opacity-50"
                     >
-                      {bi('Wszystkie', 'All')} ({availableTopologies.length})
+                      {t('research.all')} ({availableTopologies.length})
                     </button>
                   </div>
 
@@ -2194,34 +2140,30 @@ export const ResearchProtocolConfigurator = memo(
                   <div className="rounded-lg border border-slate-800/90 bg-slate-950/60 p-2 space-y-1.5">
                     <div className="flex items-center justify-between text-[10px]">
                       <span className="font-medium text-slate-300">
-                        {bi(
-                          'Gotowe zestawy kształtów (presety hipotez)',
-                          'Hypothesis Shape Bundles (1-click presets)'
-                        )}
+                        {t('research.hypothesisShapeBundles1Click')}
                       </span>
                       <span className="font-mono text-slate-500">
-                        {bi('zastępuje wybór dla tej architektury', 'replaces selection for this arch')}
+                        {t('research.replacesSelectionForThisArch')}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                       {(
                         ['SUB50_ZOO', 'TWO_BY_N', 'ISO_PARAM', 'BOTTLENECK'] as const
                       ).map((bundleKey) => {
-                        const b = TOPOLOGY_BUNDLES[bundleKey];
                         return (
                           <button
                             key={bundleKey}
                             type="button"
                             disabled={isBusy}
-                            title={lang === 'pl' ? b.tooltipPl : b.tooltipEn}
+                            title={t(`research.protocol.bundles.${bundleKey}.tooltip`)}
                             onClick={() => applyTopologyBundle(bundleKey)}
                             className="rounded-md border border-slate-800 bg-[#0B1120] px-2 py-1.5 text-left cursor-pointer transition-colors hover:border-cyan-500/50 disabled:opacity-50"
                           >
                             <div className="text-[10.5px] font-semibold text-cyan-300 truncate">
-                              {lang === 'pl' ? b.labelPl : b.labelEn}
+                              {t(`research.protocol.bundles.${bundleKey}.label`)}
                             </div>
                             <div className="font-mono text-[9px] text-slate-400 truncate">
-                              {lang === 'pl' ? b.subPl : b.subEn}
+                              {t(`research.protocol.bundles.${bundleKey}.sub`)}
                             </div>
                           </button>
                         );
@@ -2234,21 +2176,18 @@ export const ResearchProtocolConfigurator = memo(
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 text-[10px]">
                         <span className="font-medium text-slate-300">
-                          {bi('Generator kombinacji', 'Combinatorial Generator')}
+                          {t('research.combinatorialGenerator')}
                         </span>
                         <InfoTooltip
                           align="left"
-                          label={bi('O generatorze siatki kształtów', 'About combinatorial generator')}
-                          text={bi(
-                            'Wylicza wszystkie matematyczne podziały zadanej liczby neuronów ukrytych (Max neur.) na 1..4 warstwy ukryte. Przy "szer. ≥2" odrzuca warstwy z pojedynczym neuronem.',
-                            'Generates all mathematical partitions of up to N hidden neurons across 1..4 hidden layers. "width ≥2" skips 1-neuron bottleneck layers.'
-                          )}
+                          label={t('research.aboutCombinatorialGenerator')}
+                          text={t('research.generatesAllMathematicalPartitionsOf')}
                         />
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5">
                         <div className="inline-flex items-center gap-1 rounded border border-slate-800 bg-[#0B1120] px-1.5 py-0.5">
                           <span className="text-[10px] text-slate-400">
-                            {bi('Suma neur. ≤', 'Max neur. ≤')}
+                            {t('research.maxNeur')}
                           </span>
                           <button
                             type="button"
@@ -2277,10 +2216,7 @@ export const ResearchProtocolConfigurator = memo(
 
                         <div
                           className="grid grid-cols-4 gap-0.5 rounded border border-slate-800 bg-[#0B1120] p-0.5"
-                          title={bi(
-                            'Maksymalna liczba warstw ukrytych (1w = 1 warstwa, 4w = do 4 warstw)',
-                            'Maximum hidden layer depth (1L = 1 layer, 4L = up to 4 layers)'
-                          )}
+                          title={t('research.maximumHiddenLayerDepth1l')}
                         >
                           {([1, 2, 3, 4] as const).map((d) => (
                             <button
@@ -2294,7 +2230,7 @@ export const ResearchProtocolConfigurator = memo(
                                   : 'text-slate-400 hover:text-slate-200'
                               }`}
                             >
-                              {lang === 'pl' ? `${d}w` : `${d}L`}
+                              {t('research.protocol.depthShort', { depth: d })}
                             </button>
                           ))}
                         </div>
@@ -2302,10 +2238,7 @@ export const ResearchProtocolConfigurator = memo(
                         <button
                           type="button"
                           disabled={isBusy}
-                          title={bi(
-                            'Minimalna szerokość każdej warstwy ukrytej (≥1 lub ≥2 neurony w warstwie)',
-                            'Minimum width of each hidden layer (≥1 or ≥2 neurons per layer)'
-                          )}
+                          title={t('research.minimumWidthOfEachHidden')}
                           onClick={() => setTopoGenMinWidth((w) => (w === 1 ? 2 : 1))}
                           className={`rounded border px-2 py-0.5 font-mono text-[10px] whitespace-nowrap cursor-pointer transition-colors disabled:opacity-50 ${
                             topoGenMinWidth === 2
@@ -2313,7 +2246,7 @@ export const ResearchProtocolConfigurator = memo(
                               : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
                           }`}
                         >
-                          {bi(`szer. ≥${topoGenMinWidth}`, `width ≥${topoGenMinWidth}`)}
+                          {t('research.width', { topoGenMinWidth })}
                         </button>
 
                         <button
@@ -2322,7 +2255,7 @@ export const ResearchProtocolConfigurator = memo(
                           onClick={applyAllTopologiesInRange}
                           className="rounded border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-0.5 font-mono text-[10.5px] font-semibold text-emerald-200 cursor-pointer transition-colors hover:bg-emerald-500/25 disabled:opacity-50"
                         >
-                          {bi('Generuj', 'Generate')} ({topoGenCount.toLocaleString()})
+                          {t('research.generate')} ({topoGenCount.toLocaleString()})
                         </button>
                       </div>
                     </div>
@@ -2358,16 +2291,10 @@ export const ResearchProtocolConfigurator = memo(
                             onMouseLeave={() => setHoveredTopology(null)}
                             title={
                               skipD0Blocked
-                                ? bi(
-                                    '0 warstw ukrytych dla Residual Skip ma 0 dodatkowych wag i jest matematycznie identyczne z aktywnym MLP',
-                                    '0 hidden layers on Residual Skip adds 0 parameters and is mathematically identical to active MLP'
-                                  )
+                                ? t('research.k0HiddenLayersOnResidual')
                                 : overCap
                                   ? `${archParams} param. > limit ≤${activeMaxParams} (${inspCat?.shortLabel ?? inspMeta.shortLabel})`
-                                  : bi(
-                                      `${archParams} parametrów (wagi+biasy) · ${breakdown.hiddenNeuronCount} neuronów ukrytych · ${topo.length} warstw ukrytych · ${gpuOk ? 'WebGPU' : 'CPU Workers'}`,
-                                      `${archParams} parameters (weights+biases) · ${breakdown.hiddenNeuronCount} hidden neurons · ${topo.length} hidden layers · ${gpuOk ? 'WebGPU' : 'CPU Workers'}`
-                                    )
+                                  : t('research.parametersWeightsBiasesHiddenNeurons', { archParams, hiddenNeuronCount: breakdown.hiddenNeuronCount, topo: topo.length, val3: gpuOk ? 'WebGPU' : 'CPU Workers' })
                             }
                             onClick={() => toggleTopology(topo)}
                             className={`rounded-lg border px-1.5 py-1.5 text-center font-mono text-xs cursor-pointer transition-colors disabled:opacity-35 disabled:cursor-not-allowed ${
@@ -2395,7 +2322,7 @@ export const ResearchProtocolConfigurator = memo(
                     </div>
                     {availableTopologies.length > 96 && (
                       <div className="mt-1.5 rounded-md border border-emerald-500/25 bg-emerald-500/5 px-2 py-1 text-center font-mono text-[10px] text-emerald-300">
-                        +{(availableTopologies.length - 96).toLocaleString()} {bi('dodatkowych topologii aktywnych', 'more active topologies')}
+                        +{(availableTopologies.length - 96).toLocaleString()} {t('research.moreActiveTopologies')}
                       </div>
                     )}
                   </div>
@@ -2406,8 +2333,8 @@ export const ResearchProtocolConfigurator = memo(
                       disabled={isBusy}
                       value={customTopoInput}
                       onChange={(e) => setCustomTopoInput(e.target.value)}
-                      placeholder={bi('np. 16, 16 lub 32, 16', 'e.g. 16, 16 or 32, 16')}
-                      aria-label={bi('Własne szerokości warstw ukrytych (do 64)', 'Custom hidden layer widths (up to 64)')}
+                      placeholder={t('research.eG1616Or')}
+                      aria-label={t('research.customHiddenLayerWidthsUp')}
                       className="flex-1 rounded-lg border border-slate-800 bg-slate-950 px-3 py-1.5 font-mono text-xs text-slate-200 focus:border-cyan-400 focus:outline-none disabled:opacity-50"
                     />
                     <button
@@ -2418,10 +2345,7 @@ export const ResearchProtocolConfigurator = memo(
                         isCustomTopoAlreadySelected ||
                         (isSkipRedundantOnD0 && parsedCustomTopo.length === 0)
                       }
-                      title={bi(
-                        'Dodaj własny kształt dla wybranej architektury (max 4 warstwy, do 64 neuronów/warstwę)',
-                        'Add custom topology shape (up to 4 layers, up to 64 neurons/layer)'
-                      )}
+                      title={t('research.addCustomTopologyShapeUp')}
                       onClick={handleAddCustomTopology}
                       className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors disabled:opacity-50 ${
                         isCustomTopoAlreadySelected
@@ -2432,12 +2356,12 @@ export const ResearchProtocolConfigurator = memo(
                       {isCustomTopoAlreadySelected ? (
                         <>
                           <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                          {bi('Dodany', 'Added')}
+                          {t('research.added')}
                         </>
                       ) : (
                         <>
                           <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                          {bi('Dodaj kształt', 'Add Shape')}
+                          {t('research.addShape')}
                         </>
                       )}
                     </button>
@@ -2683,11 +2607,8 @@ export const ResearchProtocolConfigurator = memo(
                     Mutation Sigma (σ)
                     <InfoTooltip
                       align="left"
-                      label={bi('Kiedy warto testować wiele σ', 'When multiple σ values help')}
-                      text={bi(
-                        'Neuro-CMA, CEM i Adaptive ES same adaptują σ w trakcie ewolucji — zazwyczaj wystarczy jedna wartość (0.3).',
-                        'Neuro-CMA, CEM, and Adaptive ES self-adapt σ during evolution — a single value (0.3) usually suffices.'
-                      )}
+                      label={t('research.whenMultipleValuesHelp')}
+                      text={t('research.neuroCmaCemAndAdaptive')}
                     />
                   </span>
                   <span className="font-mono text-[10px] text-slate-500">
@@ -2752,11 +2673,11 @@ export const ResearchProtocolConfigurator = memo(
               <div>
                 <div className="mb-1.5 flex items-center justify-between text-[11px]">
                   <span className="font-medium text-slate-300">
-                    {bi('Maks. pokoleń / próba', 'Max Gens / Trial')}
+                    {t('research.maxGensTrial')}
                   </span>
                   <span className="font-mono text-[10px] text-emerald-300">
                     {sweepConfig.maxGenerations === null
-                      ? bi('∞ do perfekcji', '∞ to perfection')
+                      ? t('research.toPerfection')
                       : `Cap ${sweepConfig.maxGenerations}`}
                   </span>
                 </div>
@@ -2786,7 +2707,7 @@ export const ResearchProtocolConfigurator = memo(
               <div>
                 <div className="mb-1.5 flex items-center justify-between text-[11px]">
                   <span className="font-medium text-slate-300">
-                    {bi('Stop przy stagnacji', 'Stagnation Early-Stop')}
+                    {t('research.stagnationEarlyStop')}
                   </span>
                   <span className="font-mono text-[10px] text-amber-300">
                     {sweepConfig.stagnationLimit === null
@@ -2861,11 +2782,8 @@ export const ResearchProtocolConfigurator = memo(
         <LabUtilityModal
           open={showScenariosModal}
           onClose={() => setShowScenariosModal(false)}
-          title={bi('Scenariusze & Fizyka Środowiska', 'Scenarios & Environment Physics')}
-          subtitle={bi(
-            'Wybierz zweryfikowane poziomy trudności lub skonfiguruj własną fizykę toru',
-            'Select verified difficulty tiers or configure custom pipe physics'
-          )}
+          title={t('research.scenariosEnvironmentPhysics')}
+          subtitle={t('research.selectVerifiedDifficultyTiersOr')}
           icon={<Layers className="h-4 w-4 text-emerald-300" />}
           maxWidthClass="max-w-2xl"
         >
@@ -2875,11 +2793,8 @@ export const ResearchProtocolConfigurator = memo(
                 4 Verified Tiers + Overdrive &amp; Custom ({sweepConfig.difficulties.length}/{ALL_DIFFICULTIES.length})
                 <InfoTooltip
                   align="left"
-                  label={bi('O poziomach scenariuszy', 'About scenario tiers')}
-                  text={bi(
-                    '4 matematycznie udowodnione poziomy (Easy, Medium, Hard, Insane), ekstremalny Overdrive (RISK) oraz konfigurowalny Custom.',
-                    '4 mathematically proven tiers (Easy, Medium, Hard, Insane), extreme Overdrive (RISK), plus configurable Custom physics.'
-                  )}
+                  label={t('research.aboutScenarioTiers')}
+                  text={t('research.k4MathematicallyProvenTiersEasy')}
                 />
               </span>
               <span className="font-mono text-[10px] text-slate-400">
@@ -3061,8 +2976,8 @@ export const ResearchProtocolConfigurator = memo(
         <LabUtilityModal
           open={showPresetsModal}
           onClose={() => setShowPresetsModal(false)}
-          title="Presety Badawcze"
-          subtitle="19 gotowych konfiguracji eksperymentów"
+          title={t('research.researchPresets')}
+          subtitle={t('research.readyToRunExperimentProtocols', { RESEARCH_PRESETS: RESEARCH_PRESETS.length })}
           icon={<Sparkles className="h-4 w-4 text-amber-300" aria-hidden="true" />}
           maxWidthClass="max-w-4xl"
         >
@@ -3071,17 +2986,17 @@ export const ResearchProtocolConfigurator = memo(
               [
                 {
                   cat: 'FRONTIER',
-                  heading: 'Frontier & Lookahead Runs (Data-Driven)',
+                  heading: t('research.frontierLookaheadRunsDataDriven'),
                   headingColor: 'text-amber-300',
                 },
                 {
                   cat: 'DIAGNOSTIC',
-                  heading: 'Self-Test & Thermal Load Diagnostics',
+                  heading: t('research.selfTestThermalLoadDiagnostics'),
                   headingColor: 'text-cyan-300',
                 },
                 {
                   cat: 'CLASSIC',
-                  heading: 'Classic Compact Labs (≤50p)',
+                  heading: t('research.classicCompactLabs90p'),
                   headingColor: 'text-slate-400',
                 },
               ] as const
@@ -3098,6 +3013,7 @@ export const ResearchProtocolConfigurator = memo(
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {items.map((preset) => {
+                      const loc = getLocalizedPreset(preset, lang);
                       const tone =
                         preset.accent === 'rose'
                           ? 'border-rose-500/45 bg-rose-500/10 text-rose-100 hover:border-rose-400'
@@ -3122,7 +3038,7 @@ export const ResearchProtocolConfigurator = memo(
                           <button
                             type="button"
                             disabled={isBusy}
-                            title={preset.description}
+                            title={loc.description}
                             onClick={() => {
                               applyLoopPreset(preset.id);
                               setShowPresetsModal(false);
@@ -3130,15 +3046,15 @@ export const ResearchProtocolConfigurator = memo(
                             className="flex-1 min-w-0 px-2.5 py-2 text-left text-xs cursor-pointer disabled:opacity-50"
                           >
                             <div className="font-semibold truncate">
-                              {preset.title}
+                              {loc.title}
                             </div>
                             <div className="text-[10px] opacity-75 truncate">
-                              {preset.subtitle}
+                              {loc.subtitle}
                             </div>
                           </button>
                           <button
                             type="button"
-                            title={`Dodaj "${preset.title}" bezpośrednio do kolejki eksperymentów`}
+                            title={t('research.addDirectlyToTheExperiment', { title: loc.title })}
                             onClick={() => onEnqueuePreset(preset.id)}
                             className="shrink-0 border-l border-slate-700/60 bg-slate-950/40 px-2 font-mono text-[10px] font-semibold text-slate-300 cursor-pointer hover:bg-slate-900 hover:text-cyan-200"
                           >
@@ -3158,15 +3074,15 @@ export const ResearchProtocolConfigurator = memo(
         <LabUtilityModal
           open={showOptimizersModal}
           onClose={() => setShowOptimizersModal(false)}
-          title="Optymalizatory AI (Globalne)"
-          subtitle="Wszystkie 12 architektur obsługuje ten sam zestaw 8 algorytmów ewolucyjnych i ES/Swarm"
+          title={t('research.aiOptimizersGlobal')}
+          subtitle={t('research.all12ArchitecturesShareThe')}
           icon={<Cpu className="h-4 w-4 text-violet-300" aria-hidden="true" />}
           maxWidthClass="max-w-2xl"
         >
           <div className="space-y-3.5">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <span className="font-medium text-slate-300">
-                Aktywne metody ({activeGlobalAlgorithms.length}/8)
+                {t('research.activeMethods8', { activeGlobalAlgori: activeGlobalAlgorithms.length })}
               </span>
               <div className="flex items-center gap-2 font-mono text-[10.5px]">
                 <button
@@ -3177,7 +3093,7 @@ export const ResearchProtocolConfigurator = memo(
                   }
                   className="text-emerald-300 hover:text-emerald-200 cursor-pointer disabled:opacity-50"
                 >
-                  Tylko Core 3
+                  {t('research.core3Only')}
                 </button>
                 <span className="text-slate-600">·</span>
                 <button
@@ -3186,7 +3102,7 @@ export const ResearchProtocolConfigurator = memo(
                   onClick={() => setGlobalAlgorithmsPreset([...ALL_ALGORITHMS])}
                   className="text-cyan-300 hover:text-cyan-200 cursor-pointer disabled:opacity-50"
                 >
-                  Wszystkie 8
+                  {t('research.all8')}
                 </button>
                 <span className="text-slate-600">·</span>
                 <button
@@ -3198,8 +3114,8 @@ export const ResearchProtocolConfigurator = memo(
                   activeGlobalAlgorithms.some((a) =>
                     EXTENDED_OPTIMIZER_ALGORITHMS.includes(a)
                   )
-                    ? 'Zwiń +5'
-                    : 'Pokaż +5 ES/Swarm'}
+                    ? t('research.hide5')
+                    : t('research.show5EsSwarm')}
                 </button>
               </div>
             </div>
@@ -3241,7 +3157,7 @@ export const ResearchProtocolConfigurator = memo(
               )) && (
               <div className="space-y-2 pt-2 border-t border-slate-800/80">
                 <span className="block text-[11px] font-medium text-slate-400">
-                  Rozszerzone metody ES / Swarm (+5)
+                  {t('research.extendedEsSwarmMethods5')}
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {EXTENDED_OPTIMIZER_ALGORITHMS.map((algo) => {

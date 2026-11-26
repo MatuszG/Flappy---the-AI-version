@@ -13,7 +13,7 @@ export function FitnessChart({
   milestones,
   allTimeBestScore,
 }: FitnessChartProps) {
-  const { bi } = useLanguage();
+  const { t } = useLanguage();
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [metric, setMetric] = useState<'score' | 'fitness'>('score');
 
@@ -74,24 +74,18 @@ export function FitnessChart({
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="font-display text-base font-semibold text-slate-100">
-              {bi('Historia Ewolucji', 'Evolution History')}
+              {t('training.evolutionHistory2')}
             </h2>
             {allTimeBestScore !== undefined && (
               <span className="rounded border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold tabular-nums text-emerald-300">
-                {bi(`Rekord: ${allTimeBestScore} rur`, `All-Time: ${allTimeBestScore} pipes`)}
+                {t('training.allTimePipes', { allTimeBestScore })}
               </span>
             )}
           </div>
           <p className="text-xs text-slate-400">
             {hasData
-              ? bi(
-                  `Pokolenia 1–${history[history.length - 1].generation}`,
-                  `Generations 1–${history[history.length - 1].generation}`
-                )
-              : bi(
-                  'Trwa Pokolenie #1 — wykres pojawi się po zakończeniu lotu',
-                  'Completing Generation 1 to plot curve'
-                )}
+              ? t('training.generations1', { generation: history[history.length - 1].generation })
+              : t('training.completingGeneration1ToPlot')}
           </p>
         </div>
 
@@ -105,7 +99,7 @@ export function FitnessChart({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            {bi('Rury', 'Pipes')}
+            {t('training.pipes')}
           </button>
           <button
             type="button"
@@ -124,10 +118,7 @@ export function FitnessChart({
       <div className="relative mt-3">
         {!hasData ? (
           <div className="flex h-[165px] items-center justify-center rounded-lg border border-dashed border-slate-800 px-4 text-center text-xs text-slate-400">
-            {bi(
-              'Pierwsze pokolenie nadal leci. Krzywa uczenia pojawi się po zakończeniu pokolenia #1.',
-              'First generation still flying. Learning curve appears after all birds crash.'
-            )}
+            {t('training.firstGenerationStillFlyingLearning')}
           </div>
         ) : (
           <svg
@@ -248,15 +239,15 @@ export function FitnessChart({
           <div className="flex flex-wrap items-center gap-3.5">
             <span className="inline-flex items-center gap-1.5">
               <span className="h-0.5 w-3 bg-cyan-400" />
-              {bi('Lider Pokolenia', 'Gen Best')}
+              {t('training.genBest')}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="h-0.5 w-3 bg-amber-400" />
-              {bi('Trend 5 Pokoleń', '5-Gen Trend')}
+              {t('training.k5GenTrend')}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="h-0.5 w-3 border-t border-dashed border-slate-400" />
-              {bi('Średnia Populacji', 'Pop Avg')}
+              {t('training.popAvg')}
             </span>
           </div>
 
@@ -270,42 +261,39 @@ export function FitnessChart({
         </div>
 
         <p className="mt-1 text-[10px] leading-snug text-slate-500">
-          {bi(
-            'Ewaluacja na losowym ziarnie co pokolenie: szczyty wahają się wraz z układem rur (+40 fit/rurę), a Rekord i Trend 5 Pokoleń śledzą rzeczywisty postęp nauki.',
-            'Single-seed per-gen evaluation: peaks fluctuate with random pipe spawns (+40 fit/pipe) while All-Time Best & 5-Gen Trend track true learning.'
-          )}
+          {t('training.singleSeedPerGenEvaluation')}
         </p>
 
         {milestones && (
           <div className="mt-2.5 rounded-lg border border-slate-800 bg-[#0B1120] px-2.5 py-2 font-mono text-[10px] tabular-nums">
             <div className="mb-1.5 flex items-center justify-between text-slate-400">
               <span className="font-semibold text-amber-300">
-                {bi('KAMIENIE MILOWE SZYBKOŚCI NAUKI', 'LEARNING SPEED MILESTONES')}
+                {t('training.learningSpeedMilestones')}
               </span>
               <span>
-                {bi('Czas:', 'Elapsed:')} {formatMs(milestones.elapsedMs)}
+                {t('training.elapsed')} {formatMs(milestones.elapsedMs)}
               </span>
             </div>
             <div className="grid grid-cols-4 gap-1.5">
               {(
                 [
                   {
-                    label: bi('1 Rura', '1 Pipe'),
+                    label: t('training.k1Pipe'),
                     gen: milestones.reached1Gen,
                     ms: milestones.reached1Ms,
                   },
                   {
-                    label: bi('10 Rur', '10 Pipes'),
+                    label: t('training.k10Pipes'),
                     gen: milestones.reached10Gen,
                     ms: milestones.reached10Ms,
                   },
                   {
-                    label: bi('50 Rur', '50 Pipes'),
+                    label: t('training.k50Pipes'),
                     gen: milestones.reached50Gen,
                     ms: milestones.reached50Ms,
                   },
                   {
-                    label: bi('100 Rur', '100 Pipes'),
+                    label: t('training.k100Pipes'),
                     gen: milestones.reached100Gen,
                     ms: milestones.reached100Ms,
                   },
@@ -323,7 +311,7 @@ export function FitnessChart({
                   <div className="text-[9.5px]">
                     {m.gen !== null
                       ? `Gen ${m.gen} · ${formatMs(m.ms)}`
-                      : bi('W toku', 'Pending')}
+                      : t('training.pending')}
                   </div>
                 </div>
               ))}

@@ -68,8 +68,12 @@ npm run desktop:build   # Kompilacja instalatora w src-tauri/target/release/bund
 
 ---
 
-## 4. Synchronizacja Stanu między Web / Desktop (`.exe`) / Android (`.apk`)
+## 4. Zapis Danych, Historia Badań i GitHub Research Data Lake
 
-W górnym pasku aplikacji znajdują się przyciski **`Backup`** oraz **`Wczytaj` (`Restore`)**:
-- **`Backup`** eksportuje cały stan laboratorium (zapisane sieci mistrzów, konfiguracje badań Sweep, kolejkę eksperymentów, historię uruchomień oraz język `PL/EN`) do pojedynczego pliku `neurolab-workspace-YYYY-MM-DD.json`.
-- **`Wczytaj`** przywraca cały stan jednym kliknięciem na dowolnym innym urządzeniu (np. z wersji webowej na GitHub Pages do aplikacji `.exe` lub `.apk` na Androidzie).
+Aplikacja działa w 100% po stronie przeglądarki (GitHub Pages to statyczny hosting tylko do odczytu), a dane zapisują się w dwóch warstwach:
+- **Lokalnie w przeglądarce**:
+  - **Play & Training Lab (`localStorage`)**: tabela najlepszych graczy (Play Leaderboard), historia gier, zapisane sieci mistrzów (**Zapisane Sieci / Saved Brains** z eksportem/importem pojedynczego mózgu `.json`) oraz wybrany język `PL/EN`.
+  - **Research Lab (`IndexedDB`: `flappy-neurolab-autosave-v1`)**: automatyczny zapis aktywnego sweepu co `20s` (konfigurowalny w panelu `Sprzęt`), po każdych `≥250` nowych próbach oraz przy pauzie/zakończeniu, wraz z archiwum do 120 biegów w **Historia Runów (Run History)** i eksportem/importem `dataset.json` / `.jsonl` / Google Colab.
+- **Globalnie na GitHubie (`research-data/runs/` → `GitHub Lake`)**:
+  - Aby zapisać wyniki na GitHubie, wyeksportuj w **Raport & Eksport** plik `LLM Pack (.jsonl + MD)` (lub `dataset.json`), umieść go w `research-data/runs/<YYYY-MM-DD-etykieta>/trials.jsonl` i wykonaj `git push`.
+  - Workflow `.github/workflows/analyze-research.yml` uruchomi `npm run lake:sync`, zdeduplikuje wszystkie próby po `trialSignature`, zaktualizuje raporty `research-data/LEADERBOARD.md`, `ai-delta-digest.md`, `llm-meta-dossier.md` oraz wygeneruje `public/data/research-lake.json`, który aplikacja ładuje jednym kliknięciem przyciskiem **`GitHub Lake`**.

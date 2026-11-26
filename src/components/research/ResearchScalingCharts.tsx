@@ -16,6 +16,7 @@ import {
   formatNormCompute,
   type MatrixRowTopology,
 } from './researchUtils';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 interface ResearchScalingChartsProps {
   sweepConfig: ResearchSweepConfig;
@@ -38,6 +39,7 @@ export const ResearchScalingCharts = memo(function ResearchScalingCharts({
   selectedTrial,
   onSelectTrial,
 }: ResearchScalingChartsProps) {
+  const { t } = useLanguage();
   const [chartMode, setChartMode] = useState<
     'score' | 'density' | 'time' | 'neurons' | 'pareto'
   >('score');
@@ -340,21 +342,21 @@ export const ResearchScalingCharts = memo(function ResearchScalingCharts({
         <div>
           <h2 className="font-display text-base font-semibold text-white">
             {chartMode === 'neurons'
-              ? 'Hidden Neurons vs. Synaptic Parameters (Iso-Param Map)'
+              ? t('research.hiddenNeuronsVsSynapticParameters')
               : chartMode === 'pareto'
-                ? 'FLOPs-vs-Score Pareto Frontier (Compute Efficiency)'
-                : 'Parameter Scaling, Density & Convergence Speed'}
+                ? t('research.flopsVsScoreParetoFrontier2')
+                : t('research.parameterScalingDensityConvergenceSp')}
           </h2>
           <p className="text-xs text-slate-400">
             {chartMode === 'score'
-              ? 'Worst-case pipes cleared across unseen seeds vs. parameter count'
+              ? t('research.worstCasePipesClearedAcross')
               : chartMode === 'density'
-                ? 'Knowledge density (worst-case pipes cleared per parameter)'
+                ? t('research.knowledgeDensityWorstCasePipes')
                 : chartMode === 'time'
-                  ? 'Hardware-independent synaptic compute (norm-ms at 10M ops/s) across parameter counts'
+                  ? t('research.hardwareIndependentSynapticComputeNo')
                   : chartMode === 'pareto'
-                    ? 'Non-dominated Score vs FLOPs/frame frontier across GPU Lockstep and CPU-Only architectures'
-                    : 'Iso-Parameter (vertical) & Iso-Neuron (horizontal) decoupling of hidden nodes vs weights'}
+                    ? t('research.nonDominatedScoreVsFlops')
+                    : t('research.isoParameterVerticalIsoNeuron')}
           </p>
         </div>
 
@@ -362,13 +364,13 @@ export const ResearchScalingCharts = memo(function ResearchScalingCharts({
           <div className="flex flex-wrap items-center gap-1 rounded-lg border border-slate-800 bg-[#0B1120] p-1">
             {(
               [
-                { id: 'score', label: 'Min Seed Score', accent: 'cyan' },
-                { id: 'density', label: 'Score / Param', accent: 'cyan' },
-                { id: 'time', label: 'Compute (norm-ms)', accent: 'cyan' },
+                { id: 'score', label: t('research.minSeedScore'), accent: 'cyan' },
+                { id: 'density', label: t('research.scoreParam'), accent: 'cyan' },
+                { id: 'time', label: t('research.computeNormMs'), accent: 'cyan' },
                 { id: 'pareto', label: 'Pareto (FLOPs)', accent: 'amber' },
                 {
                   id: 'neurons',
-                  label: 'Neurons × Params',
+                  label: t('research.neuronsParams'),
                   accent: 'emerald',
                 },
               ] as const
@@ -397,7 +399,7 @@ export const ResearchScalingCharts = memo(function ResearchScalingCharts({
               <button
                 type="button"
                 onClick={() => setChartLogX(useLogX ? 'linear' : 'log')}
-                title="Toggle logarithmic X-axis (parameters)"
+                title={t('research.toggleLogarithmicXAxisParameters')}
                 className={`rounded px-2 py-1 cursor-pointer ${
                   useLogX
                     ? 'bg-cyan-500/20 text-cyan-300'
@@ -410,7 +412,7 @@ export const ResearchScalingCharts = memo(function ResearchScalingCharts({
                 <button
                   type="button"
                   onClick={() => setChartLogY(useLogY ? 'linear' : 'log')}
-                  title="Toggle logarithmic Y-axis"
+                  title={t('research.toggleLogarithmicYAxis')}
                   className={`rounded px-2 py-1 cursor-pointer ${
                     useLogY
                       ? 'bg-cyan-500/20 text-cyan-300'

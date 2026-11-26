@@ -42,6 +42,7 @@ import type {
   SimulationTelemetry,
   SpeedSetting,
 } from '../engine/types';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const HUMAN_PB_STORAGE_KEY = 'flappy-neuro-human-pb-v1';
 
@@ -109,6 +110,7 @@ export function useSandboxSimulation(params: {
     onCloseModals,
     showNotice,
   } = params;
+  const { t } = useLanguage();
 
   const [config, setConfig] = useState<EvolutionConfig>(() => {
     const loaded = loadTrainingConfig();
@@ -588,10 +590,11 @@ export function useSandboxSimulation(params: {
         persistSavedBrains(next);
         return next;
       });
-      showNotice(`Saved "${name}"`);
+      showNotice(t('notices.saved', { name }));
     },
     [
       showNotice,
+      t,
       trainingTelemetry.allTimeBestScore,
       trainingTelemetry.currentBestScore,
       trainingTelemetry.generation,
@@ -599,8 +602,10 @@ export function useSandboxSimulation(params: {
   );
 
   const handleQuickSave = useCallback(() => {
-    handleSaveCurrentBrain(`Champion Gen ${trainingTelemetry.generation}`);
-  }, [handleSaveCurrentBrain, trainingTelemetry.generation]);
+    handleSaveCurrentBrain(
+      t('notices.championGen', { generation: trainingTelemetry.generation })
+    );
+  }, [handleSaveCurrentBrain, t, trainingTelemetry.generation]);
 
   const handleLoadIntoTraining = useCallback(
     (
@@ -640,9 +645,11 @@ export function useSandboxSimulation(params: {
       postToWorker({ type: 'SET_RUNNING', running: true });
       setMode('TRAINING');
       setRunning(true);
-      showNotice(`Seeded lab with "${brain.name}"`);
+      showNotice(
+        t('notices.seededLabWith', { name: brain.name })
+      );
     },
-    [config, postToWorker, setMode, showNotice, sweepCustomEnvironment]
+    [config, postToWorker, setMode, showNotice, sweepCustomEnvironment, t]
   );
 
   const handleRaceAgainstBrain = useCallback(
@@ -676,9 +683,11 @@ export function useSandboxSimulation(params: {
       setActiveOpponentName(brain.name);
       setRunning(true);
       syncVsAiTelemetry();
-      showNotice(`Matched against "${brain.name}"`);
+      showNotice(
+        t('notices.matchedAgainst', { name: brain.name })
+      );
     },
-    [config, postToWorker, setMode, showNotice, sweepCustomEnvironment, syncVsAiTelemetry]
+    [config, postToWorker, setMode, showNotice, sweepCustomEnvironment, syncVsAiTelemetry, t]
   );
 
   const handleSelectPlayDifficulty = useCallback(
@@ -714,7 +723,7 @@ export function useSandboxSimulation(params: {
     if (trainingChampionRef.current) {
       vsSim.setChampionBrain(trainingChampionRef.current);
       setActiveOpponentName(
-        `Evolved Champion (${trainingTelemetry.allTimeBestScore} pipes)`
+        t('notices.evolvedChampionPipes', { allTimeBestScore: trainingTelemetry.allTimeBestScore })
       );
     } else {
       vsSim.setChampionBrain(PRETRAINED_ACE_BRAIN.network);
@@ -727,7 +736,7 @@ export function useSandboxSimulation(params: {
     vsSim.prepareVsAiMatch(false);
     setRunning(true);
     syncVsAiTelemetry();
-  }, [syncVsAiTelemetry, trainingTelemetry.allTimeBestScore]);
+  }, [syncVsAiTelemetry, t, trainingTelemetry.allTimeBestScore]);
 
   const handleDeleteBrain = useCallback((id: string) => {
     setSavedBrains((prev) => {
@@ -752,9 +761,9 @@ export function useSandboxSimulation(params: {
         persistSavedBrains(next);
         return next;
       });
-      showNotice(`Imported "${name}"`);
+      showNotice(t('notices.imported', { name }));
     },
-    [showNotice]
+    [showNotice, t]
   );
 
   useEffect(() => {
@@ -844,9 +853,9 @@ export function useSandboxSimulation(params: {
     setMode('TRAINING');
     setRunning(true);
     showNotice(
-      'Loaded Drosophila Fruit-Fly Connectome (6→4, Neuro-CMA + Morphogenesis)'
+      t('notices.loadedDrosophilaFruitFlyConnectome')
     );
-  }, [config, postToWorker, setMode, showNotice]);
+  }, [config, postToWorker, setMode, showNotice, t]);
 
   const handleLoadDecoupledCortexPreset = useCallback(() => {
     const flyInputs = normalizeInputFeatures([
@@ -887,9 +896,9 @@ export function useSandboxSimulation(params: {
     setRunning(true);
     setShowSensors(true);
     showNotice(
-      'Loaded Decoupled Fly-Cortex (Compound-Eye Pixels + FlyHash 16-Slot Memory + Online DA Plasticity)'
+      t('notices.loadedDecoupledFlyCortexCompound')
     );
-  }, [config, postToWorker, setMode, showNotice]);
+  }, [config, postToWorker, setMode, showNotice, t]);
 
   const handleUpdatePlayerNick = useCallback((rawNick: string) => {
     const cleaned = persistPlayerNick(rawNick);
@@ -911,20 +920,22 @@ export function useSandboxSimulation(params: {
         setLeaderboard(res.leaderboard);
       }
       const display = cleaned || 'Anon Pilot';
-      showNotice(`Zapisano profil / wynik: ${display}`);
+      showNotice(
+        t('notices.savedProfileScore', { display })
+      );
     },
-    [lastCompletedRunId, showNotice]
+    [lastCompletedRunId, showNotice, t]
   );
 
   const handleClearPlayHistory = useCallback(() => {
     setPlayHistory(clearStoredPlayHistory());
-    showNotice('Historia lotów wyczyszczona');
-  }, [showNotice]);
+    showNotice(t('notices.flightHistoryCleared'));
+  }, [showNotice, t]);
 
   const handleClearLeaderboard = useCallback(() => {
     setLeaderboard(clearStoredLeaderboard());
-    showNotice('Tabela wyników wyczyszczona');
-  }, [showNotice]);
+    showNotice(t('notices.leaderboardCleared'));
+  }, [showNotice, t]);
 
   return {
     config,

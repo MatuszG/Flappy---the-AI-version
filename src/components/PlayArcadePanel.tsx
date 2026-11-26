@@ -174,7 +174,7 @@ export function PlayArcadePanel({
   onClearHistory,
   onClearLeaderboard,
 }: PlayArcadePanelProps) {
-  const { bi } = useLanguage();
+  const { t } = useLanguage();
   const [deckTab, setDeckTab] = useState<DeckTab>('PLAY');
   const [boardTrackFilter, setBoardTrackFilter] = useState<'ALL' | DifficultyPreset>('ALL');
   const [boardSortBy, setBoardSortBy] = useState<'POINTS' | 'PIPES'>('POINTS');
@@ -214,7 +214,7 @@ export function PlayArcadePanel({
       <div
         className="grid grid-cols-3 gap-1 rounded-xl border border-white/[0.08] bg-[#07080D] p-1"
         role="tablist"
-        aria-label={bi('Widoki panelu gry', 'Play panel sections')}
+        aria-label={t('play.playPanelSections')}
       >
         <button
           type="button"
@@ -228,7 +228,7 @@ export function PlayArcadePanel({
           }`}
         >
           <Gamepad2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <span>{bi('Gra i Tor', 'Play')}</span>
+          <span>{t('play.play')}</span>
         </button>
 
         <button
@@ -247,7 +247,7 @@ export function PlayArcadePanel({
         >
           <Crown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span>
-            {bi('Tabela', 'Top')} ({leaderboard.length})
+            {t('play.top')} ({leaderboard.length})
           </span>
         </button>
 
@@ -267,7 +267,7 @@ export function PlayArcadePanel({
         >
           <History className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span>
-            {bi('Historia', 'History')} ({playHistory.length})
+            {t('play.history')} ({playHistory.length})
           </span>
         </button>
       </div>
@@ -278,12 +278,12 @@ export function PlayArcadePanel({
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <h2 className="font-display text-sm sm:text-base font-semibold text-white">
-                {bi('Tryb Gry', 'Game Mode')}
+                {t('play.gameMode')}
               </h2>
               <span className="font-mono text-[11px] text-slate-400">
                 {playSubMode === 'SOLO'
-                  ? bi('Lot o punkty i rekord', 'Points & PB Arcade')
-                  : bi('Wyścig z duchem AI', 'Race vs. AI Ghost')}
+                  ? t('play.pointsPbArcade')
+                  : t('play.raceVsAiGhost')}
               </span>
             </div>
 
@@ -298,7 +298,7 @@ export function PlayArcadePanel({
                 }`}
               >
                 <Gamepad2 className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span>{bi('Solo Arcade', 'Solo Arcade')}</span>
+                <span>{t('play.soloArcade')}</span>
               </button>
 
               <button
@@ -311,7 +311,7 @@ export function PlayArcadePanel({
                 }`}
               >
                 <Swords className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span>{bi('Pojedynek z AI', 'Duel vs. AI')}</span>
+                <span>{t('play.duelVsAi')}</span>
               </button>
             </div>
           </div>
@@ -322,19 +322,19 @@ export function PlayArcadePanel({
               <div className="flex items-center gap-2">
                 <Trophy className="h-4 w-4 text-amber-400 shrink-0" aria-hidden="true" />
                 <span className="font-display text-sm font-bold tracking-tight text-slate-100">
-                  {bi('Profil i Rekordy', 'Profile & Records')}
+                  {t('play.profileRecords')}
                 </span>
               </div>
               <span className={`inline-flex items-center gap-1 font-mono text-[11px] font-semibold ${medal.colorClass}`}>
                 <Award className="h-3 w-3 shrink-0" aria-hidden="true" />
-                {bi(medal.labelPl, medal.labelEn)}
+                {t(`play.medals.${medal.id}`)}
               </span>
             </div>
 
             <div className="grid grid-cols-3 divide-x divide-white/[0.08] rounded-lg border border-white/[0.08] bg-[#0B0E17] tabular-nums">
               <div className="px-3 py-2.5">
                 <div className="font-mono text-[10px] tracking-wider text-slate-400">
-                  {bi('Rekord PKT', 'Best PTS')}
+                  {t('play.bestPts')}
                 </div>
                 <div className="mt-0.5 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-300">
                   {currentBestPoints.toLocaleString()}
@@ -342,7 +342,7 @@ export function PlayArcadePanel({
               </div>
               <div className="px-3 py-2.5">
                 <div className="font-mono text-[10px] tracking-wider text-slate-400">
-                  {bi('Rekord Rur', 'Best Pipes')}
+                  {t('play.bestPipes')}
                 </div>
                 <div className="mt-0.5 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-amber-300">
                   {currentBestPipes}
@@ -350,7 +350,7 @@ export function PlayArcadePanel({
               </div>
               <div className="px-3 py-2.5">
                 <div className="font-mono text-[10px] tracking-wider text-slate-400">
-                  {bi('Loty', 'Runs')}
+                  {t('play.runs')}
                 </div>
                 <div className="mt-0.5 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-slate-100">
                   {playHistory.length || sessionStats.runs}
@@ -374,8 +374,8 @@ export function PlayArcadePanel({
                 maxLength={22}
                 value={nickInput}
                 onChange={(e) => setNickInput(e.target.value)}
-                placeholder={bi('Twój nick w tabeli (np. AcePilot)', 'Your leaderboard nick...')}
-                aria-label={bi('Twój nick gracza', 'Player nickname')}
+                placeholder={t('play.yourLeaderboardNick')}
+                aria-label={t('play.playerNickname')}
                 className="min-w-0 flex-1 bg-transparent px-1.5 py-1 text-xs font-medium text-white placeholder:text-slate-500 focus:outline-none"
               />
               <button
@@ -389,10 +389,10 @@ export function PlayArcadePanel({
                 {nickSavedFlash ? (
                   <>
                     <Check className="h-3 w-3" aria-hidden="true" />
-                    {bi('Zapisano', 'Saved')}
+                    {t('play.saved')}
                   </>
                 ) : (
-                  bi('Zapisz nick', 'Set Nick')
+                  t('play.setNick')
                 )}
               </button>
             </form>
@@ -405,7 +405,7 @@ export function PlayArcadePanel({
               </span>
               <span aria-hidden="true">·</span>
               <span className="text-emerald-300">
-                {bi('Środek szczeliny: Combo ×N', 'Center pass: Combo ×N')}
+                {t('play.centerPassComboN')}
               </span>
             </div>
           </div>
@@ -414,10 +414,10 @@ export function PlayArcadePanel({
           <div className="space-y-2.5">
             <div className="flex items-center justify-between gap-2">
               <span className="font-display text-sm sm:text-base font-semibold text-slate-100">
-                {bi('Wybierz Tor / Poziom', 'Select Track / Level')}
+                {t('play.selectTrackLevel')}
               </span>
               <span className="font-mono text-[11px] text-slate-400">
-                {bi('mnożnik 1.0× – 2.95×', '1.0× – 2.95× pts')}
+                {t('play.k10295Pts')}
               </span>
             </div>
 
@@ -430,17 +430,14 @@ export function PlayArcadePanel({
                 const isExtra = diff === 'EXTRA_INSANE';
                 const specText =
                   diff === 'EASY'
-                    ? bi('144px · 1.0× PKT', '144px · 1.0× PTS')
+                    ? t('play.k144px10Pts')
                     : diff === 'MEDIUM'
-                      ? bi('±25% wiatr · 1.3×', '±25% gust · 1.3×')
+                      ? t('play.k25Gust13')
                       : diff === 'HARD'
-                        ? bi('114px · 1.7× PKT', '114px · 1.7× PTS')
+                        ? t('play.k114px17Pts')
                         : diff === 'INSANE'
-                          ? bi('Ruchome · 2.2×', 'Moving · 2.2×')
-                          : bi(
-                              'Ekstremalne ruchome rury + Overdrive (do 2.95×)',
-                              'High-speed moving pipes + Overdrive (up to 2.95×)'
-                            );
+                          ? t('play.moving22')
+                          : t('play.highSpeedMovingPipesOverdrive');
 
                 return (
                   <button
@@ -503,7 +500,7 @@ export function PlayArcadePanel({
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-semibold text-slate-100">
-                    {bi('Przeciwnik AI', 'AI Opponent')}
+                    {t('play.aiOpponent')}
                   </span>
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="font-mono text-xs text-cyan-300 truncate max-w-[140px]">
@@ -516,7 +513,7 @@ export function PlayArcadePanel({
                         className="inline-flex min-h-[30px] items-center gap-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-cyan-500/50 hover:text-cyan-200"
                       >
                         <Brain className="h-3 w-3 text-cyan-400" aria-hidden="true" />
-                        {bi('Sieci', 'Brains')}
+                        {t('play.brains')}
                       </button>
                     )}
                   </div>
@@ -546,24 +543,31 @@ export function PlayArcadePanel({
                           : 'border-slate-800 bg-[#0B1120] text-slate-300 hover:border-slate-700 hover:text-white'
                       }`}
                     >
-                      {bi('Twój Mistrz', 'Lab Champion')} ({trainedChampionScore})
+                      {t('play.labChampion')} ({trainedChampionScore})
                     </button>
                   )}
 
-                  {savedBrains.slice(0, 3).map((brain) => (
-                    <button
-                      key={brain.id}
-                      type="button"
-                      onClick={() => onSelectSavedBrain(brain)}
-                      className={`inline-flex min-h-[42px] items-center gap-1.5 rounded-xl border px-3 py-2 text-xs sm:text-sm font-medium cursor-pointer transition-colors ${
-                        activeOpponentName === brain.name
-                          ? 'border-amber-500/60 bg-amber-500/15 text-amber-200 font-semibold'
-                          : 'border-slate-800 bg-[#0B1120] text-slate-300 hover:border-slate-700 hover:text-white'
-                      }`}
-                    >
-                      <span className="truncate max-w-[140px]">{brain.name}</span>
-                    </button>
-                  ))}
+                  {savedBrains
+                    .filter(
+                      (brain) =>
+                        brain.id !== PRETRAINED_ACE_BRAIN.id &&
+                        brain.name !== PRETRAINED_ACE_BRAIN.name
+                    )
+                    .slice(0, 3)
+                    .map((brain) => (
+                      <button
+                        key={brain.id}
+                        type="button"
+                        onClick={() => onSelectSavedBrain(brain)}
+                        className={`inline-flex min-h-[42px] items-center gap-1.5 rounded-xl border px-3 py-2 text-xs sm:text-sm font-medium cursor-pointer transition-colors ${
+                          activeOpponentName === brain.name
+                            ? 'border-amber-500/60 bg-amber-500/15 text-amber-200 font-semibold'
+                            : 'border-slate-800 bg-[#0B1120] text-slate-300 hover:border-slate-700 hover:text-white'
+                        }`}
+                      >
+                        <span className="truncate max-w-[140px]">{brain.name}</span>
+                      </button>
+                    ))}
                 </div>
               </div>
 
@@ -578,23 +582,23 @@ export function PlayArcadePanel({
             <div className="rounded-xl border border-slate-800/80 bg-[#0B1120]/80 p-3.5 space-y-2">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
                 <Keyboard className="h-3.5 w-3.5 text-amber-400" aria-hidden="true" />
-                <span>{bi('Sterowanie', 'Controls')}</span>
+                <span>{t('play.controls')}</span>
               </div>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 font-mono text-[11px] text-slate-400">
                 <div className="flex items-center justify-between gap-1">
-                  <span>{bi('Skok', 'Flap')}</span>
+                  <span>{t('play.flap')}</span>
                   <span className="text-slate-200 whitespace-nowrap">Space / ↑ / Tap</span>
                 </div>
                 <div className="flex items-center justify-between gap-1">
-                  <span>{bi('Pauza', 'Pause')}</span>
+                  <span>{t('play.pause')}</span>
                   <span className="text-slate-200 whitespace-nowrap">P / Esc</span>
                 </div>
                 <div className="flex items-center justify-between gap-1">
-                  <span>{bi('Restart', 'Restart')}</span>
+                  <span>{t('play.restart2')}</span>
                   <span className="text-slate-200 whitespace-nowrap">R / Space</span>
                 </div>
                 <div className="flex items-center justify-between gap-1">
-                  <span>{bi('Medale', 'Medals')}</span>
+                  <span>{t('play.medals2')}</span>
                   <span className="text-amber-300 whitespace-nowrap">5 · 15 · 30 · 60</span>
                 </div>
               </div>
@@ -609,13 +613,10 @@ export function PlayArcadePanel({
             <div>
               <h2 className="font-display text-sm sm:text-base font-semibold text-white flex items-center gap-1.5">
                 <Crown className="h-4 w-4 text-amber-400" aria-hidden="true" />
-                <span>{bi('Tabela Najlepszych Graczy', 'Top Players Leaderboard')}</span>
+                <span>{t('play.topPlayersLeaderboard')}</span>
               </h2>
               <p className="font-mono text-[11px] text-slate-400">
-                {bi(
-                  'Wszystkie zapisane rekordy lokalne (PKT i Rury)',
-                  'Locally recorded player high scores'
-                )}
+                {t('play.locallyRecordedPlayerHighScores')}
               </p>
             </div>
 
@@ -629,7 +630,7 @@ export function PlayArcadePanel({
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                PKT
+                {t('play.pts')}
               </button>
               <button
                 type="button"
@@ -640,7 +641,7 @@ export function PlayArcadePanel({
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                {bi('Rury', 'Pipes')}
+                {t('play.pipes')}
               </button>
             </div>
           </div>
@@ -660,7 +661,7 @@ export function PlayArcadePanel({
                       : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  {f === 'ALL' ? bi('Wszystkie', 'All') : getDiffShort(f)}
+                  {f === 'ALL' ? t('play.all') : getDiffShort(f)}
                 </button>
               );
             })}
@@ -670,16 +671,10 @@ export function PlayArcadePanel({
             <div className="rounded-xl border border-dashed border-slate-800 bg-[#0B1120]/70 p-6 text-center space-y-2">
               <Medal className="mx-auto h-7 w-7 text-slate-600" aria-hidden="true" />
               <p className="text-xs font-medium text-slate-300">
-                {bi(
-                  'Brak zapisanych wyników dla tego filtra.',
-                  'No saved leaderboard scores yet.'
-                )}
+                {t('play.noSavedLeaderboardScoresYet')}
               </p>
               <p className="text-[11px] text-slate-500">
-                {bi(
-                  'Wykonaj pierwszy lot w zakładce Gra i Tor — wynik zapisze się automatycznie lub pod Twoim nickiem.',
-                  'Complete a flight in Play — runs save automatically under your chosen nick.'
-                )}
+                {t('play.completeAFlightInPlay')}
               </p>
             </div>
           ) : (
@@ -734,7 +729,7 @@ export function PlayArcadePanel({
                         {entry.points.toLocaleString()}p
                       </div>
                       <div className="text-[10.5px] text-amber-300">
-                        {entry.pipes} {bi('rur', 'pipes')}
+                        {entry.pipes} {t('play.pipes2')}
                       </div>
                     </div>
                   </div>
@@ -748,7 +743,7 @@ export function PlayArcadePanel({
               {confirmClearBoard ? (
                 <div className="flex items-center gap-1.5">
                   <span className="text-[11px] text-rose-300">
-                    {bi('Usunąć tabelę?', 'Clear table?')}
+                    {t('play.clearTable')}
                   </span>
                   <button
                     type="button"
@@ -758,14 +753,14 @@ export function PlayArcadePanel({
                     }}
                     className="rounded-md bg-rose-500 px-2.5 py-1 text-[11px] font-bold text-white cursor-pointer hover:bg-rose-400"
                   >
-                    {bi('Tak', 'Yes')}
+                    {t('play.yes')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setConfirmClearBoard(false)}
                     className="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-[11px] text-slate-300 cursor-pointer"
                   >
-                    {bi('Nie', 'No')}
+                    {t('play.no')}
                   </button>
                 </div>
               ) : (
@@ -775,7 +770,7 @@ export function PlayArcadePanel({
                   className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-rose-300 cursor-pointer"
                 >
                   <Trash2 className="h-3 w-3" aria-hidden="true" />
-                  {bi('Wyczyść tabelę', 'Clear leaderboard')}
+                  {t('play.clearLeaderboard')}
                 </button>
               )}
             </div>
@@ -789,13 +784,10 @@ export function PlayArcadePanel({
             <div>
               <h2 className="font-display text-sm sm:text-base font-semibold text-white flex items-center gap-1.5">
                 <Clock className="h-4 w-4 text-cyan-400" aria-hidden="true" />
-                <span>{bi('Historia Ostatnich Lotów', 'Recent Flight History')}</span>
+                <span>{t('play.recentFlightHistory')}</span>
               </h2>
               <p className="font-mono text-[11px] text-slate-400">
-                {bi(
-                  'Automatyczny dziennik każdej próby (do 80 lotów)',
-                  'Auto-recorded run log (up to 80 flights)'
-                )}
+                {t('play.autoRecordedRunLogUp')}
               </p>
             </div>
           </div>
@@ -804,13 +796,10 @@ export function PlayArcadePanel({
             <div className="rounded-xl border border-dashed border-slate-800 bg-[#0B1120]/70 p-6 text-center space-y-2">
               <History className="mx-auto h-7 w-7 text-slate-600" aria-hidden="true" />
               <p className="text-xs font-medium text-slate-300">
-                {bi('Brak historii lotów.', 'No flights recorded yet.')}
+                {t('play.noFlightsRecordedYet')}
               </p>
               <p className="text-[11px] text-slate-500">
-                {bi(
-                  'Zacznij lecieć po punkty i rury — każda zakończona próba pojawi się tutaj.',
-                  'Fly a round to log points, pipes, orbs, and combos here.'
-                )}
+                {t('play.flyARoundToLog')}
               </p>
             </div>
           ) : (
@@ -848,7 +837,7 @@ export function PlayArcadePanel({
                       {run.points.toLocaleString()}p
                     </div>
                     <div className="text-[10.5px] text-slate-400">
-                      {run.pipes} {bi('rur', 'pipes')}
+                      {run.pipes} {t('play.pipes2')}
                     </div>
                   </div>
                 </div>
@@ -861,7 +850,7 @@ export function PlayArcadePanel({
               {confirmClearHistory ? (
                 <div className="flex items-center gap-1.5">
                   <span className="text-[11px] text-rose-300">
-                    {bi('Wyczyścić historię?', 'Clear history?')}
+                    {t('play.clearHistory')}
                   </span>
                   <button
                     type="button"
@@ -871,14 +860,14 @@ export function PlayArcadePanel({
                     }}
                     className="rounded-md bg-rose-500 px-2.5 py-1 text-[11px] font-bold text-white cursor-pointer hover:bg-rose-400"
                   >
-                    {bi('Tak', 'Yes')}
+                    {t('play.yes')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setConfirmClearHistory(false)}
                     className="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-[11px] text-slate-300 cursor-pointer"
                   >
-                    {bi('Nie', 'No')}
+                    {t('play.no')}
                   </button>
                 </div>
               ) : (
@@ -888,7 +877,7 @@ export function PlayArcadePanel({
                   className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-rose-300 cursor-pointer"
                 >
                   <Trash2 className="h-3 w-3" aria-hidden="true" />
-                  {bi('Wyczyść historię', 'Clear history')}
+                  {t('play.clearHistory2')}
                 </button>
               )}
             </div>

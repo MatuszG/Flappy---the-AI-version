@@ -40,6 +40,9 @@ jobs:
       - name: TypeScript typecheck (lint)
         run: npm run lint
 
+      - name: Verify i18n dictionary schema & placeholder parity
+        run: npm run i18n:check
+
       - name: Run deterministic physics & neuroevolution engine tests
         run: npm run test:engine
 

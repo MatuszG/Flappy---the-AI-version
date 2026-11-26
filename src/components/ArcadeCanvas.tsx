@@ -1182,7 +1182,7 @@ export function ArcadeCanvas({
   onSaveRunWithNick,
   onSyncVsAiTelemetry,
 }: ArcadeCanvasProps) {
-  const { bi } = useLanguage();
+  const { t } = useLanguage();
   const [nickDraft, setNickDraft] = useState(playerNick);
   const [savedNotice, setSavedNotice] = useState(false);
 
@@ -1524,7 +1524,7 @@ export function ArcadeCanvas({
         <div className="flex sm:hidden flex-wrap items-center justify-between gap-2 border-b border-slate-800/90 bg-[#0B1120] px-3 py-2 font-mono text-[11px] tabular-nums">
           <div className="flex items-center gap-2 min-w-0">
             <span className="rounded bg-cyan-500/20 border border-cyan-500/35 px-1.5 py-0.5 font-bold text-cyan-300">
-              {bi('Pok', 'Gen')} {trainingHud.generation}
+              {t('play.gen')} {trainingHud.generation}
             </span>
             <span className="text-slate-300">
               <strong className="text-emerald-300">{trainingHud.aliveCount}</strong>/{trainingHud.totalPopulation}
@@ -1536,10 +1536,10 @@ export function ArcadeCanvas({
 
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-slate-300">
-              {bi('Lot', 'Now')} <strong className="text-white">{trainingHud.currentBestScore}</strong>
+              {t('play.now')} <strong className="text-white">{trainingHud.currentBestScore}</strong>
             </span>
             <span className="text-amber-300 font-bold">
-              {bi('Rek', 'Best')} {trainingHud.allTimeBestScore}
+              {t('play.best')} {trainingHud.allTimeBestScore}
             </span>
           </div>
         </div>
@@ -1573,19 +1573,19 @@ export function ArcadeCanvas({
             </span>
             <span className="text-slate-600">·</span>
             <span className="whitespace-nowrap shrink-0">
-              {bi('Pok', 'Gen')} {trainingHud.generation}
+              {t('play.gen')} {trainingHud.generation}
             </span>
             <span className="text-slate-600">·</span>
             <span className="whitespace-nowrap shrink-0">
-              {bi('Żyje', 'Alive')} {trainingHud.aliveCount}/{trainingHud.totalPopulation}
+              {t('play.alive')} {trainingHud.aliveCount}/{trainingHud.totalPopulation}
             </span>
             <span className="text-slate-600">·</span>
             <span className="whitespace-nowrap shrink-0">
-              {bi('Lot', 'Best')} {trainingHud.currentBestScore}
+              {t('play.best2')} {trainingHud.currentBestScore}
             </span>
             <span className="text-slate-600">·</span>
             <span className="font-semibold text-cyan-300 whitespace-nowrap shrink-0">
-              {bi('Rekord', 'Record')} {trainingHud.allTimeBestScore}
+              {t('play.record')} {trainingHud.allTimeBestScore}
             </span>
             {trainingHud.showMultiplier && (trainingHud.effectiveMultiplier ?? 0) > 0 && (
               <>
@@ -1606,7 +1606,7 @@ export function ArcadeCanvas({
             <div className="flex items-center gap-1.5 sm:gap-2">
               <div className="rounded-lg border border-amber-500/40 bg-[#0B1120]/85 px-2.5 py-1 backdrop-blur-sm">
                 <span className="font-mono text-[10px] uppercase tracking-wide text-amber-300">
-                  PKT
+                  {t('play.pts')}
                 </span>
                 <span className="ml-1.5 font-mono text-sm font-bold tabular-nums text-white">
                   {playerPoints.toLocaleString()}
@@ -1619,7 +1619,7 @@ export function ArcadeCanvas({
               </div>
               <div className="hidden sm:block rounded-lg border border-slate-700/70 bg-[#0B1120]/82 px-2.5 py-1 backdrop-blur-sm">
                 <span className="font-mono text-[10px] uppercase tracking-wide text-slate-400">
-                  {bi('Rekord', 'Best')}
+                  {t('play.best3')}
                 </span>
                 <span className="ml-1.5 font-mono text-sm font-bold tabular-nums text-amber-300">
                   {Math.max(personalBest, playerScore)}
@@ -1629,7 +1629,7 @@ export function ArcadeCanvas({
           ) : (
             <div className="rounded-lg border border-slate-700/70 bg-[#0B1120]/85 px-2.5 sm:px-3 py-1 sm:py-1.5 backdrop-blur-sm">
               <span className="text-[11px] sm:text-xs font-medium text-amber-300">
-                {bi('TY', 'YOU')}
+                {t('play.you')}
               </span>
               <span className="ml-1.5 font-mono text-sm sm:text-base font-bold tabular-nums text-white">
                 {playerScore}
@@ -1658,8 +1658,8 @@ export function ArcadeCanvas({
               <div className="rounded-lg border border-slate-700/70 bg-[#0B1120]/85 px-2.5 sm:px-3 py-1 sm:py-1.5 backdrop-blur-sm">
                 <span className="text-[11px] sm:text-xs font-medium text-cyan-300">
                   {playerAlive
-                    ? bi('DUCH AI', 'AI GHOST')
-                    : bi('MISTRZ AI', 'AI ACE')}
+                    ? t('play.aiGhost')
+                    : t('play.aiAce')}
                 </span>
                 <span className="ml-2 font-mono text-sm sm:text-base font-bold tabular-nums text-white">
                   {aiOpponentScore}
@@ -1675,8 +1675,8 @@ export function ArcadeCanvas({
                   e.stopPropagation();
                   onTogglePause();
                 }}
-                aria-label={running ? bi('Pauza', 'Pause') : bi('Wznów', 'Resume')}
-                title={running ? bi('Pauza (P)', 'Pause (P)') : bi('Wznów (P)', 'Resume (P)')}
+                aria-label={running ? t('play.pause') : t('play.resume')}
+                title={running ? t('play.pauseP') : t('play.resumeP')}
                 className="pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700/80 bg-[#0B1120]/85 text-slate-200 backdrop-blur-sm cursor-pointer transition-colors hover:border-amber-400/60 hover:text-amber-300"
               >
                 {running ? (
@@ -1694,18 +1694,12 @@ export function ArcadeCanvas({
         <div className="pointer-events-none absolute inset-x-0 bottom-12 sm:bottom-16 flex justify-center px-3">
           <div className="rounded-xl border border-slate-700/85 bg-[#0B1120]/90 px-5 py-3 sm:px-7 sm:py-4 text-center backdrop-blur-sm shadow-xl">
             <p className="font-display text-base sm:text-lg font-bold text-white">
-              {bi('Dotknij lub naciśnij Spację, aby lecieć', 'Tap or Press Space to Fly')}
+              {t('play.tapOrPressSpaceTo')}
             </p>
             <p className="mt-1 text-xs sm:text-sm text-slate-300">
               {isSoloPlay
-                ? bi(
-                    'Tryb Solo Arcade · pobij swój rekord na tym torze',
-                    'Solo Arcade · beat your personal best on this track'
-                  )
-                : bi(
-                    'Ty lecisz złotym ptakiem · AI leci obok jako cyjanowy duch',
-                    'You fly Amber · AI flies alongside as a translucent Cyan ghost'
-                  )}
+                ? t('play.soloArcadeBeatYourPersonal')
+                : t('play.youFlyAmberAiFlies')}
             </p>
           </div>
         </div>
@@ -1718,10 +1712,10 @@ export function ArcadeCanvas({
         >
           <div className="w-full max-w-[290px] rounded-xl border border-slate-700 bg-[#111827] p-5 text-center shadow-xl">
             <h3 className="font-display text-xl font-bold text-white">
-              {bi('Pauza', 'Paused')}
+              {t('play.paused')}
             </h3>
             <p className="mt-1 font-mono text-xs sm:text-sm tabular-nums text-slate-400">
-              {bi('Aktualny wynik:', 'Current score:')}{' '}
+              {t('play.currentScore')}{' '}
               <strong className="text-amber-300">{playerScore}</strong>
             </p>
             <div className="mt-4 flex items-center justify-center gap-2.5">
@@ -1731,7 +1725,7 @@ export function ArcadeCanvas({
                 className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-amber-400"
               >
                 <Play className="h-4 w-4" aria-hidden="true" />
-                {bi('Wznów', 'Resume')}
+                {t('play.resume')}
               </button>
               <button
                 type="button"
@@ -1739,7 +1733,7 @@ export function ArcadeCanvas({
                 className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 whitespace-nowrap cursor-pointer transition-colors hover:bg-slate-700"
               >
                 <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                {bi('Od nowa', 'Restart')}
+                {t('play.restart')}
               </button>
             </div>
           </div>
@@ -1757,10 +1751,7 @@ export function ArcadeCanvas({
           >
             <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 rounded-xl border border-slate-700/80 bg-[#0B1120]/92 px-3.5 py-2 backdrop-blur-sm">
               <span className="font-mono text-xs tabular-nums text-slate-200">
-                {bi(
-                  `Twój wynik: ${playerScore} · AI leci (${aiOpponentScore})`,
-                  `Score: ${playerScore} · AI flying (${aiOpponentScore})`
-                )}
+                {t('play.scoreAiFlying', { playerScore, aiOpponentScore })}
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -1768,14 +1759,14 @@ export function ArcadeCanvas({
                   onClick={onRematch}
                   className="min-h-[36px] rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-amber-400"
                 >
-                  {bi('Nowy Lot', 'Retry')}
+                  {t('play.retry')}
                 </button>
                 <button
                   type="button"
                   onClick={onFinishEarly}
                   className="min-h-[36px] rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 whitespace-nowrap cursor-pointer transition-colors hover:bg-slate-700"
                 >
-                  {bi('Wynik', 'Finish')}
+                  {t('play.finish')}
                 </button>
               </div>
             </div>
@@ -1789,26 +1780,26 @@ export function ArcadeCanvas({
         >
           <div className="w-full max-w-[360px] rounded-xl border border-slate-700 bg-[#111827] p-4 sm:p-5 text-center shadow-2xl">
             {lastRunWasNewRecord && playerScore > 0 && (
-              <div className="mb-1.5 inline-flex items-center gap-1 rounded-full border border-amber-400/50 bg-amber-500/15 px-3 py-0.5 font-mono text-[11px] font-bold text-amber-300">
+              <div className="mb-1.5 inline-flex items-center gap-1 rounded-md border border-amber-400/50 bg-amber-500/15 px-2.5 py-0.5 font-mono text-[11px] font-bold text-amber-300">
                 <Award className="h-3.5 w-3.5" aria-hidden="true" />
-                {bi('NOWY REKORD!', 'NEW PERSONAL BEST!')}
+                {t('play.newPersonalBest')}
               </div>
             )}
 
             <h3 className="font-display text-lg sm:text-xl font-bold text-white">
               {isSoloPlay
-                ? bi('Koniec Lotu', 'Flight Complete')
+                ? t('play.flightComplete')
                 : vsAiWinner === 'PLAYER'
-                  ? bi('Pokonałeś Mistrza AI!', 'You Beat the AI!')
+                  ? t('play.youBeatTheAi')
                   : vsAiWinner === 'AI'
-                    ? bi('Mistrz AI Wygrywa', 'AI Champion Wins')
-                    : bi('Remis!', 'Draw Match')}
+                    ? t('play.aiChampionWins')
+                    : t('play.drawMatch')}
             </h3>
 
             <div className="mt-2.5 grid grid-cols-3 gap-2 rounded-lg border border-slate-800 bg-[#0B1120] p-2.5 font-mono tabular-nums">
               <div>
                 <div className="text-[10px] uppercase text-slate-400">
-                  {bi('Punkty', 'Points')}
+                  {t('play.points')}
                 </div>
                 <div className="text-lg sm:text-xl font-bold text-emerald-300">
                   {playerPoints.toLocaleString()}
@@ -1816,7 +1807,7 @@ export function ArcadeCanvas({
               </div>
               <div>
                 <div className="text-[10px] uppercase text-slate-400">
-                  {bi('Rury', 'Pipes')}
+                  {t('play.pipes')}
                 </div>
                 <div className="text-lg sm:text-xl font-bold text-white">
                   {playerScore}
@@ -1824,7 +1815,7 @@ export function ArcadeCanvas({
               </div>
               <div>
                 <div className="text-[10px] uppercase text-slate-400">
-                  {isSoloPlay ? bi('Rekord', 'Best') : 'AI'}
+                  {isSoloPlay ? t('play.best3') : 'AI'}
                 </div>
                 <div className="text-lg sm:text-xl font-bold text-amber-300">
                   {isSoloPlay
@@ -1838,7 +1829,7 @@ export function ArcadeCanvas({
               <div className="mt-2 flex flex-wrap items-center justify-center gap-2 font-mono text-[10.5px] text-slate-400">
                 <span className="inline-flex items-center gap-1 text-amber-300">
                   <Sparkles className="h-3 w-3" aria-hidden="true" />
-                  {bi('Orby:', 'Orbs:')} {playerOrbsCollected}
+                  {t('play.orbs')} {playerOrbsCollected}
                 </span>
                 <span aria-hidden="true">·</span>
                 <span className="text-cyan-300">
@@ -1860,7 +1851,7 @@ export function ArcadeCanvas({
                 className={`mt-2 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-0.5 font-mono text-[11px] font-semibold ${runMedal.badgeBg}`}
               >
                 <Award className="h-3.5 w-3.5" aria-hidden="true" />
-                {bi(runMedal.labelPl, runMedal.labelEn)}
+                {t(`play.medals.${runMedal.id}`)}
               </div>
             )}
 
@@ -1882,8 +1873,8 @@ export function ArcadeCanvas({
                     setNickDraft(e.target.value);
                     setSavedNotice(false);
                   }}
-                  placeholder={bi('Wpisz swój nick do tabeli...', 'Your name on leaderboard...')}
-                  aria-label={bi('Twój nick w tabeli wyników', 'Your leaderboard nickname')}
+                  placeholder={t('play.yourNameOnLeaderboard')}
+                  aria-label={t('play.yourLeaderboardNickname')}
                   className="min-w-0 flex-1 bg-transparent px-2 py-1 text-xs font-medium text-white placeholder:text-slate-500 focus:outline-none"
                 />
                 <button
@@ -1897,12 +1888,12 @@ export function ArcadeCanvas({
                   {savedNotice ? (
                     <>
                       <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                      {bi('Zapisano', 'Saved')}
+                      {t('play.saved')}
                     </>
                   ) : (
                     <>
                       <UserCheck className="h-3.5 w-3.5" aria-hidden="true" />
-                      {bi('Zapisz', 'Save')}
+                      {t('play.save')}
                     </>
                   )}
                 </button>
@@ -1916,18 +1907,18 @@ export function ArcadeCanvas({
                 className="inline-flex min-h-[42px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-amber-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
               >
                 <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                {bi('Zagraj Ponownie', 'Play Again')}
+                {t('play.playAgain')}
               </button>
               <button
                 type="button"
                 onClick={onBackToLab}
                 className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-sm font-medium text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-slate-700"
               >
-                {bi('Trening', 'Lab')}
+                {t('play.lab')}
               </button>
             </div>
             <p className="mt-2 font-mono text-[10.5px] text-slate-400">
-              {bi('Spacja / Dotknij ekranu aby powtórzyć', 'Press Space or tap to retry')}
+              {t('play.pressSpaceOrTapTo')}
             </p>
           </div>
         </div>

@@ -7,10 +7,12 @@ export interface SensorMeta {
   shortLabel: string;
   opticalShortLabel: string;
   opticalDescPl: string;
+  opticalDescEn: string;
   formulaVar: string;
   vizLabel: string;
   group: 'KINEMATIC' | 'PIPE_1' | 'PIPE_2';
   description: string;
+  descriptionPl: string;
 }
 
 export const CLASSIC_5_SENSOR_FEATURES: readonly SensorFeatureId[] = [
@@ -63,10 +65,12 @@ export const SENSOR_METADATA: Record<SensorFeatureId, SensorMeta> = {
     shortLabel: 'Y',
     opticalShortLabel: 'Opt-Horiz',
     opticalDescPl: 'Balans jasności grzbiet/brzuch (Ommatidia #1–8 vs #9–16) + propriocepcja wysokości',
+    opticalDescEn: 'Dorsal/ventral luminance balance (Ommatidia #1–8 vs #9–16) + altitude proprioception',
     formulaVar: 'Y',
     vizLabel: 'Altitude',
     group: 'KINEMATIC',
     description: 'Normalized bird altitude (-1 top to +1 ground)',
+    descriptionPl: 'Znormalizowana wysokość ptaka (-1 sufit do +1 ziemia)',
   },
   VEL_VY: {
     id: 'VEL_VY',
@@ -75,10 +79,12 @@ export const SENSOR_METADATA: Record<SensorFeatureId, SensorMeta> = {
     shortLabel: 'Vy',
     opticalShortLabel: 'Flow-Vy',
     opticalDescPl: 'Przepływ optyczny ruchu własnego T4/T5 + żyroskop przezmianek (Halteres)',
+    opticalDescEn: 'T4/T5 self-motion optic flow + haltere vertical velocity gyroscope',
     formulaVar: 'Vy',
     vizLabel: 'Velocity',
     group: 'KINEMATIC',
     description: 'Vertical velocity normalized by terminal speed',
+    descriptionPl: 'Prędkość pionowa znormalizowana do prędkości granicznej',
   },
   PIPE_DX: {
     id: 'PIPE_DX',
@@ -87,10 +93,12 @@ export const SENSOR_METADATA: Record<SensorFeatureId, SensorMeta> = {
     shortLabel: 'DX',
     opticalShortLabel: 'Loom-1',
     opticalDescPl: 'Stopień zbliżenia optycznego (Looming) przednich promieni siatkówki #6–11',
+    opticalDescEn: 'Retinal looming proximity from frontal ommatidia rays #6–11',
     formulaVar: 'DX',
     vizLabel: 'P1 Dist',
     group: 'PIPE_1',
     description: 'Horizontal distance to trailing edge of Pipe #1',
+    descriptionPl: 'Poziomy dystans do tylnej krawędzi Rury #1',
   },
   TOP_CLEAR: {
     id: 'TOP_CLEAR',
@@ -99,10 +107,12 @@ export const SENSOR_METADATA: Record<SensorFeatureId, SensorMeta> = {
     shortLabel: 'Top',
     opticalShortLabel: 'Dorsal-1',
     opticalDescPl: 'Prześwit grzbietowej wiązki ommatidiów (#1–8) względem górnej krawędzi szczeliny',
+    opticalDescEn: 'Dorsal ommatidia bundle (#1–8) clearance below the upper gap lip',
     formulaVar: 'Top',
     vizLabel: 'P1 Top',
     group: 'PIPE_1',
     description: 'Signed vertical clearance below Pipe #1 top lip (y - gapTop)',
+    descriptionPl: 'Pionowy prześwit poniżej górnej krawędzi szczeliny Rury #1 (y - gapTop)',
   },
   BOT_CLEAR: {
     id: 'BOT_CLEAR',
@@ -111,10 +121,12 @@ export const SENSOR_METADATA: Record<SensorFeatureId, SensorMeta> = {
     shortLabel: 'Bot',
     opticalShortLabel: 'Ventral-1',
     opticalDescPl: 'Prześwit brzusznej wiązki ommatidiów (#9–16) względem dolnej krawędzi szczeliny',
+    opticalDescEn: 'Ventral ommatidia bundle (#9–16) clearance above the lower gap lip',
     formulaVar: 'Bot',
     vizLabel: 'P1 Bot',
     group: 'PIPE_1',
     description: 'Signed vertical clearance above Pipe #1 bottom lip (gapBot - y)',
+    descriptionPl: 'Pionowy prześwit nad dolną krawędzią szczeliny Rury #1 (gapBot - y)',
   },
   PIPE_VY: {
     id: 'PIPE_VY',
@@ -123,10 +135,12 @@ export const SENSOR_METADATA: Record<SensorFeatureId, SensorMeta> = {
     shortLabel: 'PVy',
     opticalShortLabel: 'T4/T5-Vy',
     opticalDescPl: 'Korelator ruchu krawędzi Reichardta T4/T5 między sąsiednimi ommatidiami',
+    opticalDescEn: 'Reichardt T4/T5 edge-motion correlator between neighboring ommatidia',
     formulaVar: 'PVy',
     vizLabel: 'P1 Vel',
     group: 'PIPE_1',
     description: 'Vertical velocity of moving Pipe #1 gap (+down / -up, 0 when static)',
+    descriptionPl: 'Prędkość pionowa ruchomej szczeliny Rury #1 (+w dół / -w górę, 0 dla statycznych)',
   },
   NEXT_PIPE_DY: {
     id: 'NEXT_PIPE_DY',
@@ -135,11 +149,14 @@ export const SENSOR_METADATA: Record<SensorFeatureId, SensorMeta> = {
     shortLabel: 'N2Y',
     opticalShortLabel: 'Dipole-2',
     opticalDescPl: 'Dipol dalekiego pola z promieni przenikających przez otwartą szczelinę rury #1 na rurę #2',
+    opticalDescEn: 'Far-field optical dipole from rays threading Pipe #1 gap onto Pipe #2',
     formulaVar: 'N2Y',
     vizLabel: 'P2 Center',
     group: 'PIPE_2',
     description:
       'Vertical offset from Pipe #1 gap center to Pipe #2 gap center (+down / -up, 0 if unseen)',
+    descriptionPl:
+      'Pionowe przesunięcie środka szczeliny Rury #2 względem Rury #1 (+w dół / -w górę)',
   },
   NEXT_TOP_CLEAR: {
     id: 'NEXT_TOP_CLEAR',
@@ -148,11 +165,14 @@ export const SENSOR_METADATA: Record<SensorFeatureId, SensorMeta> = {
     shortLabel: 'N2Top',
     opticalShortLabel: 'Dorsal-2',
     opticalDescPl: 'Paralaksa dalekiego pola górnej krawędzi rury #2 widziana przez szczelinę #1',
+    opticalDescEn: 'Far-field parallax of Pipe #2 upper lip visible through Pipe #1 aperture',
     formulaVar: 'N2Top',
     vizLabel: 'P2 Top',
     group: 'PIPE_2',
     description:
       'Signed vertical clearance from bird to Pipe #2 top lip (y - nextGapTop, 0 if unseen)',
+    descriptionPl:
+      'Pionowy prześwit od ptaka do górnej krawędzi Rury #2 (y - nextGapTop, 0 jeśli niewidoczna)',
   },
   NEXT_BOT_CLEAR: {
     id: 'NEXT_BOT_CLEAR',
@@ -161,11 +181,14 @@ export const SENSOR_METADATA: Record<SensorFeatureId, SensorMeta> = {
     shortLabel: 'N2Bot',
     opticalShortLabel: 'Ventral-2',
     opticalDescPl: 'Paralaksa dalekiego pola dolnej krawędzi rury #2 widziana przez szczelinę #1',
+    opticalDescEn: 'Far-field parallax of Pipe #2 lower lip visible through Pipe #1 aperture',
     formulaVar: 'N2Bot',
     vizLabel: 'P2 Bot',
     group: 'PIPE_2',
     description:
       'Signed vertical clearance from bird to Pipe #2 bottom lip (nextGapBot - y, 0 if unseen)',
+    descriptionPl:
+      'Pionowy prześwit od ptaka do dolnej krawędzi Rury #2 (nextGapBot - y, 0 jeśli niewidoczna)',
   },
   NEXT_PIPE_DX: {
     id: 'NEXT_PIPE_DX',
@@ -174,11 +197,14 @@ export const SENSOR_METADATA: Record<SensorFeatureId, SensorMeta> = {
     shortLabel: 'N2DX',
     opticalShortLabel: 'Loom-2',
     opticalDescPl: 'Głębia dalekiego pola promieni trafiających w rurę #2',
+    opticalDescEn: 'Far-field optical depth of rays intersecting Pipe #2',
     formulaVar: 'N2DX',
     vizLabel: 'P2 Dist',
     group: 'PIPE_2',
     description:
       'Horizontal distance to trailing edge of Pipe #2 (1.0 if unseen)',
+    descriptionPl:
+      'Poziomy dystans do tylnej krawędzi Rury #2 (1.0 jeśli niewidoczna)',
   },
   NEXT_PIPE_VY: {
     id: 'NEXT_PIPE_VY',
@@ -187,11 +213,14 @@ export const SENSOR_METADATA: Record<SensorFeatureId, SensorMeta> = {
     shortLabel: 'N2PVy',
     opticalShortLabel: 'T4/T5-2',
     opticalDescPl: 'Ruch pionowy krawędzi dalekiego pola (T4/T5 rury #2)',
+    opticalDescEn: 'Far-field vertical edge motion (T4/T5 velocity of Pipe #2)',
     formulaVar: 'N2PVy',
     vizLabel: 'P2 Vel',
     group: 'PIPE_2',
     description:
       'Vertical velocity of moving Pipe #2 gap (+down / -up, 0 when static or unseen)',
+    descriptionPl:
+      'Prędkość pionowa ruchomej szczeliny Rury #2 (+w dół / -w górę, 0 dla statycznych)',
   },
   PIPE_TTF: {
     id: 'PIPE_TTF',
@@ -200,11 +229,14 @@ export const SENSOR_METADATA: Record<SensorFeatureId, SensorMeta> = {
     shortLabel: 'TTF',
     opticalShortLabel: 'Tau-dθ',
     opticalDescPl: 'Optyczny czas do kontaktu τ wyznaczany z pochodnej kontrastu Lamina L1/L2 ΔI(t)',
+    opticalDescEn: 'Optical time-to-contact τ derived from Lamina L1/L2 contrast derivative ΔI(t)',
     formulaVar: 'TTF',
     vizLabel: 'Time-To-Pipe',
     group: 'KINEMATIC',
     description:
       'Wind-compensated Time-To-Pipe in frames (DX / tickSpeed normalized by 120f)',
+    descriptionPl:
+      'Skorygowany o wiatr czas dolotu do rury w klatkach (DX / tickSpeed / 120f)',
   },
 };
 

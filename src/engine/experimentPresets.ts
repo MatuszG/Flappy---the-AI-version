@@ -25,6 +25,8 @@ import {
   synthesizeKnowledgeFromRuns,
 } from './smartPrune';
 import { DIFFICULTY_SETTINGS, resolveEnvironment } from './simulation';
+import { getPresetText } from '../i18n/catalog';
+import type { AppLanguage } from '../i18n/dictionaries';
 import type {
   ExperimentRunRecord,
   IntegrityCheckItem,
@@ -825,8 +827,141 @@ export const RESEARCH_PRESETS: PresetDefinition[] = [
   },
 ];
 
+export const PRESET_TRANSLATIONS_PL: Record<
+  PresetId,
+  { title: string; subtitle: string; description: string }
+> = {
+  REALISTIC_PIXELS_DECOUPLED_LAB: {
+    title: 'Fly-Cortex & Piksele Oka',
+    subtitle: 'Rozumowanie vs Wiedza · FlyHash · Dopamina',
+    description:
+      'Testuje rozdzielony mózg Fly-Cortex (rdzeń wykonawczy LTC + Giant Fiber + bramka S1/S2 + 16-slotowa pamięć FlyHash APL z plastycznością dopaminową online) przeciwko Drosophila, Ponder-ACT i MLP w trybie 16-promieniowego oka złożonego i anomalii lotu.',
+  },
+  FRUIT_FLY_SPEED_LAB: {
+    title: 'Test Prędkości Muszki Owocowej',
+    subtitle: 'Drosophila Connectome vs Fly-LTC vs ResSkip vs MLP',
+    description:
+      'Bezpośrednie porównanie szybkości uczenia konektomu Drosophila (T4/T5 LTC + APL + oktopamina + Giant Fiber) z Fly-LTC, Residual Skip i MLP na poziomach Medium i Hard.',
+  },
+  HYBRID_ISLAND_FRONTIER: {
+    title: 'Hybrid MoE + Wyspy (Islands)',
+    subtitle: 'Compute ROI · Kara FLOPs · 5 Wysp · CPU/OpenMP',
+    description:
+      'Plastyczność uzasadniona kosztem obliczeniowym: testuje Hybrid MoE (progresywne dodawanie ekspertów LTC/SSM/ACT z rollbackiem ROI) oraz 5-gatunkowe wyspy koewolucyjne na Easy/Medium/Hard/Insane.',
+  },
+  MORPHOGENESIS_FRONTIER: {
+    title: 'Morfogeneza A/B Frontier',
+    subtitle: 'Statyczne vs Rosnące · 12 Sensorów · 4 Poziomy · 220g',
+    description:
+      'Kontrolowany test A/B sieci statycznych vs samorosnących (ekspansja Zero-Init, adaptacyjne K: 1→3, progresywne odblokowywanie 12 sensorów, mielinizacja i przycinanie synaps) na Easy–Insane.',
+  },
+  SENSOR_DISCOVERY_12: {
+    title: 'Odkrywanie 12 Sensorów',
+    subtitle: 'Bot-First · Dual-Pipe · Pula 12 · Meta-Analiza',
+    description:
+      'Systematyczna ablacja sensorów na 4 zweryfikowanych poziomach (Easy → Insane) porównująca zestawy od pojedynczego Bot po pełną pulę 12 sensorów z analizą wrażliwości i przycinania.',
+  },
+  COLAB_MEGA_FRONTIER: {
+    title: 'Colab GPU Mega-Frontier',
+    subtitle: '~4.5k Skalibrowane · 4 Poziomy · 12 Sensorów · T4/A100',
+    description:
+      'Skalibrowana macierz badawcza dla Google Colab CUDA: 4 poziomy (Easy–Insane) × 4 czołowe optymalizatory × 7 architektur × 5 kompaktowych topologii × FP32/INT4 × test A/B morfogenezy.',
+  },
+  REASONING_TTC_LAB: {
+    title: 'Rozumowanie LLM & TTC Lab',
+    subtitle: 'Looped · Ponder ACT · MinGRU · Rollout',
+    description:
+      'Pojedynek 4 architektur rekurencyjnego rozumowania (Looped Latent CoT, Ponder ACT S1/S2, Selective SSM/MinGRU, Latent Rollout) przeciwko MLP i Res-Skip na Medium/Hard/Insane.',
+  },
+  LOOKAHEAD_FRONTIER: {
+    title: 'Wyprzedzenie Dwóch Rur (Lookahead)',
+    subtitle: 'Rura #1 vs Dual-Bot vs Pełne 12 · 4 Poziomy · 120g',
+    description:
+      'Test A/B zestawu bazowego Rury #1 przeciwko Dual-Pipe Bot (P1+P2 DX·Bot) i pełnym 12 sensorom na Easy, Medium, Hard i Insane.',
+  },
+  INSANE_BREAKER: {
+    title: 'Łamacz Hard & Insane',
+    subtitle: 'Top-4 · Dual-Pipe · 8·4/6·4 · 120g',
+    description:
+      'Celowany sweep do pokonania Hard i Insane: Top-4 optymalizatory, sensory Dual-Pipe i 12-in, szersze sieci D1–D2 (w tym 8·4), Skip/NeuroChem/STP, FP32+INT4.',
+  },
+  FULL_4_FRONTIER: {
+    title: 'Wszystkie 4 Poziomy Trudności',
+    subtitle: 'Easy · Medium · Hard · Insane · ≤140p',
+    description:
+      'Pełna mapa 4 zweryfikowanych poziomów trudności (Easy → Insane) z Top-4 optymalizatorami i ablacją sensorów Bot / Dual-Bot / Pełne 12.',
+  },
+  INT4_BIO_CHAMPION: {
+    title: 'Klif Kwantyzacji INT4 Bio',
+    subtitle: 'Skip/Chem/STP · 32b→1b · 4 Poziomy',
+    description:
+      'Bada klif kwantyzacji INT4 / 1.58b / 1b dla czołowych bio-architektur na 4 zweryfikowanych poziomach trudności.',
+  },
+  ULTRA_10K_PROOF: {
+    title: 'Certyfikacja 10k Rur',
+    subtitle: '10k×5s · GA/DE/PSO · Skip/Chem',
+    description:
+      'Wytrzymałościowy audyt 10 000 rur × 5 ziaren na czołowych optymalizatorach i architekturach przez wszystkie 4 poziomy.',
+  },
+  APP_INTEGRITY_MATRIX: {
+    title: 'Pełny Auto-Test Aplikacji',
+    subtitle: '4 Poziomy · 5 Arch. · 4 Precyzje · 6 Algorytmów',
+    description:
+      'Szybka macierz walidacyjna sprawdzająca 4 poziomy fizyki, 5 architektur, 4 precyzje bitowe, 6 optymalizatorów i brak błędów NaN/audytu (~15–30s).',
+  },
+  STRESS_LIGHT_CPU_GPU: {
+    title: 'Obciążenie: Lekkie MLP/Audyt',
+    subtitle: 'Wysoki IPC & Audyt · 1/4-in · 1k',
+    description:
+      'Test wydajności szybkich prób i równoległego audytu f64 (1000 rur × 5 ziaren) do pomiaru narzutu IPC i opóźnień pętli zdarzeń.',
+  },
+  STRESS_HEAVY_BIO: {
+    title: 'Obciążenie: Ciężkie Bio Termiczne',
+    subtitle: 'Gęste 8·4/6·4 Bio · Pop 300 · Test Ciepła',
+    description:
+      'Długotrwałe wysokie obciążenie FLOPs (głębokie sieci stanowe Bio + Pop 300 na Hard/Insane) do badania throttlingu termicznego i krzywej Perf/Watt.',
+  },
+  BIO_BITS_50P: {
+    title: 'Bio + Bity (≤80p)',
+    subtitle: 'Fly-LTC · NeuroChem · 4b/1.58b',
+    description:
+      'Kompaktowe porównanie ≤80 parametrów: MLP vs Fly-LTC vs NeuroChem dla FP32, INT4 i 1.58b.',
+  },
+  HIDDEN_STATE_LAB: {
+    title: 'Lab Brakujących Sensorów',
+    subtitle: '5 Bio-Neuronów · Estymacja Vy/PVy/P2',
+    description:
+      'Sprawdza, czy stanowe bio-neurony potrafią same wydedukować brakującą prędkość ptaka Vy, ruch rury PVy i geometrię rury #2.',
+  },
+  BIO_ZOO_50P: {
+    title: 'Sweep Bitowy (32b→1b)',
+    subtitle: '6 Precyzji · Rury/Bit · ≤60p',
+    description:
+      'Pełny przegląd 6 poziomów kwantyzacji wag (FP32 → 1-bit) na kompaktowych topologiach ≤60 parametrów.',
+  },
+  PIPE_VY_FRONTIER: {
+    title: 'Lab Ruchomych Rur & TTF',
+    subtitle: 'Medium · Hard · Insane · PVy/N2PVy/TTF',
+    description:
+      'Bezpośrednio bada wpływ sensorów prędkości pionowej Rury #1/#2 oraz czasu dolotu TTF skorygowanego o wiatr.',
+  },
+};
+
 export function getPresetById(id: PresetId): PresetDefinition {
   return RESEARCH_PRESETS.find((p) => p.id === id) ?? RESEARCH_PRESETS[0];
+}
+
+export function getLocalizedPreset(
+  preset: PresetDefinition,
+  lang: AppLanguage
+) {
+  const entry = getPresetText(lang, preset.id);
+  if (entry) return entry;
+  return {
+    title: preset.title,
+    subtitle: preset.subtitle,
+    description: preset.description,
+  };
 }
 
 /**

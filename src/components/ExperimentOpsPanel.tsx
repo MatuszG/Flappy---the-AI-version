@@ -86,7 +86,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
     onDeleteHistoryItem,
     onClearHistory,
   }: ExperimentHistoryAndQueuePanelProps) {
-    const { bi } = useLanguage();
+    const { t } = useLanguage();
     const hardwareCores = useMemo(() => getHardwareCores(), []);
     const [activeTab, setActiveTab] = useState<'HISTORY' | 'QUEUE'>('HISTORY');
     const [customRunName, setCustomRunName] = useState('');
@@ -120,7 +120,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
       copyMarkdown(
         md,
         `neurolab-run-${rec.id}.md`,
-        bi(`Skopiowano "${rec.name}"`, `Copied "${rec.name}"`)
+        t('research.copied', { name: rec.name })
       );
       const nowIso = new Date().toISOString();
       onMarkReviewed([rec.id], {
@@ -136,10 +136,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
       copyMarkdown(
         md,
         `neurolab-history-${Date.now()}.md`,
-        bi(
-          `Skopiowano raport (${history.length})`,
-          `Copied report (${history.length})`
-        )
+        t('research.copiedReport', { history: history.length })
       );
     };
 
@@ -158,7 +155,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
               }`}
             >
               <History className="h-3.5 w-3.5 text-cyan-300" aria-hidden="true" />
-              {bi('Historia', 'History')} ({history.length})
+              {t('research.history')} ({history.length})
             </button>
             <button
               type="button"
@@ -170,7 +167,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
               }`}
             >
               <Layers className="h-3.5 w-3.5 text-amber-300" aria-hidden="true" />
-              {bi('Kolejka', 'Queue')} ({pendingQueueCount})
+              {t('research.queue')} ({pendingQueueCount})
               {queueActive && (
                 <span className="font-mono text-[10px] text-emerald-300">
                   · ON
@@ -194,7 +191,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
                   className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-1.5 text-[11px] font-medium text-cyan-200 cursor-pointer hover:bg-cyan-500/20"
                 >
                   <Download className="h-3.5 w-3.5" aria-hidden="true" />
-                  {bi('Kopiuj raport MD', 'Copy MD Report')}
+                  {t('research.copyMdReport')}
                 </button>
                 <button
                   type="button"
@@ -202,7 +199,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
                   className="inline-flex items-center gap-1 rounded-lg border border-slate-800 bg-[#0B1120] px-2.5 py-1.5 text-[11px] text-slate-400 cursor-pointer hover:text-rose-300"
                 >
                   <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                  {bi('Wyczyść', 'Clear')}
+                  {t('research.clear')}
                 </button>
               </>
             )}
@@ -214,10 +211,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
           <div className="space-y-2">
             {history.length === 0 ? (
               <div className="rounded-lg border border-dashed border-slate-800 bg-[#0B1120]/60 p-6 text-center text-xs text-slate-400">
-                {bi(
-                  'Brak zapisanych uruchomień. Po ukończeniu lub zatrzymaniu serii wyniki i konfiguracja pojawią się tutaj automatycznie.',
-                  'No archived runs yet. Finished or stopped sweeps will appear here automatically with their exact configuration and report.'
-                )}
+                {t('research.noArchivedRunsYetFinished')}
               </div>
             ) : (
               <div className="space-y-2 max-h-[56vh] overflow-y-auto pr-1">
@@ -254,8 +248,8 @@ export const ExperimentHistoryAndQueuePanel = memo(
                             }`}
                           >
                             {rec.status === 'COMPLETED'
-                              ? bi('UKOŃCZONO', 'COMPLETED')
-                              : bi('ZATRZYMANO', 'STOPPED')}
+                              ? t('research.completed')
+                              : t('research.stopped')}
                           </span>
                           <span className="font-mono text-[10px] text-slate-500">
                             {finishedDate}
@@ -267,7 +261,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
                             <strong className="text-slate-200">
                               {rec.summary.totalTrials}/{plannedTrials}
                             </strong>{' '}
-                            {bi('prób', 'trials')}
+                            {t('research.trials')}
                           </span>
                           <span className="text-emerald-300">
                             {rec.summary.verifiedPerfect} perfect
@@ -288,19 +282,16 @@ export const ExperimentHistoryAndQueuePanel = memo(
                           onClick={() =>
                             onLoadConfigFromHistory(rec.config, rec.name)
                           }
-                          title={bi(
-                            'Wczytaj konfigurację tego uruchomienia',
-                            'Load this run configuration'
-                          )}
+                          title={t('research.loadThisRunConfiguration')}
                           className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-[11px] text-slate-200 cursor-pointer hover:border-cyan-500/50 hover:text-cyan-200"
                         >
                           <RotateCcw className="h-3 w-3" aria-hidden="true" />
-                          {bi('Wczytaj', 'Load')}
+                          {t('research.load')}
                         </button>
                         <button
                           type="button"
                           onClick={() => onRequeueFromHistory(rec)}
-                          title={bi('Dodaj do kolejki', 'Add to queue')}
+                          title={t('research.addToQueue')}
                           className="inline-flex items-center gap-1 rounded-md border border-slate-800 bg-slate-950 px-2 py-1.5 text-[11px] text-slate-300 cursor-pointer hover:border-amber-500/40 hover:text-amber-200"
                         >
                           <Plus className="h-3 w-3" aria-hidden="true" />Q
@@ -308,7 +299,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
                         <button
                           type="button"
                           onClick={() => handleCopySingleRun(rec)}
-                          title={bi('Kopiuj raport Markdown', 'Copy Markdown report')}
+                          title={t('research.copyMarkdownReport')}
                           className="inline-flex items-center gap-1 rounded-md border border-slate-800 bg-slate-950 px-2 py-1.5 text-[11px] text-slate-300 cursor-pointer hover:border-emerald-500/40 hover:text-emerald-200"
                         >
                           <Copy className="h-3 w-3" aria-hidden="true" />
@@ -317,7 +308,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
                         <button
                           type="button"
                           onClick={() => onDeleteHistoryItem(rec.id)}
-                          aria-label={bi('Usuń z historii', 'Delete run')}
+                          aria-label={t('research.deleteRun')}
                           className="rounded-md border border-slate-800 bg-slate-950 p-1.5 text-slate-500 cursor-pointer hover:text-rose-300"
                         >
                           <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
@@ -339,10 +330,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
                 type="text"
                 value={customRunName}
                 onChange={(e) => setCustomRunName(e.target.value)}
-                placeholder={bi(
-                  'Opcjonalna nazwa zadania (np. Hard 8x4 WebGPU)...',
-                  'Optional job label (e.g. Hard 8x4 WebGPU)...'
-                )}
+                placeholder={t('research.optionalJobLabelEG')}
                 className="flex-1 min-w-[200px] rounded-lg border border-slate-700 bg-[#0B1120] px-3 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
               />
               <button
@@ -354,7 +342,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
                 className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/50 bg-cyan-500/15 px-3 py-1.5 text-xs font-medium text-cyan-100 whitespace-nowrap cursor-pointer hover:bg-cyan-500/25"
               >
                 <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                {bi('Dodaj bieżący', 'Add Current')} (
+                {t('research.addCurrent')} (
                 {countPlannedTrials(sweepConfig).toLocaleString()})
               </button>
 
@@ -366,7 +354,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
                   className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-slate-950 cursor-pointer hover:bg-emerald-400 disabled:opacity-40"
                 >
                   <Play className="h-3.5 w-3.5" aria-hidden="true" />
-                  {bi('Uruchom kolejkę', 'Run Queue')} ({pendingQueueCount})
+                  {t('research.runQueue')} ({pendingQueueCount})
                 </button>
               ) : (
                 <button
@@ -375,7 +363,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
                   className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/50 bg-rose-500/15 px-3 py-1.5 text-xs font-semibold text-rose-200 cursor-pointer hover:bg-rose-500/25"
                 >
                   <Square className="h-3 w-3" aria-hidden="true" />
-                  {bi('Zatrzymaj kolejkę', 'Stop Queue')}
+                  {t('research.stopQueue')}
                 </button>
               )}
 
@@ -387,7 +375,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
                   className="inline-flex items-center gap-1 rounded-lg border border-slate-800 bg-[#0B1120] px-2.5 py-1.5 text-[11px] text-slate-400 cursor-pointer hover:text-rose-300 disabled:opacity-40"
                 >
                   <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                  {bi('Wyczyść', 'Clear')}
+                  {t('research.clear')}
                 </button>
               )}
             </div>
@@ -395,21 +383,18 @@ export const ExperimentHistoryAndQueuePanel = memo(
             {queueActive && isBusy && (
               <div className="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 font-mono text-xs text-cyan-100 flex items-center justify-between gap-2">
                 <span className="truncate">
-                  {bi('Aktywne zadanie:', 'Active job:')}{' '}
+                  {t('research.activeJob')}{' '}
                   <strong>{activeRunLabel}</strong>
                 </span>
                 <span className="text-cyan-300 shrink-0 tabular-nums">
-                  {pendingQueueCount} {bi('w kolejce', 'pending')}
+                  {pendingQueueCount} {t('research.pending')}
                 </span>
               </div>
             )}
 
             {queue.length === 0 ? (
               <div className="rounded-lg border border-dashed border-slate-800 bg-[#0B1120]/60 p-6 text-center text-xs text-slate-400">
-                {bi(
-                  'Kolejka jest pusta. Dodaj bieżącą konfigurację lub użyj przycisku +Q przy presetach badawczych.',
-                  'Queue is empty. Add your current protocol above or click +Q on any research preset.'
-                )}
+                {t('research.queueIsEmptyAddYour')}
               </div>
             ) : (
               <div className="space-y-1.5 max-h-[50vh] overflow-y-auto pr-1">
@@ -449,10 +434,16 @@ export const ExperimentHistoryAndQueuePanel = memo(
                                     : 'text-slate-400'
                             }`}
                           >
-                            {item.status}
+                            {item.status === 'RUNNING'
+                              ? t('research.running')
+                              : item.status === 'COMPLETED'
+                                ? t('research.completed')
+                                : item.status === 'STOPPED'
+                                  ? t('research.stopped')
+                                  : t('research.pending2')}
                           </span>
                           <span className="font-mono text-[10px] text-slate-400 tabular-nums">
-                            {planned.toLocaleString()} {bi('prób', 'trials')} ·{' '}
+                            {planned.toLocaleString()} {t('research.trials')} ·{' '}
                             {item.config.computeBackend ?? 'AUTO'} ·{' '}
                             {pPlan.priority}%
                           </span>
@@ -468,7 +459,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
                           disabled={idx === 0 || item.status === 'RUNNING'}
                           onClick={() => onMoveQueueItem(item.id, -1)}
                           className="rounded border border-slate-800 bg-slate-900 p-1 text-slate-400 hover:text-white disabled:opacity-30 cursor-pointer"
-                          aria-label={bi('Przesuń wyżej', 'Move up')}
+                          aria-label={t('research.moveUp')}
                         >
                           <ArrowUp className="h-3.5 w-3.5" />
                         </button>
@@ -479,7 +470,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
                           }
                           onClick={() => onMoveQueueItem(item.id, 1)}
                           className="rounded border border-slate-800 bg-slate-900 p-1 text-slate-400 hover:text-white disabled:opacity-30 cursor-pointer"
-                          aria-label={bi('Przesuń niżej', 'Move down')}
+                          aria-label={t('research.moveDown')}
                         >
                           <ArrowDown className="h-3.5 w-3.5" />
                         </button>
@@ -488,7 +479,7 @@ export const ExperimentHistoryAndQueuePanel = memo(
                           disabled={item.status === 'RUNNING'}
                           onClick={() => onRemoveQueueItem(item.id)}
                           className="rounded border border-slate-800 bg-slate-900 p-1 text-slate-400 hover:text-rose-300 disabled:opacity-30 cursor-pointer"
-                          aria-label={bi('Usuń z kolejki', 'Remove from queue')}
+                          aria-label={t('research.removeFromQueue')}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>

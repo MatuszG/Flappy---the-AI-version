@@ -194,7 +194,7 @@ async function run() {
     }
 
     // Language toggle check
-    const langBtnSelector = 'header button[title*="English"], header button[title*="polski"]';
+    const langBtnSelector = 'header button[title*="English"], header button[title*="polski"], header button[title*="Polish"]';
     const textBefore = (await page.locator(langBtnSelector).first().innerText()).trim();
     await page.locator(langBtnSelector).first().click({ force: true });
     await page.waitForTimeout(200);

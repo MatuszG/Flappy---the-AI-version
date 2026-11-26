@@ -24,6 +24,7 @@ import type {
   ResearchProgress,
   ResearchSweepConfig,
 } from '../../engine/types';
+import labHeroBannerImg from '../../assets/images/lab_hero_banner_1795032938322.jpg';
 import { useLanguage } from '../../i18n/LanguageContext';
 
 interface ResearchHeaderAndProgressProps {
@@ -80,7 +81,7 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
   githubLakeMeta,
   onGetPerfReport,
 }: ResearchHeaderAndProgressProps) {
-  const { bi } = useLanguage();
+  const { t } = useLanguage();
   const [bannerError, setBannerError] = useState(false);
   const [copiedPerfLog, setCopiedPerfLog] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
@@ -106,8 +107,8 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
       <div className="relative min-h-[124px] flex flex-col justify-center px-5 py-4 md:px-6 md:py-5">
         {!bannerError ? (
           <img
-            src="./src/assets/images/lab_hero_banner_1795032938322.jpg"
-            alt="Geometric cyan bird navigating emerald gates with neural network filaments"
+            src={labHeroBannerImg}
+            alt={t('research.geometricCyanBirdNavigatingEmerald')}
             referrerPolicy="no-referrer"
             onError={() => setBannerError(true)}
             className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45"
@@ -120,11 +121,11 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
         <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
           <div className="max-w-2xl">
             <h1 className="font-display text-xl font-bold tracking-tight text-white md:text-2xl text-balance">
-              NeuroLab · Ablation &amp; Evolution Bench
+              {t('research.neurolabAblationEvolutionBench')}
             </h1>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] tabular-nums text-slate-400">
               <span>
-                {resultsCount.toLocaleString()} {bi('w cache', 'cached')}
+                {resultsCount.toLocaleString()} {t('research.cached')}
               </span>
               {sweepConfig.curriculumLearning && (
                 <>
@@ -141,14 +142,16 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
               {sweepConfig.evolutionTopologyMode === 'ISLAND_SPECIATION' && (
                 <>
                   <span className="text-slate-600">·</span>
-                  <span className="text-amber-300">12-Arch Islands (CPU)</span>
+                  <span className="text-amber-300">
+                    {t('research.k12ArchIslandsCpu')}
+                  </span>
                 </>
               )}
               {autosavedAt && (
                 <>
                   <span className="text-slate-600">·</span>
                   <span>
-                    {bi('Zapis', 'Saved')}{' '}
+                    {t('research.saved')}{' '}
                     {new Date(autosavedAt).toLocaleTimeString()}
                   </span>
                 </>
@@ -157,7 +160,7 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                 <>
                   <span className="text-slate-600">·</span>
                   <span className="text-cyan-300">
-                    {unsavedCount} {bi('niezapis.', 'unsaved')}
+                    {unsavedCount} {t('research.unsaved')}
                   </span>
                   <button
                     type="button"
@@ -165,7 +168,7 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                     className="inline-flex items-center gap-1 rounded border border-cyan-500/40 bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-medium text-cyan-200 cursor-pointer hover:bg-cyan-500/20"
                   >
                     <Save className="h-2.5 w-2.5" aria-hidden="true" />
-                    {bi('Zapisz', 'Save')}
+                    {t('research.save')}
                   </button>
                 </>
               )}
@@ -173,10 +176,7 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                 <>
                   <span className="text-slate-600">·</span>
                   <span className="text-amber-300">
-                    {bi(
-                      `Wznowiono (${remainingTrialsCount} pozostało)`,
-                      `Resumed (${remainingTrialsCount} left)`
-                    )}
+                    {t('research.resumedLeft', { remainingTrialsCou: remainingTrialsCount })}
                   </span>
                 </>
               )}
@@ -196,19 +196,16 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                       className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-xs font-semibold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-emerald-400"
                     >
                       <Play className="h-3.5 w-3.5" aria-hidden="true" />
-                      {bi('Kontynuuj', 'Continue')} ({remainingTrialsCount.toLocaleString()})
+                      {t('research.continue')} ({remainingTrialsCount.toLocaleString()})
                     </button>
                     <button
                       type="button"
                       onClick={onStartSweep}
-                      title={bi(
-                        'Odrzuć cache i uruchom cały protokół od nowa',
-                        'Discard cache and restart the entire protocol'
-                      )}
+                      title={t('research.discardCacheAndRestartThe')}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/90 px-3 py-2 text-xs font-medium text-slate-200 whitespace-nowrap cursor-pointer transition-colors hover:border-cyan-500/50 hover:text-cyan-200"
                     >
                       <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-                      {bi('Od nowa', 'Restart')} ({totalPlannedTrials.toLocaleString()})
+                      {t('research.restart')} ({totalPlannedTrials.toLocaleString()})
                     </button>
                   </>
                 ) : (
@@ -218,7 +215,7 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                     className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-xs font-semibold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-emerald-400"
                   >
                     <FlaskConical className="h-4 w-4" aria-hidden="true" />
-                    {bi('Uruchom', 'Run')} ({totalPlannedTrials.toLocaleString()} {bi('prób', 'trials')})
+                    {t('research.run')} ({totalPlannedTrials.toLocaleString()} {t('research.trials')})
                   </button>
                 )}
                 {onExportColab && (
@@ -226,10 +223,7 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                     type="button"
                     disabled={totalPlannedTrials === 0}
                     onClick={onExportColab}
-                    title={bi(
-                      'Eksportuj protokół jako notebook Google Colab CUDA C++ (.ipynb)',
-                      'Export protocol as Google Colab CUDA C++ notebook (.ipynb)'
-                    )}
+                    title={t('research.exportProtocolAsGoogleColab')}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-200 whitespace-nowrap cursor-pointer transition-colors hover:bg-cyan-500/20 disabled:opacity-40"
                   >
                     <Download className="h-3.5 w-3.5" aria-hidden="true" />
@@ -254,10 +248,7 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                     <button
                       type="button"
                       onClick={() => importInputRef.current?.click()}
-                      title={bi(
-                        'Wczytaj / połącz wyniki JSON lub JSONL z Colaba, GitHuba lub kopii zapasowej',
-                        'Import / merge JSON or JSONL dataset from Colab, GitHub, or backup'
-                      )}
+                      title={t('research.importMergeJsonOrJsonl')}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/90 px-3 py-2 text-xs font-medium text-slate-200 whitespace-nowrap cursor-pointer transition-colors hover:border-cyan-500/50 hover:text-cyan-200"
                     >
                       <Upload className="h-3.5 w-3.5" aria-hidden="true" />
@@ -269,10 +260,7 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                   <button
                     type="button"
                     onClick={onLoadGithubLake}
-                    title={bi(
-                      `Wczytaj zbiorcze archiwum GitHub Research Data Lake (${githubLakeMeta.runCount} biegów · ${githubLakeMeta.totalTrials} prób · ${githubLakeMeta.totalPerfect} perfect)`,
-                      `Load aggregated GitHub Research Data Lake (${githubLakeMeta.runCount} runs · ${githubLakeMeta.totalTrials} trials · ${githubLakeMeta.totalPerfect} perfect)`
-                    )}
+                    title={t('research.loadAggregatedGithubResearchData', { runCount: githubLakeMeta.runCount, totalTrials: githubLakeMeta.totalTrials, totalPerfect: githubLakeMeta.totalPerfect })}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200 whitespace-nowrap cursor-pointer transition-colors hover:bg-emerald-500/20"
                   >
                     <Download className="h-3.5 w-3.5" aria-hidden="true" />
@@ -290,26 +278,23 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                   {isRunning ? (
                     <>
                       <Pause className="h-3.5 w-3.5" aria-hidden="true" />
-                      {bi('Pauza', 'Pause Sweep')}
+                      {t('research.pauseSweep')}
                     </>
                   ) : (
                     <>
                       <Play className="h-3.5 w-3.5" aria-hidden="true" />
-                      {bi('Wznów', 'Resume Sweep')}
+                      {t('research.resumeSweep')}
                     </>
                   )}
                 </button>
                 <button
                   type="button"
                   onClick={onSkipTrial}
-                  title={bi(
-                    'Zakończ i pomiń najwolniejszą aktywną próbę',
-                    'Finalize & skip the slowest active trial'
-                  )}
+                  title={t('research.finalizeSkipTheSlowestActive')}
                   className="inline-flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3.5 py-2.5 text-xs font-medium text-amber-200 whitespace-nowrap cursor-pointer transition-colors hover:bg-amber-500/20"
                 >
                   <FastForward className="h-3.5 w-3.5" aria-hidden="true" />
-                  {bi('Pomiń najwolniejszą', 'Skip Slow')}
+                  {t('research.skipSlow')}
                 </button>
                 <button
                   type="button"
@@ -338,23 +323,25 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
             <div className="text-slate-300">
               {progress.status === 'COMPLETED' ? (
                 <span className="font-semibold text-emerald-300">
-                  {bi('Badanie zakończone', 'Sweep Complete')} · {resultsCount}{' '}
-                  {bi('prób', 'trials')} · {totalPerfect}{' '}
-                  {bi('perfekcyjnych', 'verified perfect')} · {progress.workerCount}{' '}
-                  worker{progress.workerCount === 1 ? '' : 's'}
+                  {t('research.sweepComplete')} · {resultsCount}{' '}
+                  {t('research.trials')} · {totalPerfect}{' '}
+                  {t('research.verifiedPerfect')} · {progress.workerCount}{' '}
+                  {progress.workerCount === 1
+                    ? t('research.workerSingular')
+                    : t('research.workerPlural')}
                 </span>
               ) : (
                 <>
                   {isPaused && (
                     <>
                       <span className="rounded border border-amber-500/45 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-200 whitespace-nowrap">
-                        {bi('PAUZA', 'PAUSED')}
+                        {t('research.paused')}
                       </span>
                       <span className="mx-2 text-slate-600">·</span>
                     </>
                   )}
                   <span className="font-semibold text-white">
-                    {bi('Ukończono', 'Completed')} {progress.completedTrials}/{progress.totalTrials}
+                    {t('research.completed2')} {progress.completedTrials}/{progress.totalTrials}
                   </span>
                   {progress.workerCount > 0 && (
                     <>
@@ -362,8 +349,12 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                       <span className="text-cyan-300">
                         {progress.workerCount} CPU
                         {(progress.auditWorkerCount ?? 0) > 0
-                          ? ` + ${progress.auditWorkerCount} audit`
-                          : ` worker${progress.workerCount === 1 ? '' : 's'}`}
+                          ? ` + ${progress.auditWorkerCount} ${t('research.auditShort')}`
+                          : ` ${
+                              progress.workerCount === 1
+                                ? t('research.workerSingular')
+                                : t('research.workerPlural')
+                            }`}
                       </span>
                     </>
                   )}
@@ -377,8 +368,8 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                           ? 'WebGL2 GPU'
                           : 'WebGPU'}
                         {(progress.gpuActiveTrials ?? 0) > 0
-                          ? ` (${progress.gpuActiveTrials} ${bi('prób', 'trials')}`
-                          : ` (${bi('inicjalizacja', 'booting')}`}
+                          ? ` (${progress.gpuActiveTrials} ${t('research.trials')}`
+                          : ` (${t('research.booting')}`}
                         {(progress.gpuTicksPerSec ?? 0) > 0
                           ? ` · ${((progress.gpuTicksPerSec ?? 0) / 1e6).toFixed(1)}M t/s)`
                           : ')'}
@@ -397,8 +388,10 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                     <>
                       <span className="mx-2 text-slate-600">·</span>
                       <span className="text-amber-300">
-                        {progress.activeAuditSeeds} parallel audit seed
-                        {progress.activeAuditSeeds === 1 ? '' : 's'}
+                        {progress.activeAuditSeeds}{' '}
+                        {progress.activeAuditSeeds === 1
+                          ? t('research.auditSeedSingular')
+                          : t('research.auditSeedPlural')}
                       </span>
                     </>
                   )}
@@ -406,17 +399,17 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                     <>
                       <span className="mx-2 text-slate-600">·</span>
                       <span>
-                        {bi('Kolejka', 'Queue')}: {progress.queueRemaining}{' '}
-                        {bi('pozostało', 'left')}
+                        {t('research.queue')}: {progress.queueRemaining}{' '}
+                        {t('research.left')}
                       </span>
                     </>
                   )}
                   <span className="mx-2 text-slate-600">·</span>
                   <span>
-                    Cap{' '}
+                    {t('research.cap')}{' '}
                     {sweepConfig.maxGenerations === null
-                      ? bi('∞ Bez limitu', '∞ Unlimited gens')
-                      : `${sweepConfig.maxGenerations} gens`}
+                      ? t('research.unlimitedGens')
+                      : `${sweepConfig.maxGenerations} ${t('research.gensShort')}`}
                   </span>
                 </>
               )}
@@ -424,7 +417,7 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
 
             <div className="flex items-center gap-3 text-slate-400">
               <span>
-                {bi('Czas aktywny', 'Active')}{' '}
+                {t('research.active')}{' '}
                 {(progress.elapsedMs / 1000).toFixed(1)}s · {pctComplete}%
                 {isBusy &&
                   progress.totalTrials > progress.completedTrials &&
@@ -456,14 +449,14 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                           ? `${Math.floor(remSec / 60)}m ${remSec % 60}s`
                           : `${remSec}s`;
                     return isPaused
-                      ? ` · ${rate.toFixed(1)} t/s · ~${etaStr} (${bi('wstrzymano', 'paused')})`
-                      : ` · ${rate.toFixed(1)} t/s · ~${etaStr} ${bi('do końca', 'left')}`;
+                      ? ` · ${rate.toFixed(1)} t/s · ~${etaStr} (${t('research.pausedShort')})`
+                      : ` · ${rate.toFixed(1)} t/s · ~${etaStr} ${t('research.etaLeft')}`;
                   })()}
               </span>
               {onGetPerfReport && (
                 <button
                   type="button"
-                  title="Copy temporary worker & main-thread bottleneck trace (also logged every 5s in DevTools Console)"
+                  title={t('research.copyTemporaryWorkerMainThread')}
                   onClick={() => {
                     const md = onGetPerfReport();
                     if (!md) return;
@@ -487,12 +480,12 @@ export const ResearchHeaderAndProgress = memo(function ResearchHeaderAndProgress
                         className="h-3 w-3 text-emerald-400"
                         aria-hidden="true"
                       />
-                      Copied Trace
+                      {t('research.copiedTrace')}
                     </>
                   ) : (
                     <>
                       <Copy className="h-3 w-3" aria-hidden="true" />
-                      Copy Perf Log
+                      {t('research.copyPerfLog')}
                     </>
                   )}
                 </button>

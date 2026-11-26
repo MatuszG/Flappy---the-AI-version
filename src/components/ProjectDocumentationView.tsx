@@ -30,9 +30,16 @@ import {
   DIFFICULTY_SETTINGS,
   verifyScenarioSolvability,
 } from '../engine/physics';
+import { RESEARCH_PRESETS } from '../engine/experimentPresets';
 import { ALL_SENSOR_FEATURES, SENSOR_METADATA } from '../engine/sensors';
 import type { CoreDifficultyPreset, LearningAlgorithm } from '../engine/types';
 import { useLanguage } from '../i18n/LanguageContext';
+import {
+  getArchText,
+  getDifficultyText,
+  getOptimizerText,
+  getPrecisionText,
+} from '../i18n/catalog';
 
 type DocSection =
   | 'OVERVIEW'
@@ -46,7 +53,7 @@ const OPTIMIZER_PROFILE: Record<
   { speedPct: number; explorePct: number; usesMutRate: boolean }
 > = {
   CMA_HYBRID: { speedPct: 96, explorePct: 78, usesMutRate: false },
-  DE: { speedPct: 86, explorePct: 94, usesMutRate: false },
+  DE: { speedPct: 86, explorePct: 94, usesMutRate: true },
   GA: { speedPct: 74, explorePct: 85, usesMutRate: true },
   ADAPTIVE_ES: { speedPct: 82, explorePct: 68, usesMutRate: true },
   NATURAL_ES: { speedPct: 78, explorePct: 72, usesMutRate: false },
@@ -56,7 +63,7 @@ const OPTIMIZER_PROFILE: Record<
 };
 
 export const ProjectDocumentationView: React.FC = () => {
-  const { bi } = useLanguage();
+  const { lang, t } = useLanguage();
   const [activeSection, setActiveSection] = useState<DocSection>('OVERVIEW');
 
   const scenarioProofRows = useMemo(() => {
@@ -70,7 +77,7 @@ export const ProjectDocumentationView: React.FC = () => {
       (diff) => ({
         id: diff,
         title: DIFFICULTY_META[diff].shortLabel,
-        subtitle: DIFFICULTY_META[diff].description,
+        subtitle: getDifficultyText(lang, diff).description,
         env: DIFFICULTY_SETTINGS[diff],
       })
     );
@@ -79,21 +86,21 @@ export const ProjectDocumentationView: React.FC = () => {
       {
         id: 'EXTRA_INSANE_115',
         title: 'Extra Insane (115%)',
-        subtitle: bi('Próg strefy ujemnej', 'Enters negative slack zone'),
+        subtitle: t('docs.entersNegativeSlackZone'),
         env: buildOverdriveEnvironment(115),
         isOverdrive: true,
       },
       {
         id: 'EXTRA_INSANE_120',
         title: 'Extra Insane (120%)',
-        subtitle: bi('Wymaga predykcji fazy rur', 'Forces phase lookahead'),
+        subtitle: t('docs.forcesPhaseLookahead'),
         env: buildOverdriveEnvironment(120),
         isOverdrive: true,
       },
       {
         id: 'EXTRA_INSANE_135',
         title: 'Extra Insane (135%)',
-        subtitle: bi('Ekstremalny test stresu', 'Extreme connectome stress'),
+        subtitle: t('docs.extremeConnectomeStress'),
         env: buildOverdriveEnvironment(135),
         isOverdrive: true,
       }
@@ -103,7 +110,7 @@ export const ProjectDocumentationView: React.FC = () => {
       ...item,
       proof: verifyScenarioSolvability(item.env),
     }));
-  }, [bi]);
+  }, [lang, t]);
 
   const navTabs: {
     id: DocSection;
@@ -116,7 +123,7 @@ export const ProjectDocumentationView: React.FC = () => {
     {
       id: 'OVERVIEW',
       index: '01',
-      label: bi('Mapa Systemu', 'System Map'),
+      label: t('docs.systemMap'),
       icon: Compass,
       activeText: 'text-amber-300',
       activeBar: 'bg-amber-400',
@@ -124,7 +131,7 @@ export const ProjectDocumentationView: React.FC = () => {
     {
       id: 'VIEWS_CONTROLS',
       index: '02',
-      label: bi('Widoki i Sensory', 'Views & Sensors'),
+      label: t('docs.viewsSensors'),
       icon: Sliders,
       activeText: 'text-cyan-300',
       activeBar: 'bg-cyan-400',
@@ -132,7 +139,7 @@ export const ProjectDocumentationView: React.FC = () => {
     {
       id: 'ARCHITECTURES_MOE',
       index: '03',
-      label: bi('12 Architektur & MoE', '12 Archs & MoE'),
+      label: t('docs.k12ArchsMoe'),
       icon: Layers,
       activeText: 'text-purple-300',
       activeBar: 'bg-purple-400',
@@ -140,7 +147,7 @@ export const ProjectDocumentationView: React.FC = () => {
     {
       id: 'OPTIMIZERS_RESEARCH',
       index: '04',
-      label: bi('Algorytmy & Badania', 'Optimizers & Lab'),
+      label: t('docs.optimizersLab'),
       icon: Sparkles,
       activeText: 'text-emerald-300',
       activeBar: 'bg-emerald-400',
@@ -148,7 +155,7 @@ export const ProjectDocumentationView: React.FC = () => {
     {
       id: 'VISION_PROOFS',
       index: '05',
-      label: bi('Fly-Cortex & Dowody', 'Fly-Cortex & Proofs'),
+      label: t('docs.flyCortexProofs'),
       icon: Flame,
       activeText: 'text-rose-300',
       activeBar: 'bg-rose-400',
@@ -164,25 +171,22 @@ export const ProjectDocumentationView: React.FC = () => {
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[11px] tracking-wider text-slate-400">
               <span className="text-emerald-300 font-semibold">Flappy NeuroLab</span>
               <span aria-hidden="true">·</span>
-              <span>{bi('Dokumentacja Wizualna', 'Visual System Blueprint')}</span>
+              <span>{t('docs.visualSystemBlueprint')}</span>
               <span aria-hidden="true">·</span>
               <span>100% Client-Side</span>
             </div>
 
             <h1 className="font-display text-3xl sm:text-5xl lg:text-[3.25rem] font-extrabold tracking-[-0.04em] leading-[0.96] text-white">
-              {bi('System, fizyka ', 'System, physics ')}
+              {t('docs.systemPhysics')}
               <span className="bg-gradient-to-r from-amber-200 via-cyan-300 to-emerald-300 bg-clip-text text-transparent">
-                {bi('i architektury mózgów AI.', '& neural architectures.')}
+                {t('docs.neuralArchitectures')}
               </span>
             </h1>
           </div>
 
           <div className="lg:col-span-4 space-y-2 border-t lg:border-t-0 lg:border-l border-white/[0.08] pt-3 lg:pt-0 lg:pl-6">
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              {bi(
-                'Od ogółu do szczegółu: jedna deterministyczna fizyka 60 Hz łączy grę Arcade, Laboratorium Areny AI oraz masowe eksperymenty WebGPU z audytem Float64.',
-                'End-to-end technical blueprint: one deterministic 60 Hz Euler flight kernel connects Play Arcade, the Live Training Arena, and WebGPU + Float64 research.'
-              )}
+              {t('docs.endToEndTechnicalBlueprint')}
             </p>
             <div className="font-mono text-[11px] text-slate-500">
               Euler 60 Hz · Mulberry32 PRNG · WebGPU WGSL
@@ -194,56 +198,56 @@ export const ProjectDocumentationView: React.FC = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.08] border-y border-white/[0.08] bg-[#0A0C12]/80">
           <div className="px-4 py-3.5 sm:py-4">
             <div className="font-mono text-[10.5px] tracking-wider text-slate-400">
-              01 · {bi('Gra i Ranking', 'Play & Rank')}
+              01 · {t('docs.playRank')}
             </div>
             <div className="mt-1 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-amber-300 tabular-nums">
               Solo + Duel
             </div>
             <div className="mt-0.5 text-[11px] text-slate-400">
-              {bi('Orby, combo ×N, tabela i historia', 'Orbs, ×N combos, leaderboard')}
+              {t('docs.orbsNCombosLeaderboard')}
             </div>
           </div>
 
           <div className="px-4 py-3.5 sm:py-4 border-l border-white/[0.08] sm:border-l-0">
             <div className="font-mono text-[10.5px] tracking-wider text-slate-400">
-              02 · {bi('Architektury', 'Architectures')}
+              02 · {t('docs.architectures')}
             </div>
             <div className="mt-1 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-cyan-300 tabular-nums">
               12
             </div>
             <div className="mt-0.5 text-[11px] text-slate-400">
-              {bi('7 badawczych Tier 1 + 5 Tier 2', '7 Tier-1 research + 5 Tier-2')}
+              {t('docs.k7Tier1Research5')}
             </div>
           </div>
 
           <div className="px-4 py-3.5 sm:py-4">
             <div className="font-mono text-[10.5px] tracking-wider text-slate-400">
-              03 · {bi('Algorytmy', 'Optimizers')}
+              03 · {t('docs.optimizers')}
             </div>
             <div className="mt-1 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-emerald-300 tabular-nums">
               8
             </div>
             <div className="mt-0.5 text-[11px] text-slate-400">
-              {bi('3 główne + 5 strategii ES/Swarm', '3 core + 5 ES/Swarm methods')}
+              {t('docs.k3Core5EsSwarm')}
             </div>
           </div>
 
           <div className="px-4 py-3.5 sm:py-4 border-l border-white/[0.08] sm:border-l-0">
             <div className="font-mono text-[10.5px] tracking-wider text-slate-400">
-              04 · {bi('Obliczenia', 'Compute Stack')}
+              04 · {t('docs.computeStack')}
             </div>
             <div className="mt-1 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-purple-300 tabular-nums">
               F32 → F64
             </div>
             <div className="mt-0.5 text-[11px] text-slate-400">
-              {bi('8-Tier GPU WGSL + audyt CPU', '8-Tier GPU WGSL + CPU audit')}
+              {t('docs.k8TierGpuWgslCpu')}
             </div>
           </div>
         </div>
 
         {/* Clean Chapter Index Tabs */}
         <nav
-          aria-label={bi('Rozdziały dokumentacji', 'Documentation chapters')}
+          aria-label={t('docs.documentationChapters')}
           className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-white/[0.08] pb-1"
         >
           {navTabs.map((tab) => {
@@ -285,10 +289,7 @@ export const ProjectDocumentationView: React.FC = () => {
                   FIG. 01
                 </span>
                 <h2 className="font-display text-sm sm:text-base font-bold text-white">
-                  {bi(
-                    'Diagram Przepływu: Jak współpracują moduły',
-                    'End-to-End Architecture Pipeline'
-                  )}
+                  {t('docs.endToEndArchitecturePipeline')}
                 </h2>
               </div>
               <span className="font-mono text-[11px] text-slate-400">
@@ -325,35 +326,35 @@ export const ProjectDocumentationView: React.FC = () => {
                   </defs>
 
                   <rect x="6" y="8" width="154" height="102" rx="10" fill="url(#gAmberM)" stroke="#F59E0B" strokeOpacity="0.6" strokeWidth="1.2" />
-                  <text x="16" y="28" fill="#FCD34D" fontSize="11.5" fontWeight="700" fontFamily="Bricolage Grotesque, sans-serif">01. GRAJ ARCADE</text>
-                  <text x="16" y="45" fill="#E2E8F0" fontSize="9.5" fontFamily="Plus Jakarta Sans, sans-serif">Solo · Pojedynek AI</text>
-                  <text x="16" y="62" fill="#94A3B8" fontSize="9" fontFamily="JetBrains Mono, monospace">PKT · Orby ★/◆</text>
-                  <text x="16" y="77" fill="#94A3B8" fontSize="9" fontFamily="JetBrains Mono, monospace">Combo ×N · Tabela</text>
+                  <text x="16" y="28" fill="#FCD34D" fontSize="11.5" fontWeight="700" fontFamily="Bricolage Grotesque, sans-serif">{t('docs.k01PlayArcade')}</text>
+                  <text x="16" y="45" fill="#E2E8F0" fontSize="9.5" fontFamily="Plus Jakarta Sans, sans-serif">{t('docs.soloDuelVsAi')}</text>
+                  <text x="16" y="62" fill="#94A3B8" fontSize="9" fontFamily="JetBrains Mono, monospace">{t('docs.ptsOrbs')}</text>
+                  <text x="16" y="77" fill="#94A3B8" fontSize="9" fontFamily="JetBrains Mono, monospace">{t('docs.comboNTopList')}</text>
                   <text x="16" y="96" fill="#FDE68A" fontSize="8.5" fontFamily="JetBrains Mono, monospace">60 Hz Native</text>
 
                   <rect x="180" y="8" width="154" height="102" rx="10" fill="url(#gCyanM)" stroke="#06B6D4" strokeOpacity="0.6" strokeWidth="1.2" />
-                  <text x="190" y="28" fill="#67E8F9" fontSize="11.5" fontWeight="700" fontFamily="Bricolage Grotesque, sans-serif">02. TRENING AI</text>
+                  <text x="190" y="28" fill="#67E8F9" fontSize="11.5" fontWeight="700" fontFamily="Bricolage Grotesque, sans-serif">{t('docs.k02AiTraining')}</text>
                   <text x="190" y="45" fill="#E2E8F0" fontSize="9.5" fontFamily="Plus Jakarta Sans, sans-serif">Arena (2–12) / Single</text>
                   <text x="190" y="62" fill="#94A3B8" fontSize="9" fontFamily="JetBrains Mono, monospace">12 Geo | 16-Ray</text>
-                  <text x="190" y="77" fill="#94A3B8" fontSize="9" fontFamily="JetBrains Mono, monospace">Live Mózg · Wykres</text>
-                  <text x="190" y="96" fill="#A5F3FC" fontSize="8.5" fontFamily="JetBrains Mono, monospace">Eco Mobile Guard</text>
+                  <text x="190" y="77" fill="#94A3B8" fontSize="9" fontFamily="JetBrains Mono, monospace">{t('docs.liveBrainChart')}</text>
+                  <text x="190" y="96" fill="#A5F3FC" fontSize="8.5" fontFamily="JetBrains Mono, monospace">95% Duty Cap</text>
 
                   <line x1="180" y1="58" x2="162" y2="58" stroke="#FBBF24" strokeWidth="1.8" />
                   <text x="170" y="50" fill="#FCD34D" fontSize="7.5" textAnchor="middle" fontFamily="JetBrains Mono, monospace">Duel</text>
 
                   <rect x="6" y="132" width="154" height="96" rx="10" fill="url(#gPurpleM)" stroke="#A855F7" strokeOpacity="0.6" strokeWidth="1.2" />
-                  <text x="16" y="152" fill="#D8B4FE" fontSize="11.5" fontWeight="700" fontFamily="Bricolage Grotesque, sans-serif">SIECI (.JSON)</text>
-                  <text x="16" y="169" fill="#E2E8F0" fontSize="9.5" fontFamily="Plus Jakarta Sans, sans-serif">Biblioteka Mistrzów</text>
+                  <text x="16" y="152" fill="#D8B4FE" fontSize="11.5" fontWeight="700" fontFamily="Bricolage Grotesque, sans-serif">{t('docs.brainsJson')}</text>
+                  <text x="16" y="169" fill="#E2E8F0" fontSize="9.5" fontFamily="Plus Jakarta Sans, sans-serif">{t('docs.championsLibrary')}</text>
                   <text x="16" y="186" fill="#94A3B8" fontSize="9" fontFamily="JetBrains Mono, monospace">Weights + Arch</text>
                   <text x="16" y="201" fill="#94A3B8" fontSize="9" fontFamily="JetBrains Mono, monospace">Verified Ace 155+</text>
                   <text x="16" y="218" fill="#E9D5FF" fontSize="8.5" fontFamily="JetBrains Mono, monospace">Auto-Persist Sync</text>
 
                   <rect x="180" y="132" width="154" height="96" rx="10" fill="url(#gEmeraldM)" stroke="#10B981" strokeOpacity="0.6" strokeWidth="1.2" />
-                  <text x="190" y="152" fill="#6EE7B7" fontSize="11.5" fontWeight="700" fontFamily="Bricolage Grotesque, sans-serif">03. BADANIA</text>
-                  <text x="190" y="169" fill="#E2E8F0" fontSize="9.5" fontFamily="Plus Jakarta Sans, sans-serif">Siatki Ablacji</text>
+                  <text x="190" y="152" fill="#6EE7B7" fontSize="11.5" fontWeight="700" fontFamily="Bricolage Grotesque, sans-serif">{t('docs.k03Research')}</text>
+                  <text x="190" y="169" fill="#E2E8F0" fontSize="9.5" fontFamily="Plus Jakarta Sans, sans-serif">{t('docs.ablationSweeps')}</text>
                   <text x="190" y="186" fill="#94A3B8" fontSize="9" fontFamily="JetBrains Mono, monospace">WebGPU → F64 Audit</text>
                   <text x="190" y="201" fill="#94A3B8" fontSize="9" fontFamily="JetBrains Mono, monospace">Smart Prune · Colab</text>
-                  <text x="190" y="218" fill="#A7F3D0" fontSize="8.5" fontFamily="JetBrains Mono, monospace">TDR &lt;800ms Guard</text>
+                  <text x="190" y="218" fill="#A7F3D0" fontSize="8.5" fontFamily="JetBrains Mono, monospace">TDR &lt;400ms Guard</text>
 
                   <line x1="257" y1="110" x2="115" y2="132" stroke="#38BDF8" strokeWidth="1.4" strokeDasharray="3 3" />
                   <line x1="180" y1="180" x2="162" y2="180" stroke="#34D399" strokeWidth="1.8" />
@@ -399,32 +400,32 @@ export const ProjectDocumentationView: React.FC = () => {
                   </defs>
 
                   <rect x="16" y="28" width="195" height="126" rx="12" fill="url(#gAmber)" stroke="#F59E0B" strokeOpacity="0.6" strokeWidth="1.4" />
-                  <text x="32" y="54" fill="#FCD34D" fontSize="13" fontWeight="800" fontFamily="Bricolage Grotesque, sans-serif">01. GRAJ ARCADE</text>
-                  <text x="32" y="76" fill="#E2E8F0" fontSize="11" fontFamily="Plus Jakarta Sans, sans-serif">Solo · Pojedynek z Duchem AI</text>
-                  <text x="32" y="98" fill="#94A3B8" fontSize="10.5" fontFamily="JetBrains Mono, monospace">PKT · Orby ★/◆ · Combo ×N</text>
-                  <text x="32" y="118" fill="#94A3B8" fontSize="10.5" fontFamily="JetBrains Mono, monospace">Tabela Graczy · Historia</text>
+                  <text x="32" y="54" fill="#FCD34D" fontSize="13" fontWeight="800" fontFamily="Bricolage Grotesque, sans-serif">{t('docs.k01PlayArcade')}</text>
+                  <text x="32" y="76" fill="#E2E8F0" fontSize="11" fontFamily="Plus Jakarta Sans, sans-serif">{t('docs.soloDuelVsAiGhost')}</text>
+                  <text x="32" y="98" fill="#94A3B8" fontSize="10.5" fontFamily="JetBrains Mono, monospace">{t('docs.ptsOrbsComboN')}</text>
+                  <text x="32" y="118" fill="#94A3B8" fontSize="10.5" fontFamily="JetBrains Mono, monospace">{t('docs.leaderboardRunHistory')}</text>
                   <text x="32" y="140" fill="#FDE68A" fontSize="9.5" fontFamily="JetBrains Mono, monospace">60 Hz Native FPS</text>
 
                   <rect x="252" y="28" width="205" height="126" rx="12" fill="url(#gCyan)" stroke="#06B6D4" strokeOpacity="0.6" strokeWidth="1.4" />
-                  <text x="268" y="54" fill="#67E8F9" fontSize="13" fontWeight="800" fontFamily="Bricolage Grotesque, sans-serif">02. TRENING AI</text>
-                  <text x="268" y="76" fill="#E2E8F0" fontSize="11" fontFamily="Plus Jakarta Sans, sans-serif">Arena (2–12) lub Single Network</text>
-                  <text x="268" y="98" fill="#94A3B8" fontSize="10.5" fontFamily="JetBrains Mono, monospace">12 Sensorów Geo | 16-Ray</text>
-                  <text x="268" y="118" fill="#94A3B8" fontSize="10.5" fontFamily="JetBrains Mono, monospace">Live Mózg Lidera · Wykres</text>
+                  <text x="268" y="54" fill="#67E8F9" fontSize="13" fontWeight="800" fontFamily="Bricolage Grotesque, sans-serif">{t('docs.k02AiTraining')}</text>
+                  <text x="268" y="76" fill="#E2E8F0" fontSize="11" fontFamily="Plus Jakarta Sans, sans-serif">{t('docs.arena212OrSingle')}</text>
+                  <text x="268" y="98" fill="#94A3B8" fontSize="10.5" fontFamily="JetBrains Mono, monospace">{t('docs.k12GeoSensors16Ray')}</text>
+                  <text x="268" y="118" fill="#94A3B8" fontSize="10.5" fontFamily="JetBrains Mono, monospace">{t('docs.liveLeaderBrainChart')}</text>
                   <text x="268" y="140" fill="#A5F3FC" fontSize="9.5" fontFamily="JetBrains Mono, monospace">95% Duty Cap</text>
 
                   <rect x="498" y="28" width="175" height="126" rx="12" fill="url(#gPurple)" stroke="#A855F7" strokeOpacity="0.6" strokeWidth="1.4" />
-                  <text x="514" y="54" fill="#D8B4FE" fontSize="13" fontWeight="800" fontFamily="Bricolage Grotesque, sans-serif">SIECI (.JSON)</text>
-                  <text x="514" y="76" fill="#E2E8F0" fontSize="11" fontFamily="Plus Jakarta Sans, sans-serif">Biblioteka Mistrzów</text>
+                  <text x="514" y="54" fill="#D8B4FE" fontSize="13" fontWeight="800" fontFamily="Bricolage Grotesque, sans-serif">{t('docs.brainsJson')}</text>
+                  <text x="514" y="76" fill="#E2E8F0" fontSize="11" fontFamily="Plus Jakarta Sans, sans-serif">{t('docs.championsLibrary')}</text>
                   <text x="514" y="98" fill="#94A3B8" fontSize="10.5" fontFamily="JetBrains Mono, monospace">Exact Weights + Arch</text>
                   <text x="514" y="118" fill="#94A3B8" fontSize="10.5" fontFamily="JetBrains Mono, monospace">Verified Ace (155+)</text>
                   <text x="514" y="140" fill="#E9D5FF" fontSize="9.5" fontFamily="JetBrains Mono, monospace">LocalStorage Sync</text>
 
                   <rect x="714" y="28" width="190" height="126" rx="12" fill="url(#gEmerald)" stroke="#10B981" strokeOpacity="0.6" strokeWidth="1.4" />
-                  <text x="730" y="54" fill="#6EE7B7" fontSize="13" fontWeight="800" fontFamily="Bricolage Grotesque, sans-serif">03. BADANIA</text>
-                  <text x="730" y="76" fill="#E2E8F0" fontSize="11" fontFamily="Plus Jakarta Sans, sans-serif">Siatki Ablacji &amp; Kolejka</text>
+                  <text x="730" y="54" fill="#6EE7B7" fontSize="13" fontWeight="800" fontFamily="Bricolage Grotesque, sans-serif">{t('docs.k03Research')}</text>
+                  <text x="730" y="76" fill="#E2E8F0" fontSize="11" fontFamily="Plus Jakarta Sans, sans-serif">{t('docs.ablationSweepsQueue')}</text>
                   <text x="730" y="98" fill="#94A3B8" fontSize="10.5" fontFamily="JetBrains Mono, monospace">WebGPU F32 -&gt; CPU F64</text>
                   <text x="730" y="118" fill="#94A3B8" fontSize="10.5" fontFamily="JetBrains Mono, monospace">Smart Prune · Colab GPU</text>
-                  <text x="730" y="140" fill="#A7F3D0" fontSize="9.5" fontFamily="JetBrains Mono, monospace">TDR &lt;800ms Guard</text>
+                  <text x="730" y="140" fill="#A7F3D0" fontSize="9.5" fontFamily="JetBrains Mono, monospace">TDR &lt;400ms Guard</text>
 
                   <line x1="252" y1="80" x2="215" y2="80" stroke="#FBBF24" strokeWidth="2" markerEnd="url(#arrowAmber)" />
                   <text x="233" y="72" fill="#FCD34D" fontSize="9" textAnchor="middle" fontFamily="JetBrains Mono, monospace">Duel</text>
@@ -451,13 +452,10 @@ export const ProjectDocumentationView: React.FC = () => {
                 </div>
                 <div className="font-display text-sm font-bold text-white flex items-center gap-1.5">
                   <Gamepad2 className="w-4 h-4 text-amber-400 shrink-0" />
-                  {bi('Graj Arcade', 'Play Arcade')}
+                  {t('docs.playArcade')}
                 </div>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  {bi(
-                    'Lot o punkty (★/◆ orby + combo ×N), medale, historia i Tabela Najlepszych Graczy z zapisem nicka.',
-                    'Arcade points flight (★/◆ orbs + ×N combos), medals, history log, and Top Players Leaderboard.'
-                  )}
+                  {t('docs.arcadePointsFlightOrbsN')}
                 </p>
               </div>
 
@@ -470,13 +468,10 @@ export const ProjectDocumentationView: React.FC = () => {
                 </div>
                 <div className="font-display text-sm font-bold text-white flex items-center gap-1.5">
                   <Brain className="w-4 h-4 text-cyan-400 shrink-0" />
-                  {bi('Trening AI', 'Training Lab')}
+                  {t('docs.trainingLab')}
                 </div>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  {bi(
-                    'Ewolucja stada na żywo z podglądem synaps, wykresem pokoleń i pojedynkiem wysp w Arenie.',
-                    'Live flock neuroevolution with real-time synaptic inspection, learning curve, and Multi-Arch Arena.'
-                  )}
+                  {t('docs.liveFlockNeuroevolutionWithReal')}
                 </p>
               </div>
 
@@ -489,13 +484,10 @@ export const ProjectDocumentationView: React.FC = () => {
                 </div>
                 <div className="font-display text-sm font-bold text-white flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
-                  {bi('Badania', 'Research')}
+                  {t('docs.research')}
                 </div>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  {bi(
-                    'Siatki eksperymentów (19 presetów + kolejka), audyt 5-seed Float64 i eksport notebooka Colab.',
-                    'Automated ablation sweeps (19 presets + queue), 5-seed Float64 proofs, and Colab GPU export.'
-                  )}
+                  {t('docs.automatedAblationSweeps19Presets')}
                 </p>
               </div>
 
@@ -508,13 +500,10 @@ export const ProjectDocumentationView: React.FC = () => {
                 </div>
                 <div className="font-display text-sm font-bold text-white flex items-center gap-1.5">
                   <Archive className="w-4 h-4 text-purple-400 shrink-0" />
-                  {bi('Sieci & Zapis', 'Brains & Save')}
+                  {t('docs.brainsSave')}
                 </div>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  {bi(
-                    'Okno "Sieci" zapisuje liderów (.json), a postęp gry, nick i sesja badań wznawiają się automatycznie.',
-                    '"Brains" exports/imports .json champions while play runs, nick, and research autosave seamlessly.'
-                  )}
+                  {t('docs.brainsExportsImportsJsonChampions')}
                 </p>
               </div>
             </div>
@@ -525,28 +514,28 @@ export const ProjectDocumentationView: React.FC = () => {
             <div className="lg:col-span-8 rounded-xl border border-white/[0.08] bg-[#090B11] overflow-hidden">
               <div className="flex items-center justify-between gap-2 border-b border-white/[0.07] px-4 py-3">
                 <h3 className="font-display text-sm sm:text-base font-bold text-white">
-                  {bi('Punktacja Arcade i Obieg 3 Kroków', 'Arcade Scoring Formula & 3-Step Flow')}
+                  {t('docs.arcadeScoringFormula3Step')}
                 </h3>
                 <span className="font-mono text-[11px] text-amber-300">
-                  PKT · Orby · Combo ×N
+                  {t('docs.ptsOrbsComboN2')}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-white/[0.08] border-b border-white/[0.08] tabular-nums">
                 <div className="px-4 py-3">
-                  <div className="font-mono text-[10px] text-emerald-300">{bi('Rura', 'Pipe Clear')}</div>
-                  <div className="mt-0.5 font-display text-lg sm:text-xl font-extrabold text-white">+100 × Tor</div>
+                  <div className="font-mono text-[10px] text-emerald-300">{t('docs.pipeClear')}</div>
+                  <div className="mt-0.5 font-display text-lg sm:text-xl font-extrabold text-white">{t('docs.k100Track')}</div>
                 </div>
                 <div className="px-4 py-3">
                   <div className="font-mono text-[10px] text-amber-300">Combo ×N</div>
                   <div className="mt-0.5 font-display text-lg sm:text-xl font-extrabold text-white">+35..280p</div>
                 </div>
                 <div className="px-4 py-3">
-                  <div className="font-mono text-[10px] text-cyan-300">{bi('Orby w locie', 'Mid-Air Orbs')}</div>
+                  <div className="font-mono text-[10px] text-cyan-300">{t('docs.midAirOrbs')}</div>
                   <div className="mt-0.5 font-display text-lg sm:text-xl font-extrabold text-white">★ 75 · ◆ 150</div>
                 </div>
                 <div className="px-4 py-3">
-                  <div className="font-mono text-[10px] text-purple-300">{bi('Tabela & Nick', 'Leaderboard')}</div>
+                  <div className="font-mono text-[10px] text-purple-300">{t('docs.leaderboard')}</div>
                   <div className="mt-0.5 font-display text-lg sm:text-xl font-extrabold text-white flex items-center gap-1.5">
                     <Crown className="w-4 h-4 text-amber-300 shrink-0" />
                     Auto-Log
@@ -557,35 +546,26 @@ export const ProjectDocumentationView: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.07] text-xs">
                 <div className="p-4 space-y-1">
                   <div className="font-mono font-bold text-amber-300">
-                    01 · {bi('Wpisz Nick & Leć', 'Set Nick & Fly')}
+                    01 · {t('docs.setNickFly')}
                   </div>
                   <p className="text-slate-400 leading-relaxed">
-                    {bi(
-                      'Zbieraj orby i trafiaj środkiem rur, aby budować mnożnik ×N w Tabeli Graczy.',
-                      'Collect orbs and thread gap centers to build ×N multipliers on the Leaderboard.'
-                    )}
+                    {t('docs.collectOrbsAndThreadGap')}
                   </p>
                 </div>
                 <div className="p-4 space-y-1">
                   <div className="font-mono font-bold text-cyan-300">
-                    02 · {bi('Odpal Arenę AI', 'Launch AI Arena')}
+                    02 · {t('docs.launchAiArena')}
                   </div>
                   <p className="text-slate-400 leading-relaxed">
-                    {bi(
-                      'W Treningu AI obserwuj wyścig do 12 gatunków lub trenuj własną sieć w 60 FPS.',
-                      'Compare up to 12 neural species on identical wind & pipes or focus a single brain.'
-                    )}
+                    {t('docs.compareUpTo12Neural')}
                   </p>
                 </div>
                 <div className="p-4 space-y-1">
                   <div className="font-mono font-bold text-emerald-300">
-                    03 · {bi('Pojedynek z Liderem', 'Duel Your Champion')}
+                    03 · {t('docs.duelYourChampion')}
                   </div>
                   <p className="text-slate-400 leading-relaxed">
-                    {bi(
-                      'Kliknij "Ścigaj się z AI", aby zmierzyć się ze swoją najlepszą siecią na żywo.',
-                      'Click "Race AI" to test human reflexes side-by-side against your top brain.'
-                    )}
+                    {t('docs.clickRaceAiToTest')}
                   </p>
                 </div>
               </div>
@@ -594,12 +574,12 @@ export const ProjectDocumentationView: React.FC = () => {
             <div className="lg:col-span-4 rounded-xl border border-white/[0.08] bg-[#090B11] overflow-hidden">
               <div className="border-b border-white/[0.07] px-4 py-3">
                 <h3 className="font-display text-sm sm:text-base font-bold text-white">
-                  {bi('Klawiatura & Dotyk', 'Keycaps & Touch')}
+                  {t('docs.keycapsTouch')}
                 </h3>
               </div>
               <div className="divide-y divide-white/[0.07] text-xs">
                 <div className="flex items-center justify-between gap-2 px-4 py-3">
-                  <span className="text-slate-300">{bi('Skok', 'Flap')}</span>
+                  <span className="text-slate-300">{t('docs.flap')}</span>
                   <div className="flex items-center gap-1 font-mono text-[11px]">
                     <kbd className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-amber-200">Space</kbd>
                     <kbd className="rounded border border-white/15 bg-white/[0.04] px-2 py-0.5 text-slate-200">↑</kbd>
@@ -607,19 +587,19 @@ export const ProjectDocumentationView: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center justify-between gap-2 px-4 py-3">
-                  <span className="text-slate-300">{bi('Pauza', 'Pause')}</span>
+                  <span className="text-slate-300">{t('docs.pause')}</span>
                   <div className="flex items-center gap-1 font-mono text-[11px]">
                     <kbd className="rounded border border-cyan-500/40 bg-cyan-500/10 px-2 py-0.5 text-cyan-200">P</kbd>
                     <kbd className="rounded border border-white/15 bg-white/[0.04] px-2 py-0.5 text-slate-200">Esc</kbd>
                   </div>
                 </div>
                 <div className="flex items-center justify-between gap-2 px-4 py-3">
-                  <span className="text-slate-300">{bi('Nowy lot', 'Restart')}</span>
+                  <span className="text-slate-300">{t('docs.restart')}</span>
                   <kbd className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-[11px] text-emerald-200">R</kbd>
                 </div>
                 <div className="flex items-center justify-between gap-2 px-4 py-3">
-                  <span className="text-slate-300">{bi('Smartfon', 'Mobile')}</span>
-                  <span className="font-mono text-[11px] text-amber-300">SKOK (FLAP) · Eco Auto</span>
+                  <span className="text-slate-300">{t('docs.mobile')}</span>
+                  <span className="font-mono text-[11px] text-amber-300">{t('docs.flap95Cap')}</span>
                 </div>
               </div>
             </div>
@@ -637,7 +617,7 @@ export const ProjectDocumentationView: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-[11px] font-bold text-cyan-300">FIG. 02</span>
                   <h2 className="font-display text-sm sm:text-base font-bold text-white">
-                    {bi('Tryb A: Sensory Geometryczne (1–12)', 'Mode A: Geometric Sensors (1–12)')}
+                    {t('docs.modeAGeometricSensors1')}
                   </h2>
                 </div>
                 <span className="font-mono text-[10.5px] text-slate-400">Exact Kinematics</span>
@@ -672,10 +652,7 @@ export const ProjectDocumentationView: React.FC = () => {
                 </svg>
               </div>
               <p className="border-t border-white/[0.07] px-4 py-2.5 font-mono text-[11px] text-slate-400">
-                {bi(
-                  'Blokady spójności: wymagane min. Top/Bot · PVy/N2PVy wyłączone na statycznych rurach.',
-                  'Invariants: min Top/Bot clearance · PVy/N2PVy auto-disabled on static tracks.'
-                )}
+                {t('docs.invariantsMinTopBotClearance')}
               </p>
             </div>
 
@@ -685,7 +662,7 @@ export const ProjectDocumentationView: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-[11px] font-bold text-emerald-300">FIG. 03</span>
                   <h2 className="font-display text-sm sm:text-base font-bold text-white">
-                    {bi('Tryb B: Siatkówka 16-Ray (Ommatidia)', 'Mode B: 16-Ray Compound Retina')}
+                    {t('docs.modeB16RayCompound')}
                   </h2>
                 </div>
                 <span className="font-mono text-[10.5px] text-slate-400">-68°..+68° Fan</span>
@@ -729,10 +706,7 @@ export const ProjectDocumentationView: React.FC = () => {
                 </svg>
               </div>
               <p className="border-t border-white/[0.07] px-4 py-2.5 font-mono text-[11px] text-slate-400">
-                {bi(
-                  'Sieć nie dostaje dokładnych pikseli X/Y rury — uczy się z różnic luminancji i szumu 0–25%.',
-                  'Network receives optical contrast & motion deltas with tunable 0–25% fog noise instead of exact coords.'
-                )}
+                {t('docs.networkReceivesOpticalContrastMotion')}
               </p>
             </div>
           </div>
@@ -741,48 +715,48 @@ export const ProjectDocumentationView: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.08] rounded-xl border border-white/[0.08] bg-[#090B11]">
             <div className="p-4 sm:p-5 space-y-3">
               <h3 className="font-display text-sm sm:text-base font-bold text-amber-300">
-                {bi('Panel Graj · Kluczowe Ustawienia', 'Play View · Key Mechanics')}
+                {t('docs.playViewKeyMechanics')}
               </h3>
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
                   <div className="font-mono text-[11px] font-bold text-amber-200">Solo / VS AI</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">{bi('Lot samemu lub obok ducha sieci', 'Solo flight or vs AI ghost')}</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">{t('docs.soloFlightOrVsAi')}</div>
                 </div>
                 <div>
                   <div className="font-mono text-[11px] font-bold text-emerald-300">Orby ★/◆ &amp; Combo</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">{bi('Punkty za środek szczeliny i orby', 'Bonus points for center pass & orbs')}</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">{t('docs.bonusPointsForCenterPass')}</div>
                 </div>
                 <div>
-                  <div className="font-mono text-[11px] font-bold text-cyan-300">{bi('Tabela & Historia', 'Leaderboard')}</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">{bi('Nick gracza, ranking PKT i rur', 'Nick profile, top scores & run log')}</div>
+                  <div className="font-mono text-[11px] font-bold text-cyan-300">{t('docs.leaderboard2')}</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">{t('docs.nickProfileTopScoresRun')}</div>
                 </div>
                 <div>
                   <div className="font-mono text-[11px] font-bold text-rose-300">Overdrive 100–145%</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">{bi('Ekstremalna fizyka na Extra Insane', 'Extreme slider on Extra Insane')}</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">{t('docs.extremeSliderOnExtraInsane')}</div>
                 </div>
               </div>
             </div>
 
             <div className="p-4 sm:p-5 space-y-3">
               <h3 className="font-display text-sm sm:text-base font-bold text-cyan-300">
-                {bi('Panel Trening AI · Tryby Pracy', 'Training Lab · Key Modes')}
+                {t('docs.trainingLabKeyModes')}
               </h3>
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
                   <div className="font-mono text-[11px] font-bold text-emerald-300">Arena vs Single</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">{bi('12 wysp gatunkowych lub 1 pełna sieć', '12 species islands or 1 focused flock')}</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">{t('docs.k12SpeciesIslandsOr1')}</div>
                 </div>
                 <div>
-                  <div className="font-mono text-[11px] font-bold text-amber-300">{bi('Samorozrost', 'Auto-Grow')}</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">{bi('Start 50% wag i dokładanie neuronów', 'Grows hidden width on stagnation')}</div>
+                  <div className="font-mono text-[11px] font-bold text-amber-300">{t('docs.autoGrow')}</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">{t('docs.growsHiddenWidthOnStagnation')}</div>
                 </div>
                 <div>
                   <div className="font-mono text-[11px] font-bold text-purple-300">Shaped + Curriculum</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">{bi('Premia osi + łagodny start pokoleń', 'Centering reward + gentle ramp')}</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">{t('docs.centeringRewardGentleRamp')}</div>
                 </div>
                 <div>
                   <div className="font-mono text-[11px] font-bold text-cyan-300">95% Cap + 1x..MAX</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">{bi('Stały limit 95% mocy + krok 1/60s', 'Constant 95% power cap + single-tick step')}</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">{t('docs.constant95PowerCapSingle')}</div>
                 </div>
               </div>
             </div>
@@ -793,7 +767,7 @@ export const ProjectDocumentationView: React.FC = () => {
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="font-display text-base sm:text-lg font-bold text-white flex items-center gap-2">
                 <Eye className="w-4 h-4 text-cyan-400 shrink-0" />
-                {bi('Wszystkie 12 Wejść Sieci (Geo ↔ 16-Ray)', 'All 12 Sensor Channels (Geo ↔ 16-Ray)')}
+                {t('docs.all12SensorChannelsGeo')}
               </h3>
               <span className="font-mono text-[11px] text-cyan-300">
                 5 Core · 2 Velocity/Gap · 4 Lookahead #2 · 1 Timing
@@ -836,7 +810,7 @@ export const ProjectDocumentationView: React.FC = () => {
                   <span className="font-mono text-[11px] font-bold text-amber-300">FIG. 04</span>
                   <h3 className="font-display text-sm sm:text-base font-bold text-white flex items-center gap-1.5">
                     <GitBranch className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>HYBRID_MOE · {bi('Auto-Router w 1 Mózgu', 'Single-Bird Auto-Router')}</span>
+                    <span>HYBRID_MOE · {t('docs.singleBirdAutoRouter')}</span>
                   </h3>
                 </div>
                 <span className="font-mono text-[10.5px] text-amber-200">ROI ≥ 2% Gate</span>
@@ -870,10 +844,7 @@ export const ProjectDocumentationView: React.FC = () => {
                 </svg>
               </div>
               <p className="border-t border-white/[0.07] px-4 py-2.5 font-mono text-[11px] text-slate-400">
-                {bi(
-                  'Startuje jako lekki MLP; testuje ekspertów przez 10 pokoleń i odrzuca przy zysku <2%/FLOP.',
-                  'Starts as MLP; trials specialists for 10 gens and rolls back if gain/FLOP < 2%.'
-                )}
+                {t('docs.startsAsMlpTrialsSpecialists')}
               </p>
             </div>
 
@@ -884,7 +855,7 @@ export const ProjectDocumentationView: React.FC = () => {
                   <span className="font-mono text-[11px] font-bold text-cyan-300">FIG. 05</span>
                   <h3 className="font-display text-sm sm:text-base font-bold text-white flex items-center gap-1.5">
                     <Layers className="w-4 h-4 text-cyan-400 shrink-0" />
-                    <span>Arena Live · {bi('Wyspy Gatunkowe', 'Island Speciation')}</span>
+                    <span>Arena Live · {t('docs.islandSpeciation')}</span>
                   </h3>
                 </div>
                 <span className="font-mono text-[10.5px] text-cyan-200">2–12 Species Parallel</span>
@@ -910,15 +881,12 @@ export const ProjectDocumentationView: React.FC = () => {
                   ))}
                   <rect x="316" y="42" width="104" height="64" rx="10" fill="#0B0E17" stroke="#22D3EE" />
                   <text x="368" y="66" fill="#67E8F9" fontSize="10.5" fontWeight="700" textAnchor="middle" fontFamily="JetBrains Mono, monospace">SHARED SEED</text>
-                  <text x="368" y="82" fill="#E2E8F0" fontSize="9.5" textAnchor="middle" fontFamily="Plus Jakarta Sans, sans-serif">Identyczne rury</text>
-                  <text x="368" y="96" fill="#94A3B8" fontSize="9" textAnchor="middle" fontFamily="JetBrains Mono, monospace">Klik = Podgląd</text>
+                  <text x="368" y="82" fill="#E2E8F0" fontSize="9.5" textAnchor="middle" fontFamily="Plus Jakarta Sans, sans-serif">{t('docs.identicalPipes')}</text>
+                  <text x="368" y="96" fill="#94A3B8" fontSize="9" textAnchor="middle" fontFamily="JetBrains Mono, monospace">{t('docs.clickInspect')}</text>
                 </svg>
               </div>
               <p className="border-t border-white/[0.07] px-4 py-2.5 font-mono text-[11px] text-slate-400">
-                {bi(
-                  'Każda wyspa ewoluuje własnym optymalizatorem na identycznym ziarnie rur. Klik w wiersz = podgląd Mózgu.',
-                  'Each island runs its isolated optimizer on shared seeded courses. Click any row to inspect.'
-                )}
+                {t('docs.eachIslandRunsItsIsolated')}
               </p>
             </div>
           </div>
@@ -928,7 +896,7 @@ export const ProjectDocumentationView: React.FC = () => {
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="font-display text-base sm:text-lg font-bold text-white flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>{bi('7 Głównych Architektur Badawczych (Tier 1)', '7 Primary Architectures (Tier 1)')}</span>
+                <span>{t('docs.k7PrimaryArchitecturesTier1')}</span>
               </h3>
               <span className="font-mono text-[11px] text-slate-400">
                 ◆ WebGPU Lockstep · ◇ CPU Specialized
@@ -953,16 +921,16 @@ export const ProjectDocumentationView: React.FC = () => {
                               {String(idx + 1).padStart(2, '0')}
                             </span>
                             <span className="font-display font-bold text-base text-white truncate">
-                              {info.label}
+                              {getArchText(lang, arch).label}
                             </span>
                           </div>
                           <span className="font-mono text-[10px] text-slate-400 shrink-0">
-                            {info.categoryBadge}
+                            {getArchText(lang, arch).badge}
                           </span>
                         </div>
 
                         <p className="text-xs text-slate-300 leading-relaxed">
-                          {info.howItWorksPl}
+                          {getArchText(lang, arch).howItWorks}
                         </p>
 
                         <div className="font-mono text-[11px] text-cyan-300 bg-[#05060A] px-3 py-2 rounded border border-white/[0.07] truncate">
@@ -972,8 +940,8 @@ export const ProjectDocumentationView: React.FC = () => {
 
                       <div className="space-y-2.5 pt-3 border-t border-white/[0.07] text-[11px]">
                         <div className="text-emerald-300/95 leading-snug">
-                          <span className="font-mono text-[10px] text-emerald-400 mr-1.5">WERDYKT ·</span>
-                          {info.empiricalVerdictPl}
+                          <span className="font-mono text-[10px] text-emerald-400 mr-1.5">{t('docs.verdict')}</span>
+                          {getArchText(lang, arch).verdict}
                         </div>
 
                         <div className="space-y-1">
@@ -1013,7 +981,7 @@ export const ProjectDocumentationView: React.FC = () => {
           <div className="space-y-2.5">
             <h3 className="font-display text-sm font-bold text-slate-300 flex items-center gap-2">
               <Archive className="w-4 h-4 text-slate-400" />
-              <span>{bi('5 Architektur Pomocniczych / Legacy (Tier 2)', '5 Auxiliary / Legacy (Tier 2)')}</span>
+              <span>{t('docs.k5AuxiliaryLegacyTier2')}</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-px bg-white/[0.08] rounded-xl overflow-hidden border border-white/[0.08]">
               {TIER_2_LEGACY_ARCHITECTURES.map((arch) => {
@@ -1026,9 +994,11 @@ export const ProjectDocumentationView: React.FC = () => {
                       </span>
                       <span className="text-[10.5px] text-amber-300">{info.flopsMultiplier}×</span>
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-snug">{info.summaryPl}</p>
+                    <p className="text-[11px] text-slate-400 leading-snug">
+                      {getArchText(lang, arch).summary}
+                    </p>
                     <p className="font-mono text-[10px] text-amber-300/85 pt-1.5 border-t border-white/[0.06]">
-                      {info.empiricalVerdictPl}
+                      {getArchText(lang, arch).verdict}
                     </p>
                   </div>
                 );
@@ -1047,7 +1017,7 @@ export const ProjectDocumentationView: React.FC = () => {
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.07] px-4 py-3">
                 <h3 className="font-display text-sm sm:text-base font-bold text-white flex items-center gap-2">
                   <Zap className="w-4 h-4 text-cyan-400" />
-                  <span>{bi('8 Optymalizatorów Bezgradientowych', '8 Gradient-Free Optimizers')}</span>
+                  <span>{t('docs.k8GradientFreeOptimizers')}</span>
                 </h3>
                 <span className="font-mono text-[10px] text-slate-400">
                   Zero Backprop · Closed Physics Loop
@@ -1061,21 +1031,29 @@ export const ProjectDocumentationView: React.FC = () => {
                     <div key={opt.id} className="p-3.5 sm:px-4 space-y-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="font-display font-bold text-xs sm:text-sm text-cyan-300">
-                          {opt.label}
+                          {getOptimizerText(lang, opt.id).fullName}
                         </span>
                         <div className="flex items-center gap-2 font-mono text-[10px]">
                           <span className={prof.usesMutRate ? 'text-amber-300' : 'text-slate-500'}>
-                            {prof.usesMutRate ? '✓ Mut. Rate' : '— Covariance/DE'}
+                            {prof.usesMutRate
+                              ? opt.id === 'DE'
+                                ? '✓ CR Rate'
+                                : '✓ Mut. Rate'
+                              : '— Covariance/ES'}
                           </span>
                           <span aria-hidden="true" className="text-slate-600">·</span>
-                          <span className="text-emerald-300">{opt.bestForPl}</span>
+                          <span className="text-emerald-300">
+                            {getOptimizerText(lang, opt.id).badge}
+                          </span>
                         </div>
                       </div>
-                      <p className="text-[11.5px] text-slate-300 leading-snug">{opt.summaryPl}</p>
+                      <p className="text-[11.5px] text-slate-300 leading-snug">
+                        {getOptimizerText(lang, opt.id).summary}
+                      </p>
                       <div className="grid grid-cols-2 gap-4 pt-0.5 font-mono text-[10px] text-slate-400 tabular-nums">
                         <div>
                           <div className="flex justify-between">
-                            <span>{bi('Szybkość G1', 'G1 Speed')}</span>
+                            <span>{t('docs.g1Speed')}</span>
                             <span className="text-cyan-300">{prof.speedPct}%</span>
                           </div>
                           <div className="mt-1 h-1 bg-white/[0.06] overflow-hidden">
@@ -1084,7 +1062,7 @@ export const ProjectDocumentationView: React.FC = () => {
                         </div>
                         <div>
                           <div className="flex justify-between">
-                            <span>{bi('Eksploracja', 'Explore')}</span>
+                            <span>{t('docs.explore')}</span>
                             <span className="text-emerald-300">{prof.explorePct}%</span>
                           </div>
                           <div className="mt-1 h-1 bg-white/[0.06] overflow-hidden">
@@ -1104,7 +1082,7 @@ export const ProjectDocumentationView: React.FC = () => {
                 <div className="flex items-center justify-between gap-2 border-b border-white/[0.07] px-4 py-3">
                   <h3 className="font-display text-sm sm:text-base font-bold text-white flex items-center gap-2">
                     <Cpu className="w-4 h-4 text-amber-400" />
-                    <span>{bi('Spektrum Kwantyzacji Wag', 'Weight Precision Spectrum')}</span>
+                    <span>{t('docs.weightPrecisionSpectrum')}</span>
                   </h3>
                   <span className="font-mono text-[10.5px] text-amber-300">32-bit → 1-bit Edge</span>
                 </div>
@@ -1128,7 +1106,9 @@ export const ProjectDocumentationView: React.FC = () => {
                             {prec.bitsPerWeight} b/w
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-400 leading-snug">{prec.summaryPl}</p>
+                        <p className="text-[11px] text-slate-400 leading-snug">
+                          {getPrecisionText(lang, prec.id).summary}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -1141,7 +1121,7 @@ export const ProjectDocumentationView: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[11px] font-bold text-emerald-300">FIG. 06</span>
                     <h3 className="font-display text-sm sm:text-base font-bold text-white">
-                      {bi('Potok Badań: WebGPU F32 → Audyt CPU Float64', 'Research Pipeline: WebGPU → Float64 Audit')}
+                      {t('docs.researchPipelineWebgpuFloat64Audit')}
                     </h3>
                   </div>
                 </div>
@@ -1150,17 +1130,17 @@ export const ProjectDocumentationView: React.FC = () => {
                   <svg viewBox="0 0 460 116" className="w-full h-auto" role="img" aria-label="Research WebGPU to F64 Audit pipeline">
                     <rect x="8" y="18" width="98" height="74" rx="8" fill="#0B0E17" stroke="#38BDF8" />
                     <text x="57" y="42" fill="#7DD3FC" fontSize="10" fontWeight="700" textAnchor="middle" fontFamily="JetBrains Mono, monospace">Smart Prune</text>
-                    <text x="57" y="60" fill="#CBD5E1" fontSize="9.5" textAnchor="middle" fontFamily="Plus Jakarta Sans, sans-serif">Pomija ~65%</text>
-                    <text x="57" y="75" fill="#94A3B8" fontSize="9" textAnchor="middle" fontFamily="JetBrains Mono, monospace">duplikatów</text>
+                    <text x="57" y="60" fill="#CBD5E1" fontSize="9.5" textAnchor="middle" fontFamily="Plus Jakarta Sans, sans-serif">{t('docs.skips65')}</text>
+                    <text x="57" y="75" fill="#94A3B8" fontSize="9" textAnchor="middle" fontFamily="JetBrains Mono, monospace">{t('docs.duplicates')}</text>
                     <line x1="106" y1="55" x2="122" y2="55" stroke="#10B981" strokeWidth="1.8" />
                     <rect x="122" y="18" width="106" height="74" rx="8" fill="#0B0E17" stroke="#10B981" />
                     <text x="175" y="42" fill="#6EE7B7" fontSize="10" fontWeight="700" textAnchor="middle" fontFamily="JetBrains Mono, monospace">WebGPU F32</text>
                     <text x="175" y="60" fill="#CBD5E1" fontSize="9.5" textAnchor="middle" fontFamily="Plus Jakarta Sans, sans-serif">8-Tier WGSL</text>
-                    <text x="175" y="75" fill="#94A3B8" fontSize="9" textAnchor="middle" fontFamily="JetBrains Mono, monospace">&lt;800ms TDR</text>
+                    <text x="175" y="75" fill="#94A3B8" fontSize="9" textAnchor="middle" fontFamily="JetBrains Mono, monospace">&lt;400ms TDR</text>
                     <line x1="228" y1="55" x2="244" y2="55" stroke="#FBBF24" strokeWidth="1.8" />
                     <rect x="244" y="18" width="96" height="74" rx="8" fill="#451A03" stroke="#F59E0B" />
                     <text x="292" y="42" fill="#FDE68A" fontSize="10" fontWeight="700" textAnchor="middle" fontFamily="JetBrains Mono, monospace">Milestone</text>
-                    <text x="292" y="60" fill="#FCD34D" fontSize="10" fontWeight="700" textAnchor="middle" fontFamily="JetBrains Mono, monospace">≥25 rur</text>
+                    <text x="292" y="60" fill="#FCD34D" fontSize="10" fontWeight="700" textAnchor="middle" fontFamily="JetBrains Mono, monospace">{t('docs.k25Pipes')}</text>
                     <text x="292" y="75" fill="#FDE68A" fontSize="9" textAnchor="middle" fontFamily="JetBrains Mono, monospace">Smart Gate</text>
                     <line x1="340" y1="55" x2="356" y2="55" stroke="#A855F7" strokeWidth="1.8" />
                     <rect x="356" y="18" width="96" height="74" rx="8" fill="#3B0764" stroke="#A855F7" />
@@ -1171,8 +1151,39 @@ export const ProjectDocumentationView: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-2 divide-x divide-white/[0.07] border-t border-white/[0.07] font-mono text-[11px] text-slate-300">
-                  <div className="px-4 py-2.5">19 Presetów + Kolejka</div>
+                  <div className="px-4 py-2.5">
+                    {t('docs.presetsQueue', { RESEARCH_PRESETS: RESEARCH_PRESETS.length })}
+                  </div>
                   <div className="px-4 py-2.5">GPU Load 10%–100%</div>
+                </div>
+              </div>
+
+              {/* Research Persistence & GitHub Data Lake */}
+              <div className="rounded-xl border border-white/[0.08] bg-[#090B11] overflow-hidden">
+                <div className="flex items-center justify-between gap-2 border-b border-white/[0.07] px-4 py-3">
+                  <h3 className="font-display text-sm font-bold text-white flex items-center gap-2">
+                    <GitBranch className="w-4 h-4 text-emerald-400" />
+                    <span>{t('docs.persistenceIndexeddbVsGithubData')}</span>
+                  </h3>
+                  <span className="font-mono text-[10px] text-emerald-300">Static SPA + CI</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.07] text-[11.5px] leading-relaxed">
+                  <div className="p-3.5 space-y-1">
+                    <div className="font-mono text-[10.5px] font-bold text-cyan-300">
+                      {t('docs.k1LocalBrowserAutomatic')}
+                    </div>
+                    <p className="text-slate-400">
+                      {t('docs.allTrialRowsCheckpointsEvery')}
+                    </p>
+                  </div>
+                  <div className="p-3.5 space-y-1">
+                    <div className="font-mono text-[10.5px] font-bold text-emerald-300">
+                      {t('docs.k2GithubPagesDataLake')}
+                    </div>
+                    <p className="text-slate-400">
+                      {t('docs.githubPagesIsStaticRead')}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1183,7 +1194,9 @@ export const ProjectDocumentationView: React.FC = () => {
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.07] px-4 py-3">
               <h3 className="font-display text-sm sm:text-base font-bold text-white flex items-center gap-2">
                 <Archive className="w-4 h-4 text-cyan-400" />
-                <span>Empirical Conclusions (84,062 Historical Trials)</span>
+                <span>
+                  {t('docs.empiricalConclusions84062Historical')}
+                </span>
               </h3>
               <span className="font-mono text-[11px] text-cyan-300 tabular-nums">n = 84,062</span>
             </div>
@@ -1193,40 +1206,28 @@ export const ProjectDocumentationView: React.FC = () => {
                 <div className="font-display text-2xl font-extrabold text-amber-300 tabular-nums">PVy + N2Y</div>
                 <div className="font-mono text-[10px] text-slate-400">01 · MOVING PIPES</div>
                 <p className="text-slate-300 text-xs leading-relaxed">
-                  {bi(
-                    'Odblokowują przelot przez ruchome rury na torze Insane.',
-                    'Unlock moving-pipe tracking and next-gap trajectories on Insane.'
-                  )}
+                  {t('docs.unlockMovingPipeTrackingAnd')}
                 </p>
               </div>
               <div className="p-4 space-y-1.5">
                 <div className="font-display text-2xl font-extrabold text-cyan-300 tabular-nums">98.1% vs 4–6</div>
                 <div className="font-mono text-[10px] text-slate-400">02 · SENSOR RANK</div>
                 <p className="text-slate-300 text-xs leading-relaxed">
-                  {bi(
-                    'Na Easy wystarczy 1 wejście (98.1%), Insane wymaga min. 4–6.',
-                    'Easy reaches 98.1% with 1 sensor; Insane demands 4–6 sensors.'
-                  )}
+                  {t('docs.easyReaches981With')}
                 </p>
               </div>
               <div className="p-4 space-y-1.5">
                 <div className="font-display text-2xl font-extrabold text-emerald-300 tabular-nums">5-seed F64</div>
                 <div className="font-mono text-[10px] text-slate-400">03 · GENERALIZATION</div>
                 <p className="text-slate-300 text-xs leading-relaxed">
-                  {bi(
-                    'GPU szuka szybko, a CPU Float64 dowodzi odporności na 5 ziarnach.',
-                    'GPU searches rapidly; CPU Float64 certifies unseen-seed robustness.'
-                  )}
+                  {t('docs.gpuSearchesRapidlyCpuFloat64')}
                 </p>
               </div>
               <div className="p-4 space-y-1.5">
                 <div className="font-display text-2xl font-extrabold text-purple-300 tabular-nums">29–32%</div>
                 <div className="font-mono text-[10px] text-slate-400">04 · CIRCUIT &gt; ALG</div>
                 <p className="text-slate-300 text-xs leading-relaxed">
-                  {bi(
-                    'Drosophila wygrywała (29–32%) niezależnie od optymalizatora.',
-                    'Drosophila scored 29–32% across CMA-ES, GA, and ES while MLP hit 0%.'
-                  )}
+                  {t('docs.drosophilaScored2932Across')}
                 </p>
               </div>
             </div>
@@ -1245,10 +1246,7 @@ export const ProjectDocumentationView: React.FC = () => {
                 <h2 className="font-display text-sm sm:text-base font-bold text-white flex items-center gap-2">
                   <Brain className="w-4 h-4 text-purple-400 shrink-0" />
                   <span>
-                    {bi(
-                      'Fly-Cortex: Rozdzielenie Rozumowania od Wiedzy',
-                      'Fly-Cortex: Decoupling Reasoning from Frozen Knowledge'
-                    )}
+                    {t('docs.flyCortexDecouplingReasoningFrom')}
                   </span>
                 </h2>
               </div>
@@ -1280,7 +1278,7 @@ export const ProjectDocumentationView: React.FC = () => {
                 <svg viewBox="0 0 880 156" className="w-full h-auto" role="img" aria-label="Fly-Cortex 3-Layer Connectome Circuit">
                   <rect x="14" y="20" width="230" height="84" rx="12" fill="#064E3B" fillOpacity="0.45" stroke="#10B981" strokeWidth="1.5" />
                   <text x="30" y="45" fill="#6EE7B7" fontSize="12" fontWeight="700" fontFamily="Bricolage Grotesque, sans-serif">1. T4/T5 LTC Perception</text>
-                  <text x="30" y="65" fill="#CBD5E1" fontSize="10.5" fontFamily="Plus Jakarta Sans, sans-serif">Ciekła stała czasowa τ(x)</text>
+                  <text x="30" y="65" fill="#CBD5E1" fontSize="10.5" fontFamily="Plus Jakarta Sans, sans-serif">{t('docs.liquidTimeConstantX')}</text>
                   <text x="30" y="85" fill="#A7F3D0" fontSize="10" fontFamily="JetBrains Mono, monospace">16-Ray ΔI + Edge Motion</text>
                   <path d="M 129 104 L 129 138 L 745 138 L 745 106" fill="none" stroke="#EF4444" strokeWidth="1.8" strokeDasharray="5 4" />
                   <rect x="330" y="126" width="230" height="22" rx="6" fill="#450A0A" stroke="#EF4444" />
@@ -1290,12 +1288,12 @@ export const ProjectDocumentationView: React.FC = () => {
                   <line x1="244" y1="62" x2="296" y2="62" stroke="#34D399" strokeWidth="2" />
                   <rect x="296" y="20" width="268" height="84" rx="12" fill="#3B0764" fillOpacity="0.55" stroke="#A855F7" strokeWidth="1.5" />
                   <text x="312" y="45" fill="#E9D5FF" fontSize="12" fontWeight="700" fontFamily="Bricolage Grotesque, sans-serif">2. Frozen FlyHash APL Index</text>
-                  <text x="312" y="65" fill="#CBD5E1" fontSize="10.5" fontFamily="Plus Jakarta Sans, sans-serif">Zamrożony indeks pojęć (0-backprop)</text>
+                  <text x="312" y="65" fill="#CBD5E1" fontSize="10.5" fontFamily="Plus Jakarta Sans, sans-serif">{t('docs.frozenConceptIndex0Backprop')}</text>
                   <text x="312" y="85" fill="#D8B4FE" fontSize="10" fontFamily="JetBrains Mono, monospace">16-Slot Sparse Top-25% k-WTA</text>
                   <line x1="564" y1="62" x2="616" y2="62" stroke="#A855F7" strokeWidth="2" />
                   <rect x="616" y="20" width="250" height="84" rx="12" fill="#451A03" fillOpacity="0.55" stroke="#F59E0B" strokeWidth="1.5" />
                   <text x="632" y="45" fill="#FDE68A" fontSize="12" fontWeight="700" fontFamily="Bricolage Grotesque, sans-serif">3. Plastic Executive + DA</text>
-                  <text x="632" y="65" fill="#CBD5E1" fontSize="10.5" fontFamily="Plus Jakarta Sans, sans-serif">Rozumowanie i plastyczność online</text>
+                  <text x="632" y="65" fill="#CBD5E1" fontSize="10.5" fontFamily="Plus Jakarta Sans, sans-serif">{t('docs.reasoningOnlinePlasticity')}</text>
                   <text x="632" y="85" fill="#FCD34D" fontSize="10" fontFamily="JetBrains Mono, monospace">Δw = η · DA(t) · pre · post</text>
                 </svg>
               </div>
@@ -1308,10 +1306,7 @@ export const ProjectDocumentationView: React.FC = () => {
               <h2 className="font-display text-sm sm:text-base font-bold text-white flex items-center gap-2">
                 <Flame className="w-4 h-4 text-rose-400 shrink-0" />
                 <span>
-                  {bi(
-                    'Dowody Balistyczne (Easy..Insane) vs Overdrive',
-                    'Ballistic Solvability Proofs vs Overdrive'
-                  )}
+                  {t('docs.ballisticSolvabilityProofsVsOverdriv')}
                 </span>
               </h2>
               <span className="font-mono text-[11px] text-slate-400">
@@ -1323,12 +1318,12 @@ export const ProjectDocumentationView: React.FC = () => {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-white/[0.08] text-slate-400 font-mono text-[11px]">
-                    <th className="py-2.5 px-3">{bi('Scenariusz', 'Scenario')}</th>
-                    <th className="py-2.5 px-3">{bi('Szczelina', 'Gap')}</th>
-                    <th className="py-2.5 px-3">{bi('Prędkość', 'Speed')}</th>
+                    <th className="py-2.5 px-3">{t('docs.scenario')}</th>
+                    <th className="py-2.5 px-3">{t('docs.gap')}</th>
+                    <th className="py-2.5 px-3">{t('docs.speed')}</th>
                     <th className="py-2.5 px-3">dt</th>
-                    <th className="py-2.5 px-3">{bi('Margines Wznoszenia', 'Climb Slack')}</th>
-                    <th className="py-2.5 px-3">{bi('Margines Nurkowania', 'Dive Slack')}</th>
+                    <th className="py-2.5 px-3">{t('docs.climbSlack')}</th>
+                    <th className="py-2.5 px-3">{t('docs.diveSlack')}</th>
                     <th className="py-2.5 px-3">Status</th>
                   </tr>
                 </thead>
@@ -1380,7 +1375,7 @@ export const ProjectDocumentationView: React.FC = () => {
                         <td className="py-3 px-3">
                           {p.solvable ? (
                             <span className="inline-flex items-center gap-1 text-emerald-300 text-[10.5px] font-semibold">
-                              <ShieldCheck className="w-3.5 h-3.5" /> {bi('PRZECHODNI', 'PASSABLE')}
+                              <ShieldCheck className="w-3.5 h-3.5" /> {t('docs.passable')}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-rose-300 text-[10.5px] font-semibold">
@@ -1404,10 +1399,7 @@ export const ProjectDocumentationView: React.FC = () => {
                 <span>8-Tier Dynamic WebGPU WGSL</span>
               </div>
               <p className="text-slate-400 text-[12px] leading-relaxed">
-                {bi(
-                  'Automatyczny routing TIER_8_12 → DENSE_64 ze Startup Auto-Tunerem i ochroną TDR (<800ms).',
-                  'Auto-routes TIER_8_12 → DENSE_64 with startup GPU profiling & <800ms TDR dispatch guard.'
-                )}
+                {t('docs.autoRoutesFastRegisterDeep')}
               </p>
             </div>
             <div className="p-4 sm:p-5 space-y-1.5">
@@ -1416,10 +1408,7 @@ export const ProjectDocumentationView: React.FC = () => {
                 <span>Deterministic Mulberry32 · Float64 Parity</span>
               </div>
               <p className="text-slate-400 text-[12px] leading-relaxed">
-                {bi(
-                  'Identyczne trajektorie przy prędkościach 1x..MAX oraz na każdym urządzeniu.',
-                  'Bit-identical Euler kinematics & trajectories from 1x..MAX across desktop & mobile.'
-                )}
+                {t('docs.bitIdenticalEulerKinematicsTrajector')}
               </p>
             </div>
           </div>

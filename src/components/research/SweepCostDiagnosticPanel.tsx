@@ -46,7 +46,7 @@ export const SweepCostDiagnosticPanel = memo(function SweepCostDiagnosticPanel({
   onChangeConfig,
   onImportJsonDataset,
 }: SweepCostDiagnosticPanelProps) {
-  const { bi } = useLanguage();
+  const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [exportScope, setExportScope] = useState<ColabExportScope>('REMAINING');
   const [maxRuntimeMin, setMaxRuntimeMin] = useState<number>(55);
@@ -89,18 +89,16 @@ export const SweepCostDiagnosticPanel = memo(function SweepCostDiagnosticPanel({
       checkpointEvery: 50,
     });
     setLastExportNote(
-      bi(
-        `Pobrano ${summary.filename} (${summary.exportedTrialsCount.toLocaleString()} prób${
-          summary.skippedCachedCount > 0
-            ? `, pominięto ${summary.skippedCachedCount.toLocaleString()} z cache`
-            : ''
-        })`,
-        `Downloaded ${summary.filename} (${summary.exportedTrialsCount.toLocaleString()} trials${
-          summary.skippedCachedCount > 0
-            ? `, skipped ${summary.skippedCachedCount.toLocaleString()} cached`
-            : ''
-        })`
-      )
+      summary.skippedCachedCount > 0
+        ? t('research.downloadedColabWithSkipped', {
+            filename: summary.filename,
+            count: summary.exportedTrialsCount.toLocaleString(),
+            skipped: summary.skippedCachedCount.toLocaleString(),
+          })
+        : t('research.downloadedColab', {
+            filename: summary.filename,
+            count: summary.exportedTrialsCount.toLocaleString(),
+          })
     );
   };
 
@@ -115,10 +113,12 @@ export const SweepCostDiagnosticPanel = memo(function SweepCostDiagnosticPanel({
               : 'border-emerald-500/35 bg-emerald-500/5'
           }`}
         >
-          <div className="flex items-center justify-between text-[11px] text-slate-400">
-            <span className="inline-flex items-center gap-1.5 font-medium text-slate-200 truncate">
+          <div className="flex items-center justify-between gap-2 text-[11px] text-slate-400">
+            <span className="inline-flex min-w-0 items-center gap-1.5 font-medium text-slate-200 truncate">
               <Cpu className="h-3.5 w-3.5 text-cyan-400 shrink-0" aria-hidden="true" />
-              {bi('Lokalnie', 'Local')} · {estimate.activeLocalModeLabel}
+              <span className="truncate">
+                {t('research.local')} · {estimate.activeLocalModeLabel}
+              </span>
             </span>
             <span className="font-mono text-[10px] text-cyan-300 shrink-0 tabular-nums">
               {hasLiveRate ? '' : '~'}
@@ -133,10 +133,10 @@ export const SweepCostDiagnosticPanel = memo(function SweepCostDiagnosticPanel({
             {formatDurationCompact(estimate.localEstSec)}
           </div>
           <div className="mt-0.5 font-mono text-[10px] text-slate-400 tabular-nums">
-            {estimate.remainingTrials.toLocaleString()} {bi('prób', 'trials')} ·{' '}
+            {estimate.remainingTrials.toLocaleString()} {t('research.trials')} ·{' '}
             {hasLiveRate
-              ? bi('kalibracja na żywo', 'live measured')
-              : bi('estymacja analityczna', 'analytical est.')}
+              ? t('research.liveMeasured')
+              : t('research.analyticalEst')}
           </div>
         </div>
 
@@ -208,13 +208,13 @@ export const SweepCostDiagnosticPanel = memo(function SweepCostDiagnosticPanel({
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              {bi('Pełna siatka', 'Full Grid')} ({estimate.activeTrials.toLocaleString()})
+              {t('research.fullGrid')} ({estimate.activeTrials.toLocaleString()})
             </button>
           </div>
 
           <div className="flex items-center gap-1.5 text-[11px]">
             <span className="text-slate-400">
-              {bi('Limit Colab:', 'Colab cap:')}
+              {t('research.colabCap')}
             </span>
             {RUNTIME_PRESETS.map((mins) => (
               <button
@@ -253,10 +253,7 @@ export const SweepCostDiagnosticPanel = memo(function SweepCostDiagnosticPanel({
               <button
                 type="button"
                 onClick={() => onChangeConfig(buildQuickTrimConfig(sweepConfig))}
-                title={bi(
-                  'Zawęża budżet generacji, powtórzeń i populacji do pilota <15 min bez usuwania architektur',
-                  'Trims generation budget, repeats & pop size for a <15m local pilot without removing architectures'
-                )}
+                title={t('research.trimsGenerationBudgetRepeatsPop')}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5 text-[11px] font-medium text-amber-200 cursor-pointer hover:bg-amber-500/20"
               >
                 <Scissors className="h-3.5 w-3.5" aria-hidden="true" />
@@ -269,7 +266,7 @@ export const SweepCostDiagnosticPanel = memo(function SweepCostDiagnosticPanel({
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-200 cursor-pointer hover:border-cyan-500/50 hover:text-cyan-200"
             >
               <Upload className="h-3.5 w-3.5" aria-hidden="true" />
-              {bi('Importuj JSON z Colab', 'Import Colab JSON')}
+              {t('research.importColabJson')}
             </button>
           </div>
 
@@ -284,7 +281,7 @@ export const SweepCostDiagnosticPanel = memo(function SweepCostDiagnosticPanel({
             }`}
           >
             <Download className="h-3.5 w-3.5" aria-hidden="true" />
-            {bi('Pobierz notebook .ipynb', 'Export .ipynb Notebook')}
+            {t('research.exportIpynbNotebook')}
           </button>
         </div>
 
@@ -299,7 +296,7 @@ export const SweepCostDiagnosticPanel = memo(function SweepCostDiagnosticPanel({
       {estimate.bottlenecks.length > 0 && (
         <div className="space-y-1.5">
           <div className="text-[11px] font-medium text-slate-400">
-            {bi('Główne czynniki wydłużające czas', 'Primary Time Bottlenecks')}
+            {t('research.primaryTimeBottlenecks')}
           </div>
           {estimate.bottlenecks.slice(0, 3).map((item, idx) => (
             <div

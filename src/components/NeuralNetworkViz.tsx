@@ -10,15 +10,12 @@ interface NeuralNetworkVizProps {
 }
 
 export function NeuralNetworkViz({ snapshot, perceptionMode }: NeuralNetworkVizProps) {
-  const { lang, bi } = useLanguage();
+  const { lang, t } = useLanguage();
   const isCompoundEye = perceptionMode === 'COMPOUND_EYE_PIXELS';
   if (!snapshot) {
     return (
       <div className="flex h-60 items-center justify-center text-sm text-slate-400">
-        {bi(
-          'Oczekiwanie na telemetrię sieci neuronowej...',
-          'Waiting for live neural network telemetry...'
-        )}
+        {t('training.waitingForLiveNeuralNetwork')}
       </div>
     );
   }
@@ -112,7 +109,7 @@ export function NeuralNetworkViz({ snapshot, perceptionMode }: NeuralNetworkVizP
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <h2 className="font-display text-sm sm:text-base font-semibold text-slate-100 whitespace-nowrap">
-              {bi('Mózg Lidera', 'Leader Brain')}
+              {t('training.leaderBrain')}
             </h2>
             {archCatalog && (
               <span
@@ -150,8 +147,8 @@ export function NeuralNetworkViz({ snapshot, perceptionMode }: NeuralNetworkVizP
             }`}
           >
             {snapshot.shouldFlap
-              ? bi('SKOK (FLAP)', 'FLAP WINGS')
-              : bi('LOT (GLIDE)', 'GLIDING')}
+              ? t('training.flapWings')
+              : t('training.gliding')}
           </div>
           <div className="mt-0.5 text-[10.5px] text-slate-500">
             out: {snapshot.output >= 0 ? '+' : ''}
@@ -165,35 +162,20 @@ export function NeuralNetworkViz({ snapshot, perceptionMode }: NeuralNetworkVizP
           <span className="text-emerald-300 font-semibold">
             {snapshot.architecture === 'PONDER_ACT'
               ? snapshot.reasoningStepInfo.ponderSteps > 1
-                ? bi(
-                    `SYSTEM 2 (${snapshot.reasoningStepInfo.ponderSteps}/${snapshot.reasoningStepInfo.maxSteps} kroków)`,
-                    `SYSTEM 2 (${snapshot.reasoningStepInfo.ponderSteps}/${snapshot.reasoningStepInfo.maxSteps} steps)`
-                  )
-                : bi(
-                    `SYSTEM 1 (1/${snapshot.reasoningStepInfo.maxSteps} krok)`,
-                    `SYSTEM 1 (1/${snapshot.reasoningStepInfo.maxSteps} step)`
-                  )
+                ? t('training.system2Steps', { ponderSteps: snapshot.reasoningStepInfo.ponderSteps, maxSteps: snapshot.reasoningStepInfo.maxSteps })
+                : t('training.system11Step', { maxSteps: snapshot.reasoningStepInfo.maxSteps })
               : snapshot.architecture === 'LOOPED_REASONER'
-                ? bi(
-                    `LOOPED CoT (${snapshot.reasoningStepInfo.ponderSteps} kroków)`,
-                    `LOOPED CoT (${snapshot.reasoningStepInfo.ponderSteps} steps)`
-                  )
+                ? t('training.loopedCotSteps', { ponderSteps: snapshot.reasoningStepInfo.ponderSteps })
                 : snapshot.architecture === 'LATENT_ROLLOUT'
-                  ? bi('ROLLOUT WYOBRAŹNI', 'IMAGINATION ROLLOUT')
+                  ? t('training.imaginationRollout')
                   : 'SELECTIVE SSM / MinGRU'}
           </span>
           <span className="text-slate-300">
             {snapshot.reasoningStepInfo.rolloutAdvantage !== undefined
               ? `ΔV(SKOK−CZEKAJ)=${snapshot.reasoningStepInfo.rolloutAdvantage >= 0 ? '+' : ''}${snapshot.reasoningStepInfo.rolloutAdvantage.toFixed(2)}`
               : snapshot.reasoningStepInfo.ssmGateMean !== undefined
-                ? bi(
-                    `Bramka z_t=${snapshot.reasoningStepInfo.ssmGateMean.toFixed(2)}`,
-                    `Gate z_t=${snapshot.reasoningStepInfo.ssmGateMean.toFixed(2)}`
-                  )
-                : bi(
-                    `Głębokość ${snapshot.reasoningStepInfo.ponderSteps}/${snapshot.reasoningStepInfo.maxSteps}`,
-                    `Depth ${snapshot.reasoningStepInfo.ponderSteps}/${snapshot.reasoningStepInfo.maxSteps}`
-                  )}
+                ? t('training.gateZT', { val0: snapshot.reasoningStepInfo.ssmGateMean.toFixed(2) })
+                : t('training.depth', { ponderSteps: snapshot.reasoningStepInfo.ponderSteps, maxSteps: snapshot.reasoningStepInfo.maxSteps })}
           </span>
         </div>
       )}
@@ -216,29 +198,26 @@ export function NeuralNetworkViz({ snapshot, perceptionMode }: NeuralNetworkVizP
         <div className="mt-2 rounded-lg border border-amber-500/35 bg-[#0B1120] px-2.5 py-2 font-mono text-[10px] tabular-nums space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="font-semibold text-amber-300">
-              {bi(
-                `ROUTER HYBRID MoE (Aktywne bloki: ${1 + hybridTelemetry.activeExperts.length}/4)`,
-                `HYBRID MoE ROUTER (Active blocks: ${1 + hybridTelemetry.activeExperts.length}/4)`
-              )}
+              {t('training.hybridMoeRouterActiveBlocks', { activeExperts: 1 + hybridTelemetry.activeExperts.length })}
             </span>
             <span className="text-slate-300">
-              {Math.round(hybridTelemetry.avgFlopsPerFrame)} {bi('FLOPs/kl · Zatwierdzone:', 'FLOPs/f · Approved:')}{' '}
+              {Math.round(hybridTelemetry.avgFlopsPerFrame)} {t('training.flopsFApproved')}{' '}
               <span className="text-emerald-300 font-bold">
                 {hybridTelemetry.committedExpertsCount ?? 0}
               </span>{' '}
-              · {bi('Odrzucone (Rollback):', 'Rolled back:')}{' '}
+              · {t('training.rolledBack')}{' '}
               <span className="text-rose-300 font-bold">
                 {hybridTelemetry.rollbackCount}
               </span>
             </span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-2 gap-1.5">
             {(
               [
-                { key: 'MLP', label: bi('1. Rdzeń MLP', '1. MLP Core'), color: '#3B82F6' },
-                { key: 'LTC_FLY', label: bi('2. LTC Fly (Czas)', '2. LTC Fly (ODE)'), color: '#10B981' },
-                { key: 'SELECTIVE_SSM', label: bi('3. MinGRU (Pamięć)', '3. MinGRU (SSM)'), color: '#06B6D4' },
-                { key: 'PONDER_ACT', label: bi('4. Ponder (System 2)', '4. Ponder (Sys-2)'), color: '#F97316' },
+                { key: 'MLP', label: t('training.k1MlpCore'), color: '#3B82F6' },
+                { key: 'LTC_FLY', label: '2. LTC Fly (ODE)', color: '#10B981' },
+                { key: 'SELECTIVE_SSM', label: '3. MinGRU (SSM)', color: '#06B6D4' },
+                { key: 'PONDER_ACT', label: t('training.k4PonderSys2'), color: '#F97316' },
               ] as const
             ).map((blk) => {
               const weight = hybridTelemetry.routerWeights[blk.key] ?? 0;
@@ -278,18 +257,12 @@ export function NeuralNetworkViz({ snapshot, perceptionMode }: NeuralNetworkVizP
                   <div className="text-[9px] text-slate-400 flex items-center justify-between">
                     <span>
                       {isCore
-                        ? bi('Zawsze aktywny', 'Always active')
+                        ? t('training.alwaysActive')
                         : inTrial
-                          ? bi(
-                              `Okres próbny (${hybridTelemetry.trialGensRemaining}g)`,
-                              `Trial window (${hybridTelemetry.trialGensRemaining}g)`
-                            )
+                          ? t('training.trialWindowG', { trialGensRemaining: hybridTelemetry.trialGensRemaining })
                           : active
-                            ? bi(
-                                `Zatwierdzony α=${(alpha ?? 0).toFixed(2)}`,
-                                `Committed α=${(alpha ?? 0).toFixed(2)}`
-                              )
-                            : bi('Uśpiony (0 FLOPs)', 'Dormant (0 FLOPs)')}
+                            ? t('training.committed', { val0: (alpha ?? 0).toFixed(2) })
+                            : t('training.dormant0Flops')}
                     </span>
                   </div>
                 </div>
@@ -540,7 +513,7 @@ export function NeuralNetworkViz({ snapshot, perceptionMode }: NeuralNetworkVizP
                 snapshot.shouldFlap ? 'fill-emerald-400' : 'fill-slate-400'
               }`}
             >
-              {snapshot.shouldFlap ? bi('Skok', 'Flap') : bi('Lot', 'Glide')}
+              {snapshot.shouldFlap ? t('training.flap2') : t('training.glide')}
             </text>
           </g>
         </svg>
@@ -549,19 +522,19 @@ export function NeuralNetworkViz({ snapshot, perceptionMode }: NeuralNetworkVizP
           {snapshot.morphogenesis?.enabled ? (
             <>
               <span className="text-cyan-300">
-                {bi('Cyjan: Rdzeń zmielinizowany', 'Cyan node: Myelinated core')}
+                {t('training.cyanNodeMyelinatedCore')}
               </span>
               <span className="text-amber-300">
-                {bi('Bursztyn: Nowy plastyczny neuron', 'Amber: Plastic newborn')}
+                {t('training.amberPlasticNewborn')}
               </span>
               <span className="text-slate-500">
-                {bi('Przerywane: Uśpione / Przycięte', 'Dashed: Dormant / Pruned')}
+                {t('training.dashedDormantPruned')}
               </span>
             </>
           ) : (
             <>
-              <span>{bi('Zielone synapsy: pobudzające (+)', 'Green edges: excitatory (+)')}</span>
-              <span>{bi('Czerwone synapsy: hamujące (−)', 'Red edges: inhibitory (−)')}</span>
+              <span>{t('training.greenEdgesExcitatory')}</span>
+              <span>{t('training.redEdgesInhibitory')}</span>
             </>
           )}
         </div>

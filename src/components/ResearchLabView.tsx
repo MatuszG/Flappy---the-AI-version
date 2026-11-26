@@ -53,6 +53,7 @@ import { ResearchReportPanel } from './research/ResearchReportPanel';
 import { ResearchScalingCharts } from './research/ResearchScalingCharts';
 import { SweepCostDiagnosticPanel } from './research/SweepCostDiagnosticPanel';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getPowerProfileText } from '../i18n/catalog';
 import {
   compareBestTrial,
   getFastResultInputKey,
@@ -175,7 +176,7 @@ export const ResearchLabView = memo(function ResearchLabView({
   onRaceTrial,
   onGetPerfReport,
 }: ResearchLabViewProps) {
-  const { bi } = useLanguage();
+  const { lang, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<WorkspaceViewTab>('PROTOCOL');
   const [utilityModal, setUtilityModal] = useState<UtilityModalView>(null);
   const [matrixAlgoFilter, setMatrixAlgoFilter] = useState<
@@ -470,10 +471,7 @@ export const ResearchLabView = memo(function ResearchLabView({
         <button
           type="button"
           onClick={() => setUtilityModal('HARDWARE')}
-          title={bi(
-            'Silnik WebGPU/CPU, wątki, obciążenie GPU oraz profil mocy',
-            'WebGPU/CPU compute backend, CPU threads, GPU load & power profile'
-          )}
+          title={t('research.webgpuCpuComputeBackendCpu')}
           className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap cursor-pointer transition-colors ${
             utilityModal === 'HARDWARE'
               ? 'border-cyan-500/60 bg-cyan-500/15 text-cyan-200'
@@ -481,7 +479,7 @@ export const ResearchLabView = memo(function ResearchLabView({
           }`}
         >
           <Cpu className="h-3.5 w-3.5 text-cyan-400 shrink-0" aria-hidden="true" />
-          <span>{bi('Sprzęt & Moc', 'Hardware & Power')}</span>
+          <span>{t('research.hardwarePower')}</span>
           <span className="font-mono text-[10px] text-slate-400 tabular-nums">
             {sweepConfig.computeBackend ?? 'CPU'} · GPU {gpuLoadPct}%
           </span>
@@ -490,10 +488,7 @@ export const ResearchLabView = memo(function ResearchLabView({
         <button
           type="button"
           onClick={() => setUtilityModal('ETA_COLAB')}
-          title={bi(
-            'Szacowany czas lokalny vs Google Colab T4/L4/A100 i eksport .ipynb',
-            'Local vs Google Colab T4/L4/A100 ETA and CUDA .ipynb export'
-          )}
+          title={t('research.localVsGoogleColabT4')}
           className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap cursor-pointer transition-colors ${
             utilityModal === 'ETA_COLAB'
               ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-200'
@@ -511,10 +506,7 @@ export const ResearchLabView = memo(function ResearchLabView({
         <button
           type="button"
           onClick={() => setUtilityModal('HISTORY')}
-          title={bi(
-            'Historia uruchomień i kolejka eksperymentów',
-            'Run history and experiment queue'
-          )}
+          title={t('research.runHistoryAndExperimentQueue')}
           className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap cursor-pointer transition-colors ${
             utilityModal === 'HISTORY'
               ? 'border-amber-500/60 bg-amber-500/15 text-amber-200'
@@ -522,7 +514,7 @@ export const ResearchLabView = memo(function ResearchLabView({
           }`}
         >
           <History className="h-3.5 w-3.5 text-amber-400 shrink-0" aria-hidden="true" />
-          <span>{bi('Historia & Kolejka', 'History & Queue')}</span>
+          <span>{t('research.historyQueue')}</span>
           <span className="font-mono text-[10px] text-slate-400 tabular-nums">
             {runHistory.length}
             {experimentQueue.length > 0 ? ` · Q:${experimentQueue.length}` : ''}
@@ -531,7 +523,7 @@ export const ResearchLabView = memo(function ResearchLabView({
       </div>
 
       <div className="font-mono text-[10.5px] tabular-nums text-slate-400 hidden sm:flex items-center gap-2">
-        <span>{powerPlan.thermalBadge}</span>
+        <span>{getPowerProfileText(lang, powerPlan.modeId).thermalBadge}</span>
         <span className="text-slate-700">·</span>
         <span>
           {sweepConfig.workerThreads === 0
@@ -591,16 +583,16 @@ export const ResearchLabView = memo(function ResearchLabView({
             <div
               className="flex flex-wrap items-center gap-1"
               role="tablist"
-              aria-label={bi('Widoki laboratorium badawczego', 'Research lab views')}
+              aria-label={t('research.researchLabViews')}
             >
               {(
                 [
-                  { id: 'PROTOCOL', label: bi('Protokół Badawczy', 'Research Protocol') },
-                  { id: 'MATRIX_SCENARIO', label: bi('Topologia × Scenariusz', 'Topology × Scenario') },
-                  { id: 'MATRIX_ALGO', label: bi('Algorytm × Topologia', 'AI × Topology') },
-                  { id: 'CHARTS', label: bi('Wykresy Skalowania', 'Scaling Charts') },
-                  { id: 'TABLES', label: bi('Tabele Porównawcze', 'Comparison Tables') },
-                  { id: 'REPORT', label: bi('Raport & Eksport', 'Report & Export') },
+                  { id: 'PROTOCOL', label: t('research.researchProtocol') },
+                  { id: 'MATRIX_SCENARIO', label: t('research.topologyScenario') },
+                  { id: 'MATRIX_ALGO', label: t('research.aiTopology') },
+                  { id: 'CHARTS', label: t('research.scalingCharts') },
+                  { id: 'TABLES', label: t('research.comparisonTables') },
+                  { id: 'REPORT', label: t('research.reportExport') },
                 ] as const
               ).map((tab) => {
                 const active = activeTab === tab.id;
@@ -627,7 +619,7 @@ export const ResearchLabView = memo(function ResearchLabView({
 
             <div className="flex items-center gap-2 font-mono text-[11px] tabular-nums text-slate-400">
               <span>
-                {findings.totalTrials.toLocaleString()} {bi('prób', 'trials')}
+                {findings.totalTrials.toLocaleString()} {t('research.trials')}
               </span>
               <span className="text-slate-600">·</span>
               <span className="text-emerald-300">
@@ -715,11 +707,8 @@ export const ResearchLabView = memo(function ResearchLabView({
       {/* Modal Views triggered from Header Utility Icon Dock */}
       <LabUtilityModal
         open={utilityModal === 'HARDWARE'}
-        title={bi('Sprzęt & Moc', 'Hardware & Power')}
-        subtitle={bi(
-          'Silnik WebGPU/CPU, wątki CPU, suwak obciążenia GPU (z ochroną TDR) oraz profil mocy',
-          'WebGPU/CPU backend, CPU thread cap, live GPU Load % (with TDR guard) & power profile'
-        )}
+        title={t('research.hardwarePower')}
+        subtitle={t('research.webgpuCpuBackendCpuThread')}
         icon={<Cpu className="h-4 w-4 text-cyan-400" aria-hidden="true" />}
         maxWidthClass="max-w-xl"
         onClose={() => setUtilityModal(null)}
@@ -736,11 +725,8 @@ export const ResearchLabView = memo(function ResearchLabView({
 
       <LabUtilityModal
         open={utilityModal === 'ETA_COLAB'}
-        title={bi('ETA & Eksport Google Colab CUDA', 'ETA & Google Colab CUDA Export')}
-        subtitle={bi(
-          'Szacunek czasu lokalnego vs chmura CUDA (T4/L4/A100) oraz eksport/import wyników',
-          'Local vs cloud CUDA ETA (T4/L4/A100) and notebook export / JSON import'
-        )}
+        title={t('research.etaGoogleColabCudaExport')}
+        subtitle={t('research.localVsCloudCudaEta')}
         icon={<Gauge className="h-4 w-4 text-emerald-400" aria-hidden="true" />}
         maxWidthClass="max-w-3xl"
         onClose={() => setUtilityModal(null)}
@@ -759,11 +745,8 @@ export const ResearchLabView = memo(function ResearchLabView({
 
       <LabUtilityModal
         open={utilityModal === 'HISTORY'}
-        title={bi('Historia & Kolejka Eksperymentów', 'Run History & Experiment Queue')}
-        subtitle={bi(
-          'Zapisane uruchomienia oraz kolejka serii badawczych',
-          'Saved runs and experiment queue'
-        )}
+        title={t('research.runHistoryExperimentQueue')}
+        subtitle={t('research.savedRunsAndExperimentQueue')}
         icon={<History className="h-4 w-4 text-amber-400" aria-hidden="true" />}
         maxWidthClass="max-w-4xl"
         onClose={() => setUtilityModal(null)}

@@ -13,7 +13,7 @@ export function TopBar({
   onSelectMode,
   onOpenHowItWorks,
 }: TopBarProps) {
-  const { lang, toggleLang, bi } = useLanguage();
+  const { lang, toggleLang, t } = useLanguage();
 
   const navItems: {
     id: GameMode;
@@ -24,29 +24,29 @@ export function TopBar({
   }[] = [
     {
       id: 'VS_AI',
-      label: bi('Graj', 'Play'),
-      shortLabel: bi('Graj', 'Play'),
+      label: t('nav.play'),
+      shortLabel: t('nav.play'),
       activeText: 'text-amber-300',
       accentBar: 'bg-amber-400',
     },
     {
       id: 'TRAINING',
-      label: bi('Trening AI', 'Training Lab'),
-      shortLabel: bi('Trening', 'Training'),
+      label: t('nav.trainingLab'),
+      shortLabel: t('nav.training'),
       activeText: 'text-cyan-300',
       accentBar: 'bg-cyan-400',
     },
     {
       id: 'RESEARCH',
-      label: bi('Badania', 'Research'),
-      shortLabel: bi('Badania', 'Research'),
+      label: t('nav.research'),
+      shortLabel: t('nav.research'),
       activeText: 'text-emerald-300',
       accentBar: 'bg-emerald-400',
     },
     {
       id: 'DOCS',
-      label: bi('Dokumentacja', 'Docs'),
-      shortLabel: bi('Docs', 'Docs'),
+      label: t('nav.docs'),
+      shortLabel: t('nav.docs2'),
       activeText: 'text-purple-300',
       accentBar: 'bg-purple-400',
     },
@@ -97,13 +97,13 @@ export function TopBar({
           <button
             type="button"
             onClick={onOpenHowItWorks}
-            title={bi('Jak to działa', 'How It Works')}
-            aria-label={bi('Jak to działa', 'How It Works')}
+            title={t('nav.howItWorks')}
+            aria-label={t('nav.howItWorks')}
             className="inline-flex h-8 sm:h-9 items-center gap-1.5 rounded-lg border border-white/[0.09] bg-[#0D1018] px-2.5 sm:px-3 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-white/25 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
           >
             <HelpCircle className="h-3.5 w-3.5 text-slate-400 shrink-0" aria-hidden="true" />
             <span className="hidden sm:inline">
-              {bi('Pomoc', 'Guide')}
+              {t('nav.guide')}
             </span>
           </button>
 
@@ -112,13 +112,13 @@ export function TopBar({
             onClick={toggleLang}
             title={
               lang === 'pl'
-                ? 'Switch to English (EN)'
-                : 'Przełącz na język polski (PL)'
+                ? t('nav.switchToEnglishTitle')
+                : t('nav.switchToPolishTitle')
             }
             aria-label={
               lang === 'pl'
-                ? 'Switch interface language to English'
-                : 'Zmień język interfejsu na polski'
+                ? t('nav.switchToEnglishAria')
+                : t('nav.switchToPolishAria')
             }
             className="inline-flex h-8 sm:h-9 items-center gap-1.5 rounded-lg border border-white/[0.09] bg-[#0D1018] px-2.5 font-mono text-[11px] font-semibold text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-cyan-500/50 hover:bg-[#141824] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
           >

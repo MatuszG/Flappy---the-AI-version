@@ -34,6 +34,7 @@ import type {
   SimulationTelemetry,
 } from '../engine/types';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getArchText } from '../i18n/catalog';
 
 interface ArenaLeaderboardPanelProps {
   config: EvolutionConfig;
@@ -48,7 +49,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
   onUpdateConfig,
   onSelectDifficulty,
 }) => {
-  const { lang, bi } = useLanguage();
+  const { lang, t } = useLanguage();
   const [showSpeciesPicker, setShowSpeciesPicker] = useState(false);
   const [showArchCatalog, setShowArchCatalog] = useState(false);
   const [showArenaBoard, setShowArenaBoard] = useState(true);
@@ -89,6 +90,10 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
         const curB = b.currentGenBestScore ?? 0;
         if (b.bestScore !== a.bestScore) return b.bestScore - a.bestScore;
         if (curB !== curA) return curB - curA;
+        const aliveFlagA = (a.aliveCount ?? 0) > 0 ? 1 : 0;
+        const aliveFlagB = (b.aliveCount ?? 0) > 0 ? 1 : 0;
+        if (aliveFlagB !== aliveFlagA) return aliveFlagB - aliveFlagA;
+        if (b.bestFitness !== a.bestFitness) return b.bestFitness - a.bestFitness;
         return (b.aliveCount ?? 0) - (a.aliveCount ?? 0);
       });
     }
@@ -179,7 +184,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
           <div
             className="grid grid-cols-2 sm:inline-flex rounded-lg border border-slate-800 bg-slate-950/90 p-1 gap-1 shrink-0"
             role="group"
-            aria-label={bi('Tryb treningu', 'Training topology mode')}
+            aria-label={t('arena.trainingTopologyMode')}
           >
             <button
               type="button"
@@ -212,7 +217,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                   !isArenaMode ? 'text-slate-950' : 'text-cyan-400'
                 }`}
               />
-              <span>{bi('Pojedyncza Sieć', 'Single Network')}</span>
+              <span>{t('arena.singleNetwork')}</span>
             </button>
           </div>
 
@@ -230,7 +235,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                 />
                 <span className="truncate">{activeArchInfo?.shortLabel ?? activeArch}</span>
                 <span className="font-mono text-[10px] font-normal text-slate-400">
-                  ({bi('Wybierz z 12', 'Pick 1 of 12')})
+                  ({t('arena.pick1Of12')})
                 </span>
               </span>
               {showArchCatalog ? (
@@ -250,7 +255,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                     : 'bg-slate-900/90 hover:bg-slate-800 border-slate-700/90 text-slate-200'
                 }`}
               >
-                <span>{bi('Skład Areny', 'Lineup')}</span>
+                <span>{t('arena.lineup')}</span>
                 {showSpeciesPicker ? (
                   <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
                 ) : (
@@ -264,7 +269,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                   onClick={handleSelectAll12Arena}
                   className="inline-flex min-h-[38px] items-center px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-xs font-semibold text-emerald-300 whitespace-nowrap cursor-pointer transition-colors"
                 >
-                  {bi('Wszystkie 12', 'All 12')}
+                  {t('arena.all12')}
                 </button>
               )}
 
@@ -275,8 +280,8 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
               >
                 <span>
                   {showArenaBoard
-                    ? bi('Ukryj ranking', 'Hide Board')
-                    : bi('Pokaż ranking', 'Show Board')}
+                    ? t('arena.hideBoard')
+                    : t('arena.showBoard')}
                 </span>
               </button>
             </div>
@@ -289,14 +294,8 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
             <span
               title={
                 solvabilityProof.solvable
-                  ? bi(
-                      `Tor gwarantowany fizycznie: okno dt≥${solvabilityProof.dtMinFrames}kl · zapas wznoszenia +${Math.round(solvabilityProof.climbSlackPx)}px · nurkowania +${Math.round(solvabilityProof.diveSlackPx)}px`,
-                      `Mathematically solvable course: dt≥${solvabilityProof.dtMinFrames}f · climb slack +${Math.round(solvabilityProof.climbSlackPx)}px · dive +${Math.round(solvabilityProof.diveSlackPx)}px`
-                    )
-                  : bi(
-                      `Overdrive poza dowodem balistycznym: deficyt ${Math.round(worstSlackPx)}px`,
-                      `Overdrive beyond ballistic proof: ${Math.round(worstSlackPx)}px deficit`
-                    )
+                  ? t('arena.mathematicallySolvableCourseDtF', { dtMinFrames: solvabilityProof.dtMinFrames, val1: Math.round(solvabilityProof.climbSlackPx), val2: Math.round(solvabilityProof.diveSlackPx) })
+                  : t('arena.overdriveBeyondBallisticProofPx', { val0: Math.round(worstSlackPx) })
               }
               className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 font-mono text-[10.5px] whitespace-nowrap ${
                 solvabilityProof.solvable
@@ -311,10 +310,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
               )}
               <span>
                 {solvabilityProof.solvable
-                  ? bi(
-                      `Przechodni (+${Math.round(worstSlackPx)}px)`,
-                      `Passable (+${Math.round(worstSlackPx)}px)`
-                    )
+                  ? t('arena.passablePx', { val0: Math.round(worstSlackPx) })
                   : `Overdrive (${Math.round(worstSlackPx)}px)`}
               </span>
             </span>
@@ -343,7 +339,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
           <div
             className="grid grid-cols-5 sm:inline-flex rounded-lg border border-slate-800 bg-slate-950/90 p-0.5 gap-0.5"
             role="group"
-            aria-label={bi('Poziom trudności toru', 'Track difficulty')}
+            aria-label={t('arena.trackDifficulty')}
           >
             {CORE_DIFFICULTIES.map((diff) => {
               const meta = DIFFICULTY_META[diff];
@@ -394,10 +390,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                   onUpdateConfig({ overdrivePct: Number(e.target.value) })
                 }
                 className="w-24 accent-rose-500 cursor-pointer"
-                title={bi(
-                  '100% = Granica Insane (+11px zapasu). 120% = Extra Insane (-18px deficytu). 145% = Ekstremalny limit fizyczny.',
-                  '100% = Insane boundary (+11px slack). 120% = Extra Insane (-18px deficit). 145% = Extreme physical limit.'
-                )}
+                title={t('arena.k100InsaneBoundary11pxSlack')}
               />
             </div>
           )}
@@ -409,10 +402,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
         <div className="bg-slate-900/80 border border-slate-800 rounded-lg p-3 space-y-2.5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-semibold text-slate-300">
-              {bi(
-                'Skład Areny (wybierz 2–12 architektur):',
-                'Arena Lineup (pick 2–12 architectures):'
-              )}
+              {t('arena.arenaLineupPick212')}
             </span>
             <div className="flex flex-wrap items-center gap-1.5">
               <button
@@ -420,7 +410,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                 onClick={handleSelectAll12Arena}
                 className="text-[11px] px-2.5 py-1 rounded-md border border-emerald-500/40 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 font-semibold cursor-pointer"
               >
-                {bi('Wszystkie 12', 'All 12')}
+                {t('arena.all12')}
               </button>
               <button
                 type="button"
@@ -432,7 +422,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                 }
                 className="text-[11px] px-2.5 py-1 rounded-md border border-cyan-500/35 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 font-medium cursor-pointer"
               >
-                {bi('7 Głównych', '7 Core')}
+                {t('arena.k7Core')}
               </button>
               <button
                 type="button"
@@ -444,7 +434,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                 }
                 className="text-[11px] px-2.5 py-1 rounded-md border border-slate-700 bg-slate-800 text-slate-300 hover:text-white font-medium cursor-pointer"
               >
-                {bi('6 Top', '6 Top')}
+                {t('arena.k6Top')}
               </button>
             </div>
           </div>
@@ -484,10 +474,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
               <div className="flex items-center gap-1.5">
                 <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 <span className="font-semibold text-slate-200">
-                  {bi(
-                    `Klasyfikacja (${snapshots.length} arch.) · Pok #${telemetry.generation}`,
-                    `Leaderboard (${snapshots.length} arch.) · Gen #${telemetry.generation}`
-                  )}
+                  {t('arena.leaderboardArchGen', { snapshots: snapshots.length, generation: telemetry.generation })}
                 </span>
               </div>
               <button
@@ -499,7 +486,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                     : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
                 }`}
               >
-                ★ {bi('Auto-Lider', 'Auto-Leader')} ({ARCHITECTURE_CATALOG[currentLeaderSpecies]?.shortLabel})
+                ★ {t('arena.autoLeader')} ({ARCHITECTURE_CATALOG[currentLeaderSpecies]?.shortLabel})
               </button>
             </div>
 
@@ -513,7 +500,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                 const curScore = snap.currentGenBestScore ?? 0;
                 const isInspected =
                   inspectedSpecies === snap.species ||
-                  (inspectedSpecies === null && rankIdx === 0);
+                  (inspectedSpecies === null && snap.species === currentLeaderSpecies);
 
                 return (
                   <div
@@ -526,7 +513,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                             : snap.species,
                       })
                     }
-                    title={`${info.label}: ${info.summaryPl}\n${info.empiricalVerdictPl}`}
+                    title={`${getArchText(lang, snap.species).fullName}: ${getArchText(lang, snap.species).summary}\n${getArchText(lang, snap.species).verdict}`}
                     className={`cursor-pointer rounded-lg px-3 py-2 sm:p-2.5 border transition-colors ${
                       isInspected
                         ? 'bg-slate-900/95 border-cyan-500/60'
@@ -552,10 +539,10 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                           {alive}/{pop}
                         </span>
                         <span className="text-slate-300">
-                          {bi('Lot', 'Now')} <strong className="text-white">{curScore}</strong>
+                          {t('arena.now')} <strong className="text-white">{curScore}</strong>
                         </span>
                         <span className="text-amber-300">
-                          {bi('Rek', 'Best')} <strong>{snap.bestScore}</strong>
+                          {t('arena.best')} <strong>{snap.bestScore}</strong>
                         </span>
                         <Eye
                           className={`w-3.5 h-3.5 ${
@@ -581,7 +568,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                               {info.shortLabel}
                             </div>
                             <div className="text-[10px] text-slate-400 truncate">
-                              {lang === 'pl' ? info.badgePl : info.badgeEn}
+                              {getArchText(lang, snap.species).badge}
                             </div>
                           </div>
                         </div>
@@ -606,8 +593,8 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                           <Eye className="w-3 h-3" />
                           <span>
                             {isInspected
-                              ? bi('Aktywny', 'Inspecting')
-                              : bi('Podgląd', 'Inspect')}
+                              ? t('arena.inspecting')
+                              : t('arena.inspect')}
                           </span>
                         </button>
                       </div>
@@ -641,10 +628,10 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
 
                         <div className="flex items-center gap-2.5">
                           <span className="text-slate-300">
-                            {bi('Lot', 'Now')} <strong className="text-white">{curScore}</strong>
+                            {t('arena.now')} <strong className="text-white">{curScore}</strong>
                           </span>
                           <span className="text-amber-300">
-                            {bi('Rek', 'Best')} <strong>{snap.bestScore}</strong>
+                            {t('arena.best')} <strong>{snap.bestScore}</strong>
                           </span>
                           <span className="text-[10px] text-slate-500">
                             {info.flopsMultiplier}×
@@ -665,14 +652,11 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
             <div className="flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
               <span className="font-semibold text-slate-200">
-                {bi(
-                  'Wybierz architekturę sieci:',
-                  'Select neural architecture:'
-                )}
+                {t('arena.selectNeuralArchitecture')}
               </span>
             </div>
             <span className="text-cyan-300 font-mono text-[11px] font-semibold">
-              {ARCHITECTURE_CATALOG[activeArch]?.label}
+              {getArchText(lang, activeArch).fullName}
             </span>
           </div>
 
@@ -688,7 +672,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                     onUpdateConfig({ architecture: arch });
                     setShowArchCatalog(false);
                   }}
-                  title={`${info.label}\n${info.summaryPl}\n${info.empiricalVerdictPl}`}
+                  title={`${getArchText(lang, arch).fullName}\n${getArchText(lang, arch).summary}\n${getArchText(lang, arch).verdict}`}
                   className={`p-2.5 rounded-lg border text-left cursor-pointer transition-colors flex flex-col justify-between gap-1.5 ${
                     active
                       ? 'bg-slate-800/95 border-cyan-500/60 shadow-sm'
@@ -710,7 +694,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                     </span>
                   </div>
                   <div className="text-[10px] text-slate-400 line-clamp-1">
-                    {lang === 'pl' ? info.badgePl : info.badgeEn}
+                    {getArchText(lang, arch).badge}
                   </div>
                 </button>
               );

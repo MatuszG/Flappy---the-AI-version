@@ -44,10 +44,15 @@ export type MorphogenesisProfileId =
 export interface MorphogenesisProfile {
   id: MorphogenesisProfileId;
   namePl: string;
+  nameEn: string;
   badgePl: string;
+  badgeEn: string;
   taglinePl: string;
+  taglineEn: string;
   hypothesisPl: string;
+  hypothesisEn: string;
   idealForPl: string;
+  idealForEn: string;
   config: MorphogenesisConfig;
 }
 
@@ -58,13 +63,21 @@ export const MORPHOGENESIS_PROFILES: Record<
   BALANCED_SEEDLING: {
     id: 'BALANCED_SEEDLING',
     namePl: 'Zrównoważona Sadzonka',
+    nameEn: 'Balanced Seedling',
     badgePl: 'Standard Badawczy',
+    badgeEn: 'Research Baseline',
     taglinePl:
       'Start z 50% szerokości, nieniszcząca inicjalizacja i selektywne przycinanie',
+    taglineEn:
+      'Starts at 50% width with zero-disruption growth and selective pruning',
     hypothesisPl:
       'Sieć zaczyna jako kompaktowy zawiązek (50% szerokości). Jeśli utknie na 10 pokoleń, dołącza nowe neurony z wagami zerowymi (Zero-Disruption Init), co zapobiega amnezji dotychczas wyuczonych manewrów.',
+    hypothesisEn:
+      'Starts as a compact seedling (50% width). After 10 stagnant generations it spawns zero-initialized neurons (Zero-Disruption Init) to prevent catastrophic forgetting.',
     idealForPl:
       'Uniwersalna baza porównawcza dla większości scenariuszy (najlepszy balans FLOPs vs sukces).',
+    idealForEn:
+      'Universal baseline across most scenarios (best balance of FLOPs vs solve rate).',
     config: {
       initialWidthRatio: 0.5,
       growthStagnationTrigger: 10,
@@ -84,13 +97,21 @@ export const MORPHOGENESIS_PROFILES: Record<
   AGGRESSIVE_EXPLORER: {
     id: 'AGGRESSIVE_EXPLORER',
     namePl: 'Agresywny Odkrywca',
+    nameEn: 'Aggressive Explorer',
     badgePl: 'Neurogenesis Fast-Track',
+    badgeEn: 'Neurogenesis Fast-Track',
     taglinePl:
       'Wczesna neurogeneza i niska kara za FLOPs dla pokonywania trudnych barier',
+    taglineEn:
+      'Early neurogenesis and low FLOPs penalty to break past hard bottlenecks',
     hypothesisPl:
       'Już po 6 pokoleniach bez rekordu następuje ekspansja pojemności neuronowej. Niska kara za złożoność (0.001) pozwala modelowi swobodnie eksplorować wielowymiarowe trajektorie lotu w trudnych warunkach.',
+    hypothesisEn:
+      'Expands neural capacity after just 6 stagnant generations. Low FLOPs penalty (0.001) lets the network freely explore complex flight trajectories on hard tiers.',
     idealForPl:
-      'Scenariusze ekstremalne (Moving Gaps, Chaos, Insane), gdzie mała sieć grzęźnie w lokalnych minimach.',
+      'Scenariusze ekstremalne (Hard, Insane, Extra Insane), gdzie mała sieć grzęźnie w lokalnych minimach.',
+    idealForEn:
+      'Extreme courses (Hard, Insane, Extra Insane) where compact seeds stall in local optima.',
     config: {
       initialWidthRatio: 0.75,
       growthStagnationTrigger: 6,
@@ -110,13 +131,21 @@ export const MORPHOGENESIS_PROFILES: Record<
   EXTREME_PRUNING: {
     id: 'EXTREME_PRUNING',
     namePl: 'Ekstremalna Oszczędność',
+    nameEn: 'Extreme Pruning',
     badgePl: 'Micro-Edge / TinyML',
+    badgeEn: 'Micro-Edge / TinyML',
     taglinePl:
       'Radykalne przycinanie synaps, silna mielinizacja i rygorystyczna kara FLOPs',
+    taglineEn:
+      'Aggressive synaptic pruning, strong myelination, and strict FLOPs penalty',
     hypothesisPl:
       'Bezwzględna eliminacja synaps o wadze <0.12 i silna mielinizacja (0.50) utwardzająca kluczowe szlaki. Ewolucja zmusza sieć do kondensacji wiedzy do absolutnego minimum wymaganego do nawigacji.',
+    hypothesisEn:
+      'Prunes synapses below 0.12 and applies heavy myelination (0.50) to lock core pathways, forcing knowledge into the smallest viable parameter budget.',
     idealForPl:
       'Wdrażanie na mikrokontrolery (Cortex-M0, ESP32) oraz testowanie limitu minimalnej pojemności informacyjnej.',
+    idealForEn:
+      'Microcontroller targets (Cortex-M0, ESP32) and minimum information-capacity studies.',
     config: {
       initialWidthRatio: 0.35,
       growthStagnationTrigger: 16,
@@ -136,13 +165,21 @@ export const MORPHOGENESIS_PROFILES: Record<
   ADAPTIVE_MOE_ROLLBACK: {
     id: 'ADAPTIVE_MOE_ROLLBACK',
     namePl: 'Dynamiczne MoE z Rollbackiem',
+    nameEn: 'Adaptive MoE + Rollback',
     badgePl: 'Modularna Plastyczność',
+    badgeEn: 'Modular Plasticity',
     taglinePl:
       'Spawnowanie ekspertów warunkowane progiem ROI z automatycznym wycofywaniem',
+    taglineEn:
+      'ROI-gated expert spawning with automatic rollback on stagnant experts',
     hypothesisPl:
       'Gdy sieć osiąga pułap możliwości, tworzy nowego wyspecjalizowanego eksperta MoE. Jeśli w oknie 8 pokoleń nowy moduł nie podniesie wskaźnika sprawności o min. 35%, następuje natychmiastowe cofnięcie struktury.',
+    hypothesisEn:
+      'Spawns a specialist MoE expert when fitness plateaus. If the module fails to lift fitness by at least 35% within 8 generations, the expansion rolls back automatically.',
     idealForPl:
       'Architektury mieszaniny ekspertów (Hybrid MoE) i zmienne warunki dynamiczne z wiatrem bocznym.',
+    idealForEn:
+      'Hybrid MoE architectures and dynamic courses with moving pipes and wind gusts.',
     config: {
       initialWidthRatio: 0.5,
       growthStagnationTrigger: 8,

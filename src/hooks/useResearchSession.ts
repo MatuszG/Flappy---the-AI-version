@@ -52,6 +52,7 @@ import type {
   ResearchSweepConfig,
   ResearchTrialResult,
 } from '../engine/types';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export const DEFAULT_SWEEP_CONFIG: ResearchSweepConfig = {
   algorithms: ['GA', 'DE'],
@@ -104,6 +105,9 @@ export const INITIAL_RESEARCH_PROGRESS: ResearchProgress = {
 };
 
 export function useResearchSession(showNotice: (msg: string) => void) {
+  const { t } = useLanguage();
+  const tRef = useRef(t);
+  tRef.current = t;
   const [sweepConfig, setSweepConfig] =
     useState<ResearchSweepConfig>(DEFAULT_SWEEP_CONFIG);
   const [researchProgress, setResearchProgress] = useState<ResearchProgress>(
@@ -451,7 +455,9 @@ export function useResearchSession(showNotice: (msg: string) => void) {
             } else {
               setQueueActive(false);
               queueActiveRef.current = false;
-              showNotice('All queued experiments completed & archived');
+              showNotice(
+                tRef.current('notices.allQueuedExperimentsCompletedArchive')
+              );
             }
           }
         });
@@ -578,7 +584,7 @@ export function useResearchSession(showNotice: (msg: string) => void) {
                 lastUiFlushMsRef.current = performance.now();
                 pool.start(hydratedConfig, resultsMapRef.current);
                 showNotice(
-                  `Auto-resumed sweep (${saved.results.length} saved trials restored, ${pendingCount} remaining)`
+                  tRef.current('notices.autoResumedSweepSavedTrials', { results: saved.results.length, pendingCount })
                 );
               }
             }, 350);
@@ -942,9 +948,9 @@ export function useResearchSession(showNotice: (msg: string) => void) {
         config: structuredClone(sweepConfig),
       };
       setExperimentQueue((prev) => [...prev, item]);
-      showNotice(`Queued "${item.name}"`);
+      showNotice(t('notices.queued', { name: item.name }));
     },
-    [activeRunLabel, showNotice, sweepConfig]
+    [activeRunLabel, showNotice, sweepConfig, t]
   );
 
   const handleEnqueuePreset = useCallback(
@@ -960,22 +966,28 @@ export function useResearchSession(showNotice: (msg: string) => void) {
         config: preset.buildConfig(structuredClone(sweepConfig)),
       };
       setExperimentQueue((prev) => [...prev, item]);
-      showNotice(`Queued preset "${preset.title}"`);
+      showNotice(
+        t('notices.queuedPreset', { title: preset.title })
+      );
     },
-    [showNotice, sweepConfig]
+    [showNotice, sweepConfig, t]
   );
 
   const handleEnqueueThermalSweep = useCallback(() => {
     const items = buildThermalEfficiencySweepQueue(sweepConfig);
     setExperimentQueue((prev) => [...prev, ...items]);
-    showNotice('Queued 4× Perf/Watt Thermal Calibration Sweep');
-  }, [showNotice, sweepConfig]);
+    showNotice(
+      t('notices.queued4PerfWattThermal')
+    );
+  }, [showNotice, sweepConfig, t]);
 
   const handleEnqueueValidationSuite = useCallback(() => {
     const items = buildValidationAndLoadQueue(sweepConfig);
     setExperimentQueue((prev) => [...prev, ...items]);
-    showNotice('Queued 3-stage Self-Test & Load Suite');
-  }, [showNotice, sweepConfig]);
+    showNotice(
+      t('notices.queued3StageSelfTest')
+    );
+  }, [showNotice, sweepConfig, t]);
 
   const handleRemoveQueueItem = useCallback((id: string) => {
     setExperimentQueue((prev) => prev.filter((q) => q.id !== id));
@@ -1013,8 +1025,10 @@ export function useResearchSession(showNotice: (msg: string) => void) {
   const handleStopQueue = useCallback(() => {
     setQueueActive(false);
     queueActiveRef.current = false;
-    showNotice('Auto-queue stopped (current run will finish normally)');
-  }, [showNotice]);
+    showNotice(
+      t('notices.autoQueueStoppedCurrentRun')
+    );
+  }, [showNotice, t]);
 
   const handleLoadConfigFromHistory = useCallback(
     (cfg: ResearchSweepConfig, label: string) => {
@@ -1022,9 +1036,11 @@ export function useResearchSession(showNotice: (msg: string) => void) {
       sweepConfigRef.current = cloned;
       setSweepConfig(cloned);
       setActiveRunLabel(label);
-      showNotice(`Loaded config from "${label}"`);
+      showNotice(
+        t('notices.loadedConfigFrom', { label })
+      );
     },
-    [showNotice]
+    [showNotice, t]
   );
 
   const handleRequeueFromHistory = useCallback(
@@ -1038,9 +1054,11 @@ export function useResearchSession(showNotice: (msg: string) => void) {
         config: structuredClone(rec.config),
       };
       setExperimentQueue((prev) => [...prev, item]);
-      showNotice(`Re-queued "${rec.name}"`);
+      showNotice(
+        t('notices.reQueued', { name: rec.name })
+      );
     },
-    [showNotice]
+    [showNotice, t]
   );
 
   const handleMarkReviewed = useCallback(
@@ -1087,15 +1105,19 @@ export function useResearchSession(showNotice: (msg: string) => void) {
   const handleClearHistory = useCallback(() => {
     setRunHistory([]);
     void clearRunHistory();
-    showNotice('Cleared archived run history');
-  }, [showNotice]);
+    showNotice(t('notices.clearedArchivedRunHistory'));
+  }, [showNotice, t]);
 
   const handleSaveSessionNow = useCallback(() => {
     flushResultsToState();
     void persistSessionNow().then((ok) => {
-      if (ok) showNotice('Checkpoint saved to IndexedDB');
+      if (ok) {
+        showNotice(
+          t('notices.checkpointSavedToIndexeddb')
+        );
+      }
     });
-  }, [flushResultsToState, persistSessionNow, showNotice]);
+  }, [flushResultsToState, persistSessionNow, showNotice, t]);
 
   const handleClearSavedSession = useCallback(() => {
     researchPoolRef.current?.stop();
@@ -1111,8 +1133,10 @@ export function useResearchSession(showNotice: (msg: string) => void) {
     setAutosavedAt(null);
     setWasInterrupted(false);
     void clearResearchSession();
-    showNotice('Cleared cached research session');
-  }, [showNotice]);
+    showNotice(
+      t('notices.clearedCachedResearchSession')
+    );
+  }, [showNotice, t]);
 
   const mergeRawTrialRecords = useCallback(
     (
@@ -1313,11 +1337,11 @@ export function useResearchSession(showNotice: (msg: string) => void) {
 
       const tag = sourceLabel ? ` (${sourceLabel})` : '';
       showNotice(
-        `Loaded ${addedCount + updatedCount} trials${tag}: +${addedCount} new, ${updatedCount} merged, ${perfectImported} PERFECT`
+        t('notices.loadedTrialsNewMergedPerfect', { updatedCount: addedCount + updatedCount, tag, addedCount, updatedCount2: updatedCount, perfectImported })
       );
       return addedCount + updatedCount;
     },
-    [flushResultsToState, persistSessionNow, showNotice]
+    [flushResultsToState, persistSessionNow, showNotice, t]
   );
 
   const handleImportJsonDataset = useCallback(
@@ -1327,7 +1351,7 @@ export function useResearchSession(showNotice: (msg: string) => void) {
         try {
           const text = String(reader.result ?? '').trim();
           if (!text) {
-            showNotice('Empty dataset file');
+            showNotice(t('notices.emptyDatasetFile'));
             return;
           }
 
@@ -1345,7 +1369,9 @@ export function useResearchSession(showNotice: (msg: string) => void) {
               } catch {}
             }
             if (rows.length === 0) {
-              showNotice('No valid trials found in JSONL file');
+              showNotice(
+                t('notices.noValidTrialsFoundIn')
+              );
               return;
             }
             mergeRawTrialRecords(rows, undefined, 'JSONL');
@@ -1367,7 +1393,9 @@ export function useResearchSession(showNotice: (msg: string) => void) {
               ? parsed.trials
               : [];
           if (rawTrials.length === 0) {
-            showNotice('No valid trials found in JSON file');
+            showNotice(
+              t('notices.noValidTrialsFoundIn2')
+            );
             return;
           }
           const colabGpu =
@@ -1382,12 +1410,14 @@ export function useResearchSession(showNotice: (msg: string) => void) {
             colabGpu
           );
         } catch {
-          showNotice('Could not parse research JSON / JSONL dataset');
+          showNotice(
+            t('notices.couldNotParseResearchJson')
+          );
         }
       };
       reader.readAsText(file);
     },
-    [mergeRawTrialRecords, showNotice]
+    [mergeRawTrialRecords, showNotice, t]
   );
 
   const handleLoadGithubLake = useCallback(async () => {
@@ -1399,7 +1429,9 @@ export function useResearchSession(showNotice: (msg: string) => void) {
         });
       }
       if (!res.ok) {
-        showNotice('GitHub Research Lake snapshot not found yet');
+        showNotice(
+          t('notices.githubResearchLakeSnapshotNot')
+        );
         return;
       }
       const data = (await res.json()) as {
@@ -1413,7 +1445,7 @@ export function useResearchSession(showNotice: (msg: string) => void) {
       const trials = Array.isArray(data?.trials) ? data.trials : [];
       if (trials.length === 0) {
         showNotice(
-          'GitHub Research Lake is empty — drop trials.jsonl into research-data/runs/ and push'
+          t('notices.githubResearchLakeIsEmpty')
         );
         return;
       }
@@ -1426,12 +1458,14 @@ export function useResearchSession(showNotice: (msg: string) => void) {
       mergeRawTrialRecords(
         trials,
         data.protocol,
-        `GitHub Lake · ${Number(data.runCount ?? 1)} runs`
+        t('notices.githubLakeRuns', { val0: Number(data.runCount ?? 1) })
       );
     } catch {
-      showNotice('Could not fetch GitHub Research Lake snapshot');
+      showNotice(
+        t('notices.couldNotFetchGithubResearch')
+      );
     }
-  }, [mergeRawTrialRecords, showNotice]);
+  }, [mergeRawTrialRecords, showNotice, t]);
 
   const getPerfReport = useCallback(
     () => researchPoolRef.current?.getPerfReport() ?? null,
