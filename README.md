@@ -68,7 +68,7 @@ npm run desktop:build   # Kompilacja instalatora w src-tauri/target/release/bund
 
 ---
 
-## 4. Zapis Danych, Historia Badań i GitHub Research Data Lake
+## 4. Zapis Danych, Historia Badań i GitHub Research Data Lake oraz Architektura Chmurowa (Cloudflare / Serverless Ready)
 
 Aplikacja działa w 100% po stronie przeglądarki (GitHub Pages to statyczny hosting tylko do odczytu), a dane zapisują się w dwóch warstwach:
 - **Lokalnie w przeglądarce**:
@@ -77,3 +77,5 @@ Aplikacja działa w 100% po stronie przeglądarki (GitHub Pages to statyczny hos
 - **Globalnie na GitHubie (`research-data/runs/` → `GitHub Lake`)**:
   - Aby zapisać wyniki na GitHubie, wyeksportuj w **Raport & Eksport** plik `LLM Pack (.jsonl + MD)` (lub `dataset.json`), umieść go w `research-data/runs/<YYYY-MM-DD-etykieta>/trials.jsonl` i wykonaj `git push`.
   - Workflow `.github/workflows/analyze-research.yml` uruchomi `npm run lake:sync`, zdeduplikuje wszystkie próby po `trialSignature`, zaktualizuje raporty `research-data/LEADERBOARD.md`, `ai-delta-digest.md`, `llm-meta-dossier.md` oraz wygeneruje `public/data/research-lake.json`, który aplikacja ładuje jednym kliknięciem przyciskiem **`GitHub Lake`**.
+- **Gotowość pod Cloudflare Workers / Serverless / Edge DB**:
+  - Architektura frontendu jest w pełni przygotowana na podpięcie w przyszłości lekkiej bazy w chmurze (np. Supabase, Cloudflare D1 / KV lub Cloudflare Workers). Umożliwi to w pełni automatyczny, anonimowy zapis wynikowy w tle (bez konieczności ręcznego eksportu przez użytkownika) przy zachowaniu pełnej kompatybilności ze statycznym hostingiem na GitHub Pages oraz odporności na limity i opóźnienia dzięki sieci Cloudflare.
