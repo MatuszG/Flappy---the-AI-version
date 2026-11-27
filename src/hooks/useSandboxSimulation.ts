@@ -127,9 +127,17 @@ export function useSandboxSimulation(params: {
       inputFeatures: normalizeInputFeatures(loaded.inputFeatures),
     };
   });
-  const [running, setRunning] = useState(true);
+  const [playRunning, setPlayRunning] = useState(true);
+  const [trainingRunning, setTrainingRunning] = useState(false);
+  const [trainingHasStarted, setTrainingHasStarted] = useState(false);
+  const running =
+    mode === 'VS_AI'
+      ? playRunning
+      : mode === 'TRAINING'
+        ? trainingRunning
+        : false;
   const [speed, setSpeed] = useState<SpeedSetting>(1);
-  const [effectiveMultiplier, setEffectiveMultiplier] = useState<number>(1);
+  const [effectiveMultiplier, setEffectiveMultiplier] = useState<number>(0);
   const [showSensors, setShowSensors] = useState(true);
   const [muted, setMuted] = useState(true);
   const [savedBrains, setSavedBrains] = useState<SavedBrain[]>(() =>
@@ -190,8 +198,10 @@ export function useSandboxSimulation(params: {
   modeRef.current = mode;
   const playSubModeRef = useRef<PlaySubMode>(playSubMode);
   playSubModeRef.current = playSubMode;
-  const runningRef = useRef<boolean>(running);
-  runningRef.current = running;
+  const playRunningRef = useRef<boolean>(playRunning);
+  playRunningRef.current = playRunning;
+  const trainingRunningRef = useRef<boolean>(trainingRunning);
+  trainingRunningRef.current = trainingRunning;
   const configDifficultyRef = useRef<DifficultyPreset>(config.difficulty);
   configDifficultyRef.current = config.difficulty;
   const prevVsPhaseRef = useRef<string>('READY');
@@ -340,11 +350,14 @@ export function useSandboxSimulation(params: {
         trainingChampionRef.current = msg.championBrain;
         if (modeRef.current !== 'TRAINING') return;
 
-        if (msg.scored) arcadeAudio.playScore();
-        if (msg.genAdvanced) arcadeAudio.playGenerationAdvance();
+        if (trainingRunningRef.current) {
+          if (msg.scored) arcadeAudio.playScore();
+          if (msg.genAdvanced) arcadeAudio.playGenerationAdvance();
+        }
 
         const now = performance.now();
         if (
+          !trainingRunningRef.current ||
           now - lastUiSyncRef.current >= 55 ||
           msg.genAdvanced ||
           msg.scored
@@ -355,7 +368,7 @@ export function useSandboxSimulation(params: {
         }
       } else if (msg.type === 'BG_TELEMETRY') {
         trainingChampionRef.current = msg.championBrain;
-        if (modeRef.current !== 'TRAINING') return;
+        if (modeRef.current !== 'TRAINING' || !trainingRunningRef.current) return;
         setTrainingTelemetry(msg.telemetry);
         setEffectiveMultiplier(msg.effectiveMultiplier);
       }
@@ -376,7 +389,7 @@ export function useSandboxSimulation(params: {
         inputFeatures: normalizeInputFeatures(initialConfig.inputFeatures),
       },
       speed: 1,
-      running: modeRef.current === 'TRAINING',
+      running: false,
     } satisfies WorkerInboundMessage);
 
     const handleVisibilityChange = () => {
@@ -398,12 +411,24 @@ export function useSandboxSimulation(params: {
     saveTrainingConfig(config);
   }, [config]);
 
+  useEffect(() => {
+    if (mode !== 'TRAINING') {
+      if (trainingRunning) {
+        setTrainingRunning(false);
+      }
+      postToWorker({ type: 'SET_RUNNING', running: false });
+    } else {
+      postToWorker({ type: 'SET_RUNNING', running: trainingRunning });
+    }
+  }, [mode, trainingRunning, postToWorker]);
+
   const handleSelectMode = useCallback(
     (nextMode: GameMode, forcedSubMode?: PlaySubMode) => {
       if (nextMode === 'VS_AI') {
         const vsSim = vsAiSimRef.current;
         if (!vsSim) return;
 
+        setTrainingRunning(false);
         postToWorker({ type: 'SET_RUNNING', running: false });
 
         const targetSubMode = forcedSubMode ?? playSubModeRef.current;
@@ -423,15 +448,16 @@ export function useSandboxSimulation(params: {
         scoredRunRef.current = false;
         vsSim.prepareVsAiMatch(targetSubMode === 'SOLO');
         setMode('VS_AI');
-        setRunning(true);
+        setPlayRunning(true);
         syncVsAiTelemetry();
       } else if (nextMode === 'RESEARCH' || nextMode === 'DOCS') {
+        setTrainingRunning(false);
         postToWorker({ type: 'SET_RUNNING', running: false });
         setMode(nextMode);
       } else {
         setMode('TRAINING');
-        setRunning(true);
-        postToWorker({ type: 'SET_RUNNING', running: true });
+        setTrainingRunning(false);
+        postToWorker({ type: 'SET_RUNNING', running: false });
       }
     },
     [postToWorker, setMode, syncVsAiTelemetry, trainingTelemetry.allTimeBestScore]
@@ -457,20 +483,23 @@ export function useSandboxSimulation(params: {
       lastCrashAtRef.current = 0;
       scoredRunRef.current = false;
       vsSim.prepareVsAiMatch(nextSubMode === 'SOLO');
-      setRunning(true);
+      setPlayRunning(true);
       syncVsAiTelemetry();
     },
     [syncVsAiTelemetry, trainingTelemetry.allTimeBestScore]
   );
 
   const handleToggleRunning = useCallback(() => {
-    setRunning((prev) => {
-      const next = !prev;
-      if (modeRef.current === 'TRAINING') {
+    if (modeRef.current === 'TRAINING') {
+      setTrainingRunning((prev) => {
+        const next = !prev;
+        if (next) setTrainingHasStarted(true);
         postToWorker({ type: 'SET_RUNNING', running: next });
-      }
-      return next;
-    });
+        return next;
+      });
+    } else if (modeRef.current === 'VS_AI') {
+      setPlayRunning((prev) => !prev);
+    }
   }, [postToWorker]);
 
   const handleSelectSpeed = useCallback(
@@ -482,10 +511,11 @@ export function useSandboxSimulation(params: {
   );
 
   const handleResetTraining = useCallback(() => {
+    setTrainingRunning(false);
+    setTrainingHasStarted(false);
     postToWorker({ type: 'RESET' });
-    postToWorker({ type: 'SET_RUNNING', running: true });
+    postToWorker({ type: 'SET_RUNNING', running: false });
     setActiveOpponentName('Evolved Champion');
-    setRunning(true);
   }, [postToWorker]);
 
   const handleRematchVsAi = useCallback(() => {
@@ -493,7 +523,7 @@ export function useSandboxSimulation(params: {
     scoredRunRef.current = false;
     setPlaySessionStats((prev) => ({ ...prev, lastRunWasNewRecord: false }));
     vsAiSimRef.current?.prepareVsAiMatch(playSubModeRef.current === 'SOLO');
-    setRunning(true);
+    setPlayRunning(true);
     syncVsAiTelemetry();
   }, [syncVsAiTelemetry]);
 
@@ -512,13 +542,13 @@ export function useSandboxSimulation(params: {
         scoredRunRef.current = false;
         setPlaySessionStats((prev) => ({ ...prev, lastRunWasNewRecord: false }));
         sim.prepareVsAiMatch(playSubModeRef.current === 'SOLO');
-        setRunning(true);
+        setPlayRunning(true);
         syncVsAiTelemetry();
       }
       return;
     }
-    if (phase === 'PLAYING' && !runningRef.current) {
-      setRunning(true);
+    if (phase === 'PLAYING' && !playRunningRef.current) {
+      setPlayRunning(true);
     }
     const flapped = sim.playerFlap();
     if (flapped) {
@@ -556,7 +586,9 @@ export function useSandboxSimulation(params: {
   );
 
   const handleStepFrame = useCallback(() => {
-    setRunning(false);
+    if (modeRef.current !== 'TRAINING') return;
+    setTrainingRunning(false);
+    setTrainingHasStarted(true);
     postToWorker({ type: 'STEP_ONCE' });
   }, [postToWorker]);
 
@@ -640,11 +672,12 @@ export function useSandboxSimulation(params: {
             : config.customEnvironment,
       };
       setConfig(nextConfig);
+      setTrainingRunning(false);
+      setTrainingHasStarted(false);
       postToWorker({ type: 'UPDATE_CONFIG', config: nextConfig });
       postToWorker({ type: 'LOAD_BRAIN', network: brain.network });
-      postToWorker({ type: 'SET_RUNNING', running: true });
+      postToWorker({ type: 'SET_RUNNING', running: false });
       setMode('TRAINING');
-      setRunning(true);
       showNotice(
         t('notices.seededLabWith', { name: brain.name })
       );
@@ -656,6 +689,7 @@ export function useSandboxSimulation(params: {
     (brain: SavedBrain, targetDifficulty?: DifficultyPreset) => {
       const vsSim = vsAiSimRef.current;
       if (!vsSim) return;
+      setTrainingRunning(false);
       postToWorker({ type: 'SET_RUNNING', running: false });
       if (targetDifficulty) {
         const nextConfig: EvolutionConfig = {
@@ -681,7 +715,7 @@ export function useSandboxSimulation(params: {
       vsSim.prepareVsAiMatch(false);
       setMode('VS_AI');
       setActiveOpponentName(brain.name);
-      setRunning(true);
+      setPlayRunning(true);
       syncVsAiTelemetry();
       showNotice(
         t('notices.matchedAgainst', { name: brain.name })
@@ -710,7 +744,7 @@ export function useSandboxSimulation(params: {
         scoredRunRef.current = false;
         setPlaySessionStats((prev) => ({ ...prev, lastRunWasNewRecord: false }));
         vsAiSimRef.current.prepareVsAiMatch(playSubModeRef.current === 'SOLO');
-        setRunning(true);
+        setPlayRunning(true);
         syncVsAiTelemetry();
       }
     },
@@ -734,7 +768,7 @@ export function useSandboxSimulation(params: {
     lastCrashAtRef.current = 0;
     scoredRunRef.current = false;
     vsSim.prepareVsAiMatch(false);
-    setRunning(true);
+    setPlayRunning(true);
     syncVsAiTelemetry();
   }, [syncVsAiTelemetry, t, trainingTelemetry.allTimeBestScore]);
 
@@ -790,7 +824,7 @@ export function useSandboxSimulation(params: {
         } else if (e.code === 'KeyP' || e.code === 'Escape') {
           if (vsAiSimRef.current?.getVsAiPhase() === 'PLAYING') {
             e.preventDefault();
-            setRunning((prev) => !prev);
+            setPlayRunning((prev) => !prev);
           }
         } else if (e.code === 'KeyR') {
           e.preventDefault();
@@ -847,11 +881,12 @@ export function useSandboxSimulation(params: {
       onlinePlasticity: false,
     };
     setConfig(nextConfig);
+    setTrainingRunning(false);
+    setTrainingHasStarted(false);
     postToWorker({ type: 'UPDATE_CONFIG', config: nextConfig });
     postToWorker({ type: 'RESET' });
-    postToWorker({ type: 'SET_RUNNING', running: true });
+    postToWorker({ type: 'SET_RUNNING', running: false });
     setMode('TRAINING');
-    setRunning(true);
     showNotice(
       t('notices.loadedDrosophilaFruitFlyConnectome')
     );
@@ -889,11 +924,12 @@ export function useSandboxSimulation(params: {
       onlinePlasticity: true,
     };
     setConfig(nextConfig);
+    setTrainingRunning(false);
+    setTrainingHasStarted(false);
     postToWorker({ type: 'UPDATE_CONFIG', config: nextConfig });
     postToWorker({ type: 'RESET' });
-    postToWorker({ type: 'SET_RUNNING', running: true });
+    postToWorker({ type: 'SET_RUNNING', running: false });
     setMode('TRAINING');
-    setRunning(true);
     setShowSensors(true);
     showNotice(
       t('notices.loadedDecoupledFlyCortexCompound')
@@ -940,6 +976,7 @@ export function useSandboxSimulation(params: {
   return {
     config,
     running,
+    trainingHasStarted,
     speed,
     effectiveMultiplier,
     showSensors,

@@ -43,7 +43,7 @@ const TRAINING_POWER_CAP = 0.95;
 const TRAINING_FRAME_TARGET_MS = 16;
 
 let sim: FlappySimulation | null = null;
-let running = true;
+let running = false;
 let speed: SpeedSetting = 1;
 let tabHidden = false;
 let timerId: ReturnType<typeof setTimeout> | null = null;
@@ -54,7 +54,7 @@ let lastBgEmit = 0;
 
 let perfSteps = 0;
 let perfWindowStart = performance.now();
-let effectiveMultiplier = 1;
+let effectiveMultiplier = 0;
 
 function createSim(config: EvolutionConfig): FlappySimulation {
   return new FlappySimulation(config, {
@@ -222,19 +222,21 @@ workerScope.onmessage = (ev: MessageEvent<WorkerInboundMessage>) => {
     case 'RESET': {
       if (!sim) break;
       sim.resetEvolution();
+      if (!running) {
+        sim.pauseClock();
+        effectiveMultiplier = 0;
+      }
       emitFullFrame();
       break;
     }
     case 'LOAD_BRAIN': {
       if (!sim) break;
       sim.loadBrainIntoTraining(msg.network);
-      sim.resumeClock();
-      running = true;
-      effectiveMultiplier = speed === 'MAX' ? 100 : speed;
-      emitFullFrame();
-      if (timerId === null) {
-        tickLoop();
+      if (!running) {
+        sim.pauseClock();
+        effectiveMultiplier = 0;
       }
+      emitFullFrame();
       break;
     }
   }

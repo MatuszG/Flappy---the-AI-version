@@ -1266,9 +1266,23 @@ export function ArcadeCanvas({
         const palette = THEME_PALETTES[themeKey];
         const env = snap.environment;
 
-        if (runningRef.current) {
-          animOffsetRef.current += 0.6;
+        const isTrainingStandby =
+          modeRef.current === 'TRAINING' && !runningRef.current;
+
+        if (runningRef.current || isTrainingStandby) {
+          animOffsetRef.current += isTrainingStandby ? 0.35 : 0.6;
         }
+
+        const effectiveGroundOffset = isTrainingStandby
+          ? (snap.groundOffset + animOffsetRef.current * 2.15) % 32
+          : snap.groundOffset;
+
+        const hoverDy = isTrainingStandby
+          ? Math.sin(animOffsetRef.current * 0.14) * 6
+          : 0;
+        const wingIdleDelta = isTrainingStandby
+          ? animOffsetRef.current * 0.38
+          : 0;
 
         ctx.drawImage(getSkyLayer(themeKey), 0, 0);
         drawClouds(ctx, animOffsetRef.current, palette);
@@ -1282,9 +1296,17 @@ export function ArcadeCanvas({
         const aiGhostMode =
           snap.mode === 'VS_AI' && Boolean(playerBird?.alive);
 
-        const leader =
+        const rawLeader =
           snap.birds.find((b) => b.isLeader) ??
           snap.birds.find((b) => b.isChampion);
+        const leader =
+          rawLeader && isTrainingStandby
+            ? {
+                ...rawLeader,
+                y: rawLeader.y + hoverDy,
+                wingPhase: rawLeader.wingPhase + wingIdleDelta,
+              }
+            : rawLeader;
 
         // Smooth motion ribbon trail behind the active leader bird
         if (leader && leader.alive) {
@@ -1347,8 +1369,17 @@ export function ArcadeCanvas({
 
         for (let i = 0; i < snap.birds.length; i++) {
           const bird = snap.birds[i];
-          if (bird !== leader && !bird.isPlayer) {
-            drawBird(ctx, bird, false, false);
+          if (bird !== rawLeader && !bird.isPlayer) {
+            const renderBird = isTrainingStandby
+              ? {
+                  ...bird,
+                  y:
+                    bird.y +
+                    Math.sin(animOffsetRef.current * 0.14 + (i % 5) * 0.35) * 6,
+                  wingPhase: bird.wingPhase + wingIdleDelta + (i % 4) * 0.4,
+                }
+              : bird;
+            drawBird(ctx, renderBird, false, false);
           }
         }
         if (leader && !leader.isPlayer) {
@@ -1372,7 +1403,7 @@ export function ArcadeCanvas({
 
         ctx.fillStyle = palette.groundStripe;
         for (let gx = -32; gx < CANVAS_WIDTH + 32; gx += 32) {
-          const xPos = gx - snap.groundOffset;
+          const xPos = gx - effectiveGroundOffset;
           ctx.beginPath();
           ctx.moveTo(xPos, PLAYABLE_HEIGHT + 14);
           ctx.lineTo(xPos + 16, PLAYABLE_HEIGHT + 14);
@@ -1473,7 +1504,15 @@ export function ArcadeCanvas({
             ctx.textAlign = 'left';
             if (modeRef.current === 'VS_AI' && playSubModeRef.current === 'SOLO') {
               ctx.fillStyle = 'rgba(252, 211, 77, 0.88)';
-              ctx.fillText('SOLO ARCADE · TAP OR SPACE TO FLAP', 14, row1Y);
+              const isTouchViewport =
+                typeof window !== 'undefined' && window.innerWidth < 640;
+              ctx.fillText(
+                isTouchViewport
+                  ? 'SOLO ARCADE · TAP CANVAS OR FLAP'
+                  : 'SOLO ARCADE · TAP OR SPACE TO FLAP',
+                14,
+                row1Y
+              );
             } else {
               ctx.fillStyle = 'rgba(148, 163, 184, 0.75)';
               ctx.fillText('SENSORS OVERLAY: HIDDEN', 14, row1Y);
@@ -1601,29 +1640,21 @@ export function ArcadeCanvas({
 
       {mode === 'VS_AI' && (
         <div className="pointer-events-none absolute inset-x-0 top-2.5 sm:top-3 flex items-start justify-between px-2.5 sm:px-4">
-          {/* Left HUD: Points + PB in Solo, or Player Points/Pipes in Duel */}
+          {/* Left HUD: Clean Pipe Record in Solo, or Player Pipe Score in Duel */}
           {isSoloPlay ? (
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="rounded-lg border border-amber-500/40 bg-[#0B1120]/85 px-2.5 py-1 backdrop-blur-sm">
-                <span className="font-mono text-[10px] uppercase tracking-wide text-amber-300">
-                  {t('play.pts')}
-                </span>
-                <span className="ml-1.5 font-mono text-sm font-bold tabular-nums text-white">
-                  {playerPoints.toLocaleString()}
-                </span>
-                {playerCombo > 1 && (
-                  <span className="ml-1.5 font-mono text-[10px] font-bold text-emerald-300">
-                    ×{playerCombo}
-                  </span>
-                )}
-              </div>
-              <div className="hidden sm:block rounded-lg border border-slate-700/70 bg-[#0B1120]/82 px-2.5 py-1 backdrop-blur-sm">
+              <div className="rounded-lg border border-slate-700/70 bg-[#0B1120]/85 px-2.5 py-1 backdrop-blur-sm">
                 <span className="font-mono text-[10px] uppercase tracking-wide text-slate-400">
                   {t('play.best3')}
                 </span>
                 <span className="ml-1.5 font-mono text-sm font-bold tabular-nums text-amber-300">
                   {Math.max(personalBest, playerScore)}
                 </span>
+                {playerCombo > 1 && (
+                  <span className="ml-1.5 font-mono text-[10px] font-bold text-emerald-300">
+                    ×{playerCombo}
+                  </span>
+                )}
               </div>
             </div>
           ) : (
@@ -1634,11 +1665,8 @@ export function ArcadeCanvas({
               <span className="ml-1.5 font-mono text-sm sm:text-base font-bold tabular-nums text-white">
                 {playerScore}
               </span>
-              <span className="ml-2 font-mono text-[11px] font-semibold tabular-nums text-emerald-300">
-                {playerPoints.toLocaleString()}p
-              </span>
               {playerCombo > 1 && (
-                <span className="ml-1 font-mono text-[10px] font-bold text-amber-300">
+                <span className="ml-1.5 font-mono text-[10px] font-bold text-amber-300">
                   ×{playerCombo}
                 </span>
               )}
@@ -1694,7 +1722,8 @@ export function ArcadeCanvas({
         <div className="pointer-events-none absolute inset-x-0 bottom-12 sm:bottom-16 flex justify-center px-3">
           <div className="rounded-xl border border-slate-700/85 bg-[#0B1120]/90 px-5 py-3 sm:px-7 sm:py-4 text-center backdrop-blur-sm shadow-xl">
             <p className="font-display text-base sm:text-lg font-bold text-white">
-              {t('play.tapOrPressSpaceTo')}
+              <span className="sm:hidden">{t('play.tapToFlyMobile')}</span>
+              <span className="hidden sm:inline">{t('play.tapOrPressSpaceTo')}</span>
             </p>
             <p className="mt-1 text-xs sm:text-sm text-slate-300">
               {isSoloPlay
@@ -1776,57 +1805,71 @@ export function ArcadeCanvas({
       {mode === 'VS_AI' && vsAiPhase === 'GAME_OVER' && (
         <div
           onPointerDown={(e) => e.stopPropagation()}
-          className="absolute inset-0 flex items-center justify-center bg-[#0B1120]/76 backdrop-blur-[2px] p-2.5 sm:p-3 overflow-y-auto"
+          className="absolute inset-0 flex items-center justify-center bg-[#0B1120]/80 backdrop-blur-[2px] p-1.5 sm:p-3 overflow-y-auto"
         >
-          <div className="w-full max-w-[360px] rounded-xl border border-slate-700 bg-[#111827] p-4 sm:p-5 text-center shadow-2xl">
-            {lastRunWasNewRecord && playerScore > 0 && (
-              <div className="mb-1.5 inline-flex items-center gap-1 rounded-md border border-amber-400/50 bg-amber-500/15 px-2.5 py-0.5 font-mono text-[11px] font-bold text-amber-300">
-                <Award className="h-3.5 w-3.5" aria-hidden="true" />
-                {t('play.newPersonalBest')}
-              </div>
-            )}
+          <div className="w-full max-w-[340px] sm:max-w-[360px] rounded-xl border border-slate-700 bg-[#111827] px-3 py-2.5 sm:p-5 text-center shadow-2xl">
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
+              <h3 className="font-display text-base sm:text-xl font-bold text-white">
+                {isSoloPlay
+                  ? t('play.flightComplete')
+                  : vsAiWinner === 'PLAYER'
+                    ? t('play.youBeatTheAi')
+                    : vsAiWinner === 'AI'
+                      ? t('play.aiChampionWins')
+                      : t('play.drawMatch')}
+              </h3>
 
-            <h3 className="font-display text-lg sm:text-xl font-bold text-white">
-              {isSoloPlay
-                ? t('play.flightComplete')
-                : vsAiWinner === 'PLAYER'
-                  ? t('play.youBeatTheAi')
-                  : vsAiWinner === 'AI'
-                    ? t('play.aiChampionWins')
-                    : t('play.drawMatch')}
-            </h3>
+              {lastRunWasNewRecord && playerScore > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-md border border-amber-400/50 bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] sm:text-[11px] font-bold text-amber-300">
+                  <Award className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden="true" />
+                  {t('play.newPersonalBest')}
+                </span>
+              )}
 
-            <div className="mt-2.5 grid grid-cols-3 gap-2 rounded-lg border border-slate-800 bg-[#0B1120] p-2.5 font-mono tabular-nums">
+              {runMedal.id !== 'NONE' && (
+                <span
+                  className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-mono text-[10px] sm:text-[11px] font-semibold ${runMedal.badgeBg}`}
+                >
+                  <Award className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden="true" />
+                  {t(`play.medals.${runMedal.id}`)}
+                </span>
+              )}
+            </div>
+
+            <div className="mt-1.5 sm:mt-2.5 grid grid-cols-3 gap-1.5 sm:gap-2 rounded-lg border border-slate-800 bg-[#0B1120] px-2 py-1.5 sm:p-2.5 font-mono tabular-nums">
               <div>
-                <div className="text-[10px] uppercase text-slate-400">
-                  {t('play.points')}
-                </div>
-                <div className="text-lg sm:text-xl font-bold text-emerald-300">
-                  {playerPoints.toLocaleString()}
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] uppercase text-slate-400">
+                <div className="text-[9.5px] sm:text-[10px] uppercase text-slate-400">
                   {t('play.pipes')}
                 </div>
-                <div className="text-lg sm:text-xl font-bold text-white">
+                <div className="text-base sm:text-xl font-bold text-white leading-tight">
                   {playerScore}
                 </div>
               </div>
               <div>
-                <div className="text-[10px] uppercase text-slate-400">
+                <div className="text-[9.5px] sm:text-[10px] uppercase text-slate-400">
                   {isSoloPlay ? t('play.best3') : 'AI'}
                 </div>
-                <div className="text-lg sm:text-xl font-bold text-amber-300">
+                <div className="text-base sm:text-xl font-bold text-amber-300 leading-tight">
                   {isSoloPlay
                     ? Math.max(personalBest, playerScore)
                     : aiOpponentScore}
                 </div>
               </div>
+              <div
+                title={t('play.ptsTooltip')}
+                className="cursor-help"
+              >
+                <div className="text-[9.5px] sm:text-[10px] uppercase text-slate-400 underline decoration-dotted underline-offset-2">
+                  {t('play.pts')}
+                </div>
+                <div className="text-base sm:text-xl font-bold text-emerald-300 leading-tight">
+                  {playerPoints.toLocaleString()}
+                </div>
+              </div>
             </div>
 
             {(playerOrbsCollected > 0 || playerMaxCombo > 1 || bestPoints > 0) && (
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-2 font-mono text-[10.5px] text-slate-400">
+              <div className="mt-1.5 sm:mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 font-mono text-[10px] sm:text-[10.5px] text-slate-400">
                 <span className="inline-flex items-center gap-1 text-amber-300">
                   <Sparkles className="h-3 w-3" aria-hidden="true" />
                   {t('play.orbs')} {playerOrbsCollected}
@@ -1838,20 +1881,14 @@ export function ArcadeCanvas({
                 {bestPoints > 0 && (
                   <>
                     <span aria-hidden="true">·</span>
-                    <span>
-                      PB {Math.max(bestPoints, playerPoints).toLocaleString()}p
+                    <span
+                      title={t('play.ptsTooltip')}
+                      className="cursor-help underline decoration-dotted underline-offset-2"
+                    >
+                      PB {Math.max(bestPoints, playerPoints).toLocaleString()} {t('play.pts')}
                     </span>
                   </>
                 )}
-              </div>
-            )}
-
-            {runMedal.id !== 'NONE' && (
-              <div
-                className={`mt-2 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-0.5 font-mono text-[11px] font-semibold ${runMedal.badgeBg}`}
-              >
-                <Award className="h-3.5 w-3.5" aria-hidden="true" />
-                {t(`play.medals.${runMedal.id}`)}
               </div>
             )}
 
@@ -1863,7 +1900,7 @@ export function ArcadeCanvas({
                   onSaveRunWithNick(nickDraft);
                   setSavedNotice(true);
                 }}
-                className="mt-3 flex items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] p-1.5"
+                className="mt-1.5 sm:mt-3 flex items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] p-1 sm:p-1.5"
               >
                 <input
                   type="text"
@@ -1875,11 +1912,11 @@ export function ArcadeCanvas({
                   }}
                   placeholder={t('play.yourNameOnLeaderboard')}
                   aria-label={t('play.yourLeaderboardNickname')}
-                  className="min-w-0 flex-1 bg-transparent px-2 py-1 text-xs font-medium text-white placeholder:text-slate-500 focus:outline-none"
+                  className="min-w-0 flex-1 bg-transparent px-2 py-0.5 sm:py-1 text-xs font-medium text-white placeholder:text-slate-500 focus:outline-none"
                 />
                 <button
                   type="submit"
-                  className={`inline-flex min-h-[32px] items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                  className={`inline-flex min-h-[28px] sm:min-h-[32px] items-center gap-1 rounded-md px-2.5 py-0.5 sm:py-1 text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
                     savedNotice
                       ? 'bg-emerald-500 text-slate-950'
                       : 'bg-cyan-500/20 text-cyan-200 border border-cyan-500/40 hover:bg-cyan-500/30'
@@ -1900,24 +1937,24 @@ export function ArcadeCanvas({
               </form>
             )}
 
-            <div className="mt-3 flex items-center justify-center gap-2">
+            <div className="mt-2 sm:mt-3 flex items-center justify-center gap-2">
               <button
                 type="button"
                 onClick={onRematch}
-                className="inline-flex min-h-[42px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-amber-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
+                className="inline-flex min-h-[36px] sm:min-h-[42px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold text-slate-950 whitespace-nowrap cursor-pointer transition-colors hover:bg-amber-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
               >
-                <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
                 {t('play.playAgain')}
               </button>
               <button
                 type="button"
                 onClick={onBackToLab}
-                className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-sm font-medium text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-slate-700"
+                className="inline-flex min-h-[36px] sm:min-h-[42px] items-center justify-center rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-medium text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-slate-700"
               >
                 {t('play.lab')}
               </button>
             </div>
-            <p className="mt-2 font-mono text-[10.5px] text-slate-400">
+            <p className="hidden sm:block mt-2 font-mono text-[10.5px] text-slate-400">
               {t('play.pressSpaceOrTapTo')}
             </p>
           </div>

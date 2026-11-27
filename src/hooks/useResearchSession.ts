@@ -552,47 +552,9 @@ export function useResearchSession(showNotice: (msg: string) => void) {
           savedSigSet
         );
 
-        // Zero-prompt automatic resume if browser reloaded mid-sweep (with 2-in-60s crash-loop guard)
-        let autoResumed = false;
-        if (saved.wasRunning && pendingCount > 0) {
-          let recentResumes: number[] = [];
-          try {
-            const raw = window.sessionStorage.getItem('neurolab_auto_resume_ts');
-            if (raw) {
-              const parsed = JSON.parse(raw) as number[];
-              const now = Date.now();
-              recentResumes = parsed.filter((t) => now - t < 60_000);
-            }
-          } catch {}
-
-          if (recentResumes.length < 2) {
-            autoResumed = true;
-            try {
-              recentResumes.push(Date.now());
-              window.sessionStorage.setItem(
-                'neurolab_auto_resume_ts',
-                JSON.stringify(recentResumes)
-              );
-            } catch {}
-            setWasInterrupted(false);
-            window.setTimeout(() => {
-              if (
-                researchPoolRef.current === pool &&
-                researchStatusRef.current !== 'RUNNING'
-              ) {
-                runStartedAtRef.current = Date.now();
-                lastUiFlushMsRef.current = performance.now();
-                pool.start(hydratedConfig, resultsMapRef.current);
-                showNotice(
-                  tRef.current('notices.autoResumedSweepSavedTrials', { results: saved.results.length, pendingCount })
-                );
-              }
-            }, 350);
-          }
-        }
-        if (!autoResumed) {
-          setWasInterrupted(Boolean(saved.wasRunning && pendingCount > 0));
-        }
+        // Never auto-start background research workers on page load (especially while Play mode is active);
+        // instead surface the interrupted state cleanly so the user can resume when ready in Research Lab.
+        setWasInterrupted(Boolean(saved.wasRunning && pendingCount > 0));
       } else if (navigator.storage?.persist) {
         void navigator.storage.persist().catch(() => {});
       }

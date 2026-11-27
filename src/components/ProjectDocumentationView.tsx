@@ -248,17 +248,20 @@ export const ProjectDocumentationView: React.FC = () => {
         {/* Clean Chapter Index Tabs */}
         <nav
           aria-label={t('docs.documentationChapters')}
-          className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-white/[0.08] pb-1"
+          className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 sm:gap-x-2 sm:gap-y-1 border-b border-white/[0.08] pb-2 sm:pb-1"
         >
-          {navTabs.map((tab) => {
+          {navTabs.map((tab, idx) => {
             const Icon = tab.icon;
             const active = activeSection === tab.id;
+            const isLastOdd = idx === navTabs.length - 1 && navTabs.length % 2 === 1;
             return (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveSection(tab.id)}
-                className={`relative inline-flex min-h-[42px] items-center gap-2 px-3 py-2 text-xs sm:text-[13px] font-semibold whitespace-nowrap cursor-pointer transition-colors ${
+                className={`relative inline-flex min-h-[42px] items-center justify-center sm:justify-start gap-2 rounded-lg sm:rounded-none border border-white/[0.06] sm:border-transparent bg-white/[0.02] sm:bg-transparent px-3 py-2 text-xs sm:text-[13px] font-semibold whitespace-nowrap cursor-pointer transition-colors ${
+                  isLastOdd ? 'col-span-2 sm:col-span-1' : ''
+                } ${
                   active ? tab.activeText : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -266,10 +269,10 @@ export const ProjectDocumentationView: React.FC = () => {
                   {tab.index}
                 </span>
                 <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span>{tab.label}</span>
+                <span className="truncate">{tab.label}</span>
                 {active && (
                   <span
-                    className={`absolute inset-x-2 -bottom-[5px] h-[2px] ${tab.activeBar}`}
+                    className={`absolute inset-x-2 bottom-0 sm:-bottom-[5px] h-[2px] ${tab.activeBar}`}
                   />
                 )}
               </button>
@@ -580,7 +583,10 @@ export const ProjectDocumentationView: React.FC = () => {
               <div className="divide-y divide-white/[0.07] text-xs">
                 <div className="flex items-center justify-between gap-2 px-4 py-3">
                   <span className="text-slate-300">{t('docs.flap')}</span>
-                  <div className="flex items-center gap-1 font-mono text-[11px]">
+                  <span className="sm:hidden font-mono text-[11px] text-amber-200">
+                    {t('play.tapCanvasOrFlap')}
+                  </span>
+                  <div className="hidden sm:flex items-center gap-1 font-mono text-[11px]">
                     <kbd className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-amber-200">Space</kbd>
                     <kbd className="rounded border border-white/15 bg-white/[0.04] px-2 py-0.5 text-slate-200">↑</kbd>
                     <kbd className="rounded border border-white/15 bg-white/[0.04] px-2 py-0.5 text-slate-200">W</kbd>
@@ -588,14 +594,20 @@ export const ProjectDocumentationView: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between gap-2 px-4 py-3">
                   <span className="text-slate-300">{t('docs.pause')}</span>
-                  <div className="flex items-center gap-1 font-mono text-[11px]">
+                  <span className="sm:hidden font-mono text-[11px] text-cyan-200">
+                    {t('play.topRightButton')}
+                  </span>
+                  <div className="hidden sm:flex items-center gap-1 font-mono text-[11px]">
                     <kbd className="rounded border border-cyan-500/40 bg-cyan-500/10 px-2 py-0.5 text-cyan-200">P</kbd>
                     <kbd className="rounded border border-white/15 bg-white/[0.04] px-2 py-0.5 text-slate-200">Esc</kbd>
                   </div>
                 </div>
                 <div className="flex items-center justify-between gap-2 px-4 py-3">
                   <span className="text-slate-300">{t('docs.restart')}</span>
-                  <kbd className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-[11px] text-emerald-200">R</kbd>
+                  <span className="sm:hidden font-mono text-[11px] text-emerald-200">
+                    {t('play.restartButtonMobile')}
+                  </span>
+                  <kbd className="hidden sm:inline-block rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-[11px] text-emerald-200">R</kbd>
                 </div>
                 <div className="flex items-center justify-between gap-2 px-4 py-3">
                   <span className="text-slate-300">{t('docs.mobile')}</span>

@@ -245,11 +245,11 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
               )}
             </button>
           ) : (
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex w-full sm:w-auto flex-wrap items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setShowSpeciesPicker((v) => !v)}
-                className={`inline-flex min-h-[38px] items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium whitespace-nowrap cursor-pointer transition-colors ${
+                className={`inline-flex min-h-[38px] flex-1 sm:flex-initial items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium whitespace-nowrap cursor-pointer transition-colors ${
                   showSpeciesPicker
                     ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-200'
                     : 'bg-slate-900/90 hover:bg-slate-800 border-slate-700/90 text-slate-200'
@@ -267,7 +267,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
                 <button
                   type="button"
                   onClick={handleSelectAll12Arena}
-                  className="inline-flex min-h-[38px] items-center px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-xs font-semibold text-emerald-300 whitespace-nowrap cursor-pointer transition-colors"
+                  className="inline-flex min-h-[38px] flex-1 sm:flex-initial items-center justify-center px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-xs font-semibold text-emerald-300 whitespace-nowrap cursor-pointer transition-colors"
                 >
                   {t('arena.all12')}
                 </button>
@@ -276,7 +276,7 @@ export const ArenaLeaderboardPanel: React.FC<ArenaLeaderboardPanelProps> = ({
               <button
                 type="button"
                 onClick={() => setShowArenaBoard((v) => !v)}
-                className="inline-flex min-h-[38px] items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/90 text-xs font-medium text-slate-300 whitespace-nowrap cursor-pointer transition-colors"
+                className="inline-flex min-h-[38px] flex-1 sm:flex-initial items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/90 text-xs font-medium text-slate-300 whitespace-nowrap cursor-pointer transition-colors"
               >
                 <span>
                   {showArenaBoard

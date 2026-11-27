@@ -187,9 +187,13 @@ function AppContent() {
           <>
             {/* Compact Play Header or Training Notice Strip */}
             {(mode === 'VS_AI' || notice) && (
-              <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <div
+                className={`mb-3 flex-wrap items-baseline justify-between gap-x-4 gap-y-1 ${
+                  mode === 'VS_AI' && !notice ? 'hidden lg:flex' : 'flex'
+                }`}
+              >
                 {mode === 'VS_AI' ? (
-                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 min-w-0">
+                  <div className="hidden lg:flex flex-wrap items-baseline gap-x-3 gap-y-0.5 min-w-0">
                     <h1 className="font-display text-xl sm:text-2xl font-extrabold tracking-[-0.03em] text-white">
                       {sandbox.playSubMode === 'SOLO'
                         ? t('training.flappyArcadeSolo')
@@ -377,57 +381,61 @@ function AppContent() {
                 {/* Transport & Simulation Controls Bar */}
                 <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-white/[0.08] bg-[#0C0F17] px-3 py-2.5 sm:px-4 sm:py-3">
                   {mode === 'TRAINING' ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={sandbox.handleToggleRunning}
-                        className={`inline-flex min-h-[38px] items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
-                          sandbox.running
-                            ? 'bg-slate-800 text-slate-100 hover:bg-slate-700'
-                            : 'bg-cyan-500 text-slate-950 hover:bg-cyan-400'
-                        }`}
-                      >
-                        {sandbox.running ? (
-                          <>
-                            <Pause className="h-3.5 w-3.5" aria-hidden="true" />
-                            {t('training.pause')}
-                          </>
-                        ) : (
-                          <>
-                            <Play className="h-3.5 w-3.5" aria-hidden="true" />
-                            {t('training.resume')}
-                          </>
-                        )}
-                      </button>
+                    <div className="flex w-full sm:w-auto flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
+                      <div className="grid grid-cols-3 sm:flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={sandbox.handleToggleRunning}
+                          className={`inline-flex min-h-[38px] items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                            sandbox.running
+                              ? 'bg-slate-800 text-slate-100 hover:bg-slate-700'
+                              : 'bg-cyan-500 text-slate-950 hover:bg-cyan-400'
+                          }`}
+                        >
+                          {sandbox.running ? (
+                            <>
+                              <Pause className="h-3.5 w-3.5" aria-hidden="true" />
+                              {t('training.pause')}
+                            </>
+                          ) : (
+                            <>
+                              <Play className="h-3.5 w-3.5" aria-hidden="true" />
+                              {sandbox.trainingHasStarted
+                                ? t('training.resume')
+                                : t('training.start')}
+                            </>
+                          )}
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={sandbox.handleStepFrame}
-                        title={t('training.advanceOneSimulationTick')}
-                        className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-slate-700 hover:text-white"
-                      >
-                        <SkipForward
-                          className="h-3.5 w-3.5"
-                          aria-hidden="true"
-                        />
-                        {t('training.step')}
-                      </button>
+                        <button
+                          type="button"
+                          onClick={sandbox.handleStepFrame}
+                          title={t('training.advanceOneSimulationTick')}
+                          className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-slate-700 hover:text-white"
+                        >
+                          <SkipForward
+                            className="h-3.5 w-3.5"
+                            aria-hidden="true"
+                          />
+                          {t('training.step')}
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={sandbox.handleResetTraining}
-                        title={t('training.resetTrainingPopulation')}
-                        className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-slate-700 hover:text-white"
-                      >
-                        <RotateCcw
-                          className="h-3.5 w-3.5"
-                          aria-hidden="true"
-                        />
-                        {t('training.reset')}
-                      </button>
+                        <button
+                          type="button"
+                          onClick={sandbox.handleResetTraining}
+                          title={t('training.resetTrainingPopulation')}
+                          className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-slate-700 hover:text-white"
+                        >
+                          <RotateCcw
+                            className="h-3.5 w-3.5"
+                            aria-hidden="true"
+                          />
+                          {t('training.reset')}
+                        </button>
+                      </div>
 
                       <div
-                        className="flex flex-wrap items-center gap-1 rounded-lg border border-slate-800 bg-[#0B1120] p-1"
+                        className="grid grid-cols-5 sm:flex items-center gap-1 rounded-lg border border-slate-800 bg-[#0B1120] p-1"
                         role="group"
                         aria-label={t('training.simulationSpeedMultiplier')}
                       >
@@ -436,7 +444,7 @@ function AppContent() {
                             key={opt}
                             type="button"
                             onClick={() => sandbox.handleSelectSpeed(opt)}
-                            className={`rounded-md px-2 py-1 font-mono text-xs font-medium tabular-nums whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                            className={`rounded-md px-2 py-1 text-center font-mono text-xs font-medium tabular-nums whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
                               sandbox.speed === opt
                                 ? 'bg-cyan-500/20 text-cyan-300'
                                 : 'text-slate-400 hover:text-slate-200'
@@ -463,79 +471,74 @@ function AppContent() {
                           {t('training.flap')}
                         </button>
 
-                        <div className="flex items-center justify-between sm:justify-start gap-2">
-                          <div className="flex items-center gap-2">
-                            {sandbox.vsAiTelemetry.vsAiPhase === 'PLAYING' && (
-                              <button
-                                type="button"
-                                onClick={sandbox.handleToggleRunning}
-                                className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-100 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-slate-700"
-                              >
-                                {sandbox.running ? (
-                                  <>
-                                    <Pause className="h-3.5 w-3.5" aria-hidden="true" />
-                                    {t('training.pause')}
-                                  </>
-                                ) : (
-                                  <>
-                                    <Play className="h-3.5 w-3.5" aria-hidden="true" />
-                                    {t('training.resume')}
-                                  </>
-                                )}
-                              </button>
-                            )}
-
+                        <div className="flex w-full sm:w-auto items-center gap-2">
+                          {sandbox.vsAiTelemetry.vsAiPhase === 'PLAYING' && (
                             <button
                               type="button"
-                              onClick={sandbox.handleRematchVsAi}
-                              title={t('training.restartFlightR')}
-                              className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-[#0B1120] px-3.5 py-2 text-xs font-medium text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-amber-500/50 hover:text-amber-200"
+                              onClick={sandbox.handleToggleRunning}
+                              className="inline-flex min-h-[40px] flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-100 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-slate-700"
                             >
-                              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-                              <span>{t('training.restart')}</span>
+                              {sandbox.running ? (
+                                <>
+                                  <Pause className="h-3.5 w-3.5" aria-hidden="true" />
+                                  {t('training.pause')}
+                                </>
+                              ) : (
+                                <>
+                                  <Play className="h-3.5 w-3.5" aria-hidden="true" />
+                                  {t('training.resume')}
+                                </>
+                              )}
                             </button>
-                          </div>
+                          )}
 
-                          {/* Mobile utility right-side pair; hidden on sm+ where right column renders */}
-                          <div className="flex sm:hidden items-center gap-2">
-                            {sandbox.playSubMode === 'VS_AI' && (
-                              <button
-                                type="button"
-                                onClick={() => sandbox.setShowSensors((s) => !s)}
-                                aria-pressed={sandbox.showSensors}
-                                className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
-                                  sandbox.showSensors
-                                    ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
-                                    : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
-                                }`}
-                              >
-                                {sandbox.showSensors ? (
-                                  <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-                                ) : (
-                                  <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
-                                )}
-                                {t('training.sensors')}
-                              </button>
-                            )}
+                          <button
+                            type="button"
+                            onClick={sandbox.handleRematchVsAi}
+                            title={t('training.restartFlightR')}
+                            className="inline-flex min-h-[40px] flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-[#0B1120] px-3.5 py-2 text-xs font-medium text-slate-200 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-amber-500/50 hover:text-amber-200"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                            <span>{t('training.restart')}</span>
+                          </button>
 
+                          {sandbox.playSubMode === 'VS_AI' && (
                             <button
                               type="button"
-                              onClick={sandbox.handleToggleAudio}
-                              aria-pressed={!sandbox.muted}
-                              className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
-                                !sandbox.muted
-                                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                              onClick={() => sandbox.setShowSensors((s) => !s)}
+                              aria-pressed={sandbox.showSensors}
+                              className={`inline-flex sm:hidden min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                                sandbox.showSensors
+                                  ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
                                   : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
                               }`}
                             >
-                              {sandbox.muted ? (
-                                <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />
+                              {sandbox.showSensors ? (
+                                <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                               ) : (
-                                <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
+                                <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
                               )}
-                              {sandbox.muted ? t('training.muted') : 'Audio'}
+                              {t('training.sensors')}
                             </button>
-                          </div>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={sandbox.handleToggleAudio}
+                            aria-pressed={!sandbox.muted}
+                            className={`inline-flex sm:hidden min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                              !sandbox.muted
+                                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                                : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            {sandbox.muted ? (
+                              <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />
+                            ) : (
+                              <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
+                            )}
+                            {sandbox.muted ? t('training.muted') : 'Audio'}
+                          </button>
                         </div>
                       </div>
 
@@ -588,13 +591,13 @@ function AppContent() {
                   )}
 
                   {mode === 'TRAINING' && (
-                    <div className="flex w-full sm:w-auto flex-wrap items-center justify-end gap-2">
+                    <div className="grid grid-cols-2 sm:flex w-full sm:w-auto sm:flex-wrap items-center sm:justify-end gap-2">
                       <button
                         type="button"
                         onClick={() => sandbox.setShowSensors((s) => !s)}
                         aria-pressed={sandbox.showSensors}
                         title={t('training.toggleLiveCanvasOverlayShowing')}
-                        className={`inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                        className={`inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
                           sandbox.showSensors
                             ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
                             : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
@@ -617,7 +620,7 @@ function AppContent() {
                             ? t('training.unmuteArcadeSound')
                             : t('training.muteArcadeSound')
                         }
-                        className={`inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+                        className={`inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
                           !sandbox.muted
                             ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
                             : 'border-slate-800 bg-[#0B1120] text-slate-400 hover:text-slate-200'
@@ -635,7 +638,7 @@ function AppContent() {
                         type="button"
                         onClick={sandbox.handleQuickSave}
                         disabled={!sandbox.trainingTelemetry.hasChampionBrain}
-                        className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-slate-700 hover:text-white disabled:opacity-40"
+                        className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-slate-700 hover:text-white disabled:opacity-40"
                       >
                         <BookmarkPlus
                           className="h-3.5 w-3.5"
@@ -647,7 +650,7 @@ function AppContent() {
                       <button
                         type="button"
                         onClick={() => setBrainsModalOpen(true)}
-                        className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-cyan-500/50 hover:text-cyan-200"
+                        className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-lg border border-slate-800 bg-[#0B1120] px-3 py-2 text-xs font-medium text-slate-300 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:border-cyan-500/50 hover:text-cyan-200"
                       >
                         <Brain className="h-3.5 w-3.5 text-cyan-400" aria-hidden="true" />
                         {t('training.brains')}
@@ -656,7 +659,7 @@ function AppContent() {
                       <button
                         type="button"
                         onClick={() => sandbox.handleSelectMode('VS_AI', 'VS_AI')}
-                        className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-amber-500 px-3.5 py-2 text-xs font-semibold text-slate-950 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-amber-400"
+                        className="col-span-2 sm:col-span-1 inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3.5 py-2 text-xs font-semibold text-slate-950 whitespace-nowrap shrink-0 cursor-pointer transition-colors hover:bg-amber-400"
                       >
                         <Swords className="h-3.5 w-3.5" aria-hidden="true" />
                         {t('training.raceAi')}

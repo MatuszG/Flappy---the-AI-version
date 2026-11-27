@@ -106,7 +106,12 @@
     "noFlightsRecordedYet": "No flights recorded yet.",
     "flyARoundToLog": "Fly a round to log points, pipes, orbs, and combos here.",
     "clearHistory": "Clear history?",
-    "clearHistory2": "Clear history"
+    "clearHistory2": "Clear history",
+    "ptsTooltip": "Arcade Points (PTS): awarded for flight survival, pipes passed (×1.0–2.95 difficulty multiplier), orbs collected (★ +75p / ◆ +150p), and center-gap precision combos (×N).",
+    "tapToFlyMobile": "Tap the canvas or FLAP button to fly",
+    "tapCanvasOrFlap": "Tap canvas / FLAP",
+    "topRightButton": "On-canvas ⏸ button",
+    "restartButtonMobile": "Restart button"
   },
   "hardware": {
     "powerStops": {
@@ -450,6 +455,7 @@
     "track": "Track:",
     "selectTrack": "Select track",
     "pause": "Pause",
+    "start": "Start",
     "resume": "Resume",
     "advanceOneSimulationTick": "Advance one simulation tick",
     "step": "Step",

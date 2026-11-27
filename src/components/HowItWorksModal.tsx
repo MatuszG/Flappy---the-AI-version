@@ -149,8 +149,8 @@ export function HowItWorksModal({ open, onClose }: HowItWorksModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex shrink-0 items-center justify-between border-t border-white/[0.08] px-5 py-3.5 sm:px-6 sm:py-4 bg-[#0D111A]">
-          <span className="font-mono text-[11px] text-slate-400">
+        <div className="flex shrink-0 items-center justify-end sm:justify-between border-t border-white/[0.08] px-5 py-3.5 sm:px-6 sm:py-4 bg-[#0D111A]">
+          <span className="hidden sm:inline font-mono text-[11px] text-slate-400">
             Press <kbd className="px-1.5 py-0.5 bg-white/[0.08] rounded text-slate-200 font-mono">Esc</kbd> to close
           </span>
           <button

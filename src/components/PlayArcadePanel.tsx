@@ -29,6 +29,7 @@ import type {
 } from '../engine/types';
 import type { PlaySessionStats } from '../hooks/useSandboxSimulation';
 import { useLanguage } from '../i18n/LanguageContext';
+import { InfoTooltip } from './InfoTooltip';
 import { NeuralNetworkViz } from './NeuralNetworkViz';
 
 export interface MedalTier {
@@ -274,8 +275,8 @@ export function PlayArcadePanel({
 
       {deckTab === 'PLAY' && (
         <div className="space-y-4">
-          {/* Mode Switcher: Solo Arcade vs Duel vs AI */}
-          <div className="space-y-2">
+          {/* Mode Switcher: Solo Arcade vs Duel vs AI (shown on lg+ since mobile/tablet has top quick bar above canvas) */}
+          <div className="hidden lg:block space-y-2">
             <div className="flex items-center justify-between gap-2">
               <h2 className="font-display text-sm sm:text-base font-semibold text-white">
                 {t('play.gameMode')}
@@ -334,18 +335,28 @@ export function PlayArcadePanel({
             <div className="grid grid-cols-3 divide-x divide-white/[0.08] rounded-lg border border-white/[0.08] bg-[#0B0E17] tabular-nums">
               <div className="px-3 py-2.5">
                 <div className="font-mono text-[10px] tracking-wider text-slate-400">
-                  {t('play.bestPts')}
-                </div>
-                <div className="mt-0.5 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-300">
-                  {currentBestPoints.toLocaleString()}
-                </div>
-              </div>
-              <div className="px-3 py-2.5">
-                <div className="font-mono text-[10px] tracking-wider text-slate-400">
                   {t('play.bestPipes')}
                 </div>
                 <div className="mt-0.5 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-amber-300">
                   {currentBestPipes}
+                </div>
+              </div>
+              <div
+                title={t('play.ptsTooltip')}
+                className="px-3 py-2.5 cursor-help"
+              >
+                <div className="inline-flex items-center gap-1 font-mono text-[10px] tracking-wider text-slate-400">
+                  <span className="underline decoration-dotted underline-offset-2">
+                    {t('play.bestPts')}
+                  </span>
+                  <InfoTooltip
+                    align="center"
+                    label={t('play.points')}
+                    text={t('play.ptsTooltip')}
+                  />
+                </div>
+                <div className="mt-0.5 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-300">
+                  {currentBestPoints.toLocaleString()}
                 </div>
               </div>
               <div className="px-3 py-2.5">
@@ -416,9 +427,6 @@ export function PlayArcadePanel({
               <span className="font-display text-sm sm:text-base font-semibold text-slate-100">
                 {t('play.selectTrackLevel')}
               </span>
-              <span className="font-mono text-[11px] text-slate-400">
-                {t('play.k10295Pts')}
-              </span>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
@@ -426,17 +434,16 @@ export function PlayArcadePanel({
                 const meta = DIFFICULTY_META[diff];
                 const active = difficulty === diff;
                 const pbPipes = humanBestByDifficulty[diff] ?? 0;
-                const pbPts = bestPointsByDifficulty[diff] ?? 0;
                 const isExtra = diff === 'EXTRA_INSANE';
                 const specText =
                   diff === 'EASY'
-                    ? t('play.k144px10Pts')
+                    ? '144px'
                     : diff === 'MEDIUM'
-                      ? t('play.k25Gust13')
+                      ? t('play.k25Gust13').split('·')[0].trim()
                       : diff === 'HARD'
-                        ? t('play.k114px17Pts')
+                        ? '114px'
                         : diff === 'INSANE'
-                          ? t('play.moving22')
+                          ? t('play.moving22').split('·')[0].trim()
                           : t('play.highSpeedMovingPipesOverdrive');
 
                 return (
@@ -461,10 +468,10 @@ export function PlayArcadePanel({
                       </span>
                       <span
                         className={`font-mono text-[11px] font-bold tabular-nums shrink-0 ${
-                          pbPts > 0 || pbPipes > 0 ? 'text-amber-300' : 'text-slate-500'
+                          pbPipes > 0 ? 'text-amber-300' : 'text-slate-500'
                         }`}
                       >
-                        {pbPts > 0 ? `${pbPts.toLocaleString()}p` : `PB ${pbPipes}`}
+                        PB {pbPipes}
                       </span>
                     </div>
                     <span className="mt-1 text-[11px] leading-snug text-slate-400">
@@ -584,18 +591,27 @@ export function PlayArcadePanel({
                 <Keyboard className="h-3.5 w-3.5 text-amber-400" aria-hidden="true" />
                 <span>{t('play.controls')}</span>
               </div>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 font-mono text-[11px] text-slate-400">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5 font-mono text-[11px] text-slate-400">
                 <div className="flex items-center justify-between gap-1">
                   <span>{t('play.flap')}</span>
-                  <span className="text-slate-200 whitespace-nowrap">Space / ↑ / Tap</span>
+                  <span className="text-slate-200 whitespace-nowrap">
+                    <span className="sm:hidden">{t('play.tapCanvasOrFlap')}</span>
+                    <span className="hidden sm:inline">Space / ↑ / Tap</span>
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-1">
                   <span>{t('play.pause')}</span>
-                  <span className="text-slate-200 whitespace-nowrap">P / Esc</span>
+                  <span className="text-slate-200 whitespace-nowrap">
+                    <span className="sm:hidden">{t('play.topRightButton')}</span>
+                    <span className="hidden sm:inline">P / Esc</span>
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-1">
                   <span>{t('play.restart2')}</span>
-                  <span className="text-slate-200 whitespace-nowrap">R / Space</span>
+                  <span className="text-slate-200 whitespace-nowrap">
+                    <span className="sm:hidden">{t('play.restartButtonMobile')}</span>
+                    <span className="hidden sm:inline">R / Space</span>
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-1">
                   <span>{t('play.medals2')}</span>
@@ -623,6 +639,7 @@ export function PlayArcadePanel({
             <div className="inline-flex rounded-lg border border-slate-800 bg-[#0B1120] p-0.5 font-mono text-[11px]">
               <button
                 type="button"
+                title={t('play.ptsTooltip')}
                 onClick={() => setBoardSortBy('POINTS')}
                 className={`rounded-md px-2 py-1 font-semibold cursor-pointer transition-colors ${
                   boardSortBy === 'POINTS'
@@ -725,8 +742,11 @@ export function PlayArcadePanel({
                     </div>
 
                     <div className="text-right font-mono tabular-nums shrink-0">
-                      <div className="text-xs font-bold text-emerald-300">
-                        {entry.points.toLocaleString()}p
+                      <div
+                        title={t('play.ptsTooltip')}
+                        className="text-xs font-bold text-emerald-300 cursor-help underline decoration-dotted underline-offset-2"
+                      >
+                        {entry.points.toLocaleString()} {t('play.pts')}
                       </div>
                       <div className="text-[10.5px] text-amber-300">
                         {entry.pipes} {t('play.pipes2')}
@@ -833,8 +853,11 @@ export function PlayArcadePanel({
                   </div>
 
                   <div className="text-right font-mono tabular-nums shrink-0">
-                    <div className="text-xs font-bold text-emerald-300">
-                      {run.points.toLocaleString()}p
+                    <div
+                      title={t('play.ptsTooltip')}
+                      className="text-xs font-bold text-emerald-300 cursor-help underline decoration-dotted underline-offset-2"
+                    >
+                      {run.points.toLocaleString()} {t('play.pts')}
                     </div>
                     <div className="text-[10.5px] text-slate-400">
                       {run.pipes} {t('play.pipes2')}

@@ -106,7 +106,12 @@
     "noFlightsRecordedYet": "Brak historii lotów.",
     "flyARoundToLog": "Zacznij lecieć po punkty i rury — każda zakończona próba pojawi się tutaj.",
     "clearHistory": "Wyczyścić historię?",
-    "clearHistory2": "Wyczyść historię"
+    "clearHistory2": "Wyczyść historię",
+    "ptsTooltip": "Punkty Arcade (PKT): naliczane za przetrwanie, rury (×1.0–2.95 wg trudności), orby (★ +75p / ◆ +150p) oraz celny przelot środkiem szczeliny (Combo ×N).",
+    "tapToFlyMobile": "Dotknij planszy lub przycisku SKOK, aby lecieć",
+    "tapCanvasOrFlap": "Plansza / przycisk SKOK",
+    "topRightButton": "Przycisk ⏸ na planszy",
+    "restartButtonMobile": "Przycisk Od nowa"
   },
   "hardware": {
     "powerStops": {
@@ -450,6 +455,7 @@
     "track": "Tor:",
     "selectTrack": "Wybierz tor",
     "pause": "Pauza",
+    "start": "Start",
     "resume": "Wznów",
     "advanceOneSimulationTick": "Przesuń symulację o 1 klatkę",
     "step": "Krok",
